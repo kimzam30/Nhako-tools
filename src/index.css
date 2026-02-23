@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+@theme {
+  --color-nhakoPink: #FF91E7;
+  --font-sans: "Inter", sans-serif;
+}
+
+body {
+  background-color: #FAFAFA; 
+}
