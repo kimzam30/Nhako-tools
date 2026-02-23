@@ -2,7 +2,7 @@
 
 A powerful, high-performance web utility hub designed for speed and absolute privacy. Built during a "1 Day 1 Project" sprint, Nhako Tools performs complex document and media processing **100% inside your browser**.
 
-**Live Demo:** [tools.nhako.com](https://tools.nhako.com)
+**Live:** [tools.nhako.com](https://tools.nhako.com)
 
 ---
 
@@ -25,7 +25,7 @@ A powerful, high-performance web utility hub designed for speed and absolute pri
 Unlike other popular tools, Nhako Tools has **zero backend**. 
 - **Your files never leave your computer.**
 - Processing happens via **WebAssembly (Wasm)** in your browser's memory.
-- No databases, no tracking, and **RM0 server costs**—hosted entirely on Vercel's edge network.
+- No databases, no tracking, and **RM0 server costs** hosted entirely on Vercel's edge network.
 
 ---
 
@@ -61,4 +61,4 @@ npm run dev
 📜 License
 Distributed under the MIT License. See ```LICENSE``` for more information.
 
-Developed with ❤️ by [kimzam/Nhako]
+Developed with ❤️ by kimzam, owner of Nhako.
