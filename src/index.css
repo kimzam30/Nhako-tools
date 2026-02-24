@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
 @theme {
   --color-nhakoPink: #FF91E7;
   --font-sans: "Inter", sans-serif;
@@ -7,4 +8,12 @@
 
 body {
   background-color: #FAFAFA; 
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
