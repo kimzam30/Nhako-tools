@@ -19,9 +19,14 @@ A powerful, high-performance web utility hub designed for speed and absolute pri
 - **Extract Assets:** Strip audio from video files into high-quality MP3s.
 - **Audio to Text:** On-device AI transcription using OpenAI's Whisper model (via Transformers.js).
 
+### 👨‍💻 Developer Tools
+- **JSON Formatter:** Parses messy JSON strings and outputs clean, highlighted syntax.
+- **JWT Decoder:** Decode JSON Web Tokens securely without server interaction.
+- **Base64 Converter** Convert text or files to Base64 strings and vice versa.
+- **Word Counter:** Live tracking of words, characters, and reading time.
 ---
 
-## 🔒 Privacy First (RM0 Infrastructure)
+## 🔒 Privacy First 
 Unlike other popular tools, Nhako Tools has **zero backend**. 
 - **Your files never leave your computer.**
 - Processing happens via **WebAssembly (Wasm)** in your browser's memory.
