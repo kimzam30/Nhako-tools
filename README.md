@@ -1,69 +1,93 @@
-# 🛠️ Nhako Tools
+# Nhako Tools
 
-A powerful, high-performance web utility hub designed for speed and absolute privacy. Built during a "1 Day 1 Project" sprint, Nhako Tools performs complex document and media processing **100% inside your browser**.
+A browser-based utility hub for PDF, media, and developer tasks. Every operation runs client-side — files never leave your machine, and there is no backend to leak them.
 
-**Live:** [tools.nhako.com](https://tools.nhako.com)
+**Live — [tools.nhako.com](https://tools.nhako.com)**
 
----
-
-## 🌟 Features
-
-### 📄 PDF Utilities
-- **Merge PDF:** Combine multiple documents into one without uploading to a server.
-- **Split PDF:** Extract every page into a neat ZIP file instantly.
-- **Compress PDF:** Structural optimization to reduce file size without quality loss.
-- **Convert PDF:** Transform PDFs into High-Res JPG/PNG images or extract raw Text.
-
-### 🎬 Media Tools
-- **Video Compressor:** Target specific file sizes (MB) using client-side bitrate calculation.
-- **Extract Assets:** Strip audio from video files into high-quality MP3s.
-- **Audio to Text:** On-device AI transcription using OpenAI's Whisper model (via Transformers.js).
-
-### 👨‍💻 Developer Tools
-- **JSON Formatter:** Parses messy JSON strings and outputs clean, highlighted syntax.
-- **JWT Decoder:** Decode JSON Web Tokens securely without server interaction.
-- **Base64 Converter** Convert text or files to Base64 strings and vice versa.
-- **Word Counter:** Live tracking of words, characters, and reading time.
----
-
-## 🔒 Privacy First 
-Unlike other popular tools, Nhako Tools has **zero backend**. 
-- **Your files never leave your computer.**
-- Processing happens via **WebAssembly (Wasm)** in your browser's memory.
-- No databases, no tracking, and **RM0 server costs** hosted entirely on Vercel's edge network.
+![React](https://img.shields.io/badge/React_19-61DAFB?style=flat-square&logo=react&logoColor=black)
+![Vite](https://img.shields.io/badge/Vite_7-646CFF?style=flat-square&logo=vite&logoColor=white)
+![Tailwind](https://img.shields.io/badge/Tailwind_v4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
+![License](https://img.shields.io/github/license/kimzam30/Nhako-tools?style=flat-square)
 
 ---
 
-## 🚀 Tech Stack
+## Tools
 
-- **Frontend:** React + Vite
-- **Styling:** Tailwind CSS
-- **PDF Engine:** `pdf-lib` & `pdf.js`
-- **Media Engine:** `ffmpeg.wasm` (FFmpeg compiled to WebAssembly)
-- **AI Engine:** `transformers.js` (Whisper-tiny)
-- **Deployment:** Vercel (Continuous Deployment)
+### PDF
+
+| Tool | What it does |
+|---|---|
+| Merge | Combine several PDFs into one |
+| Split | Extract every page into a ZIP |
+| Compress | Structural optimisation to shrink file size |
+| Convert | PDF → high-resolution JPG/PNG, or extract raw text |
+
+### Media
+
+| Tool | What it does |
+|---|---|
+| Video compressor | Target a specific output size using client-side bitrate calculation |
+| Audio extractor | Strip audio from video into MP3 |
+| Audio to text | On-device transcription with Whisper via Transformers.js |
+
+### Developer
+
+| Tool | What it does |
+|---|---|
+| JSON formatter | Parse and pretty-print with syntax highlighting |
+| JWT decoder | Decode tokens locally, no server round-trip |
+| Base64 converter | Text or files to Base64 and back |
+| Word counter | Live word, character, and reading-time counts |
 
 ---
 
-## 🛠️ Local Setup
+## Privacy
 
-1. **Clone the repo:**
-   ```bash
-   git clone [https://github.com/](https://github.com/)[GITHUB-USERNAME]/nhako-tools.git
-   ```
-2. **Install dependencies:**
+There is no backend. No upload endpoint, no database, no analytics.
 
-```Bash
+- Files are read into browser memory and processed there.
+- Heavy lifting runs through WebAssembly — FFmpeg and the Whisper model execute in your tab.
+- The site is static, served from Vercel's edge network.
+
+The practical consequence: large files are limited by your device's memory, not by an upload cap, and nothing you process is ever transmitted.
+
+---
+
+## Stack
+
+| Layer | Choice |
+|---|---|
+| Framework | React 19 + Vite 7 |
+| Routing | React Router 7 |
+| Styling | Tailwind CSS v4 |
+| PDF | `pdf-lib`, `pdf.js` |
+| Media | `ffmpeg.wasm` |
+| Transcription | `transformers.js` (Whisper) |
+| Archives | `jszip` |
+| Hosting | Vercel |
+
+---
+
+## Local development
+
+```bash
+git clone https://github.com/kimzam30/Nhako-tools.git
+cd Nhako-tools
 npm install
-```
-3. **Run development server:**
-
-```Bash
 npm run dev
 ```
-***Note: Due to SharedArrayBuffer requirements for FFmpeg, the dev server includes specific security headers in ```vite.config.js```.***
 
-📜 License
-Distributed under the MIT License. See ```LICENSE``` for more information.
+| Command | Purpose |
+|---|---|
+| `npm run dev` | Development server |
+| `npm run build` | Production build |
+| `npm run preview` | Serve the production build locally |
+| `npm run lint` | ESLint |
 
-Developed with ❤️ by kimzam, owner of Nhako.
+> **Note.** `ffmpeg.wasm` needs `SharedArrayBuffer`, which requires cross-origin isolation. The COOP/COEP headers that enable it are set in `vite.config.js` for dev and `vercel.json` for production. Serving the build with a plain static server without those headers will break the media tools.
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE).
