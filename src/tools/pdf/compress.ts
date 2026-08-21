@@ -36,7 +36,7 @@ export const run: FileRun = async (files, opts, ctx) => {
       filename: file.name.replace(/\.pdf$/i, '') + '-compressed.pdf',
       summary: saved > 0
         ? `${Math.round((saved / original) * 100)}% smaller, text still selectable`
-        : 'Already optimally packed — try Strong mode for a real reduction',
+        : 'Already optimally packed. Try Strong mode for a real reduction',
     };
   }
 
@@ -74,6 +74,6 @@ export const run: FileRun = async (files, opts, ctx) => {
     filename: file.name.replace(/\.pdf$/i, '') + '-compressed.pdf',
     summary: saved > 0
       ? `${Math.round((saved / original) * 100)}% smaller · text is no longer selectable`
-      : `No smaller than the original — this PDF was already efficient. Text is no longer selectable.`,
+      : `No smaller than the original, because this PDF was already efficient. Text is no longer selectable.`,
   };
 };

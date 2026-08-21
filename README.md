@@ -1,8 +1,8 @@
 # Nhako Tools
 
-22 utilities for PDFs, media, images and code — all of which run on your device.
+22 utilities for PDFs, media, images and code, all of which run on your device.
 
-**Live — [tools.nhako.com](https://tools.nhako.com)**
+**Live at [tools.nhako.com](https://tools.nhako.com)**
 
 ![Astro](https://img.shields.io/badge/Astro_5-BC52EE?style=flat-square&logo=astro&logoColor=white)
 ![Preact](https://img.shields.io/badge/Preact-673AB8?style=flat-square&logo=preact&logoColor=white)
@@ -18,7 +18,7 @@ Most online tools upload your file, process it on a server, and send it back. Th
 means an upload wait, a queue, a size cap, usually a daily limit, and often an
 account before you can download the result.
 
-None of that is necessary any more — browsers can do this work directly. So there
+None of that is necessary any more, because browsers can do this work directly. So there
 is no upload step here. That makes the tools faster, and it happens to make them
 private, because a file that is never sent anywhere cannot leak.
 
@@ -29,7 +29,7 @@ your file never appears in it.
 
 ## Tools
 
-### PDF — `/pdf/*`
+### PDF `/pdf/*`
 
 | Tool | What it does |
 |---|---|
@@ -41,7 +41,7 @@ your file never appears in it.
 | [Rotate](https://tools.nhako.com/pdf/rotate) | Fix orientation without re-rendering |
 | [Watermark](https://tools.nhako.com/pdf/watermark) | Stamp text across every page |
 
-### Media — `/media/*`
+### Media `/media/*`
 
 | Tool | What it does |
 |---|---|
@@ -49,7 +49,7 @@ your file never appears in it.
 | [Extract audio](https://tools.nhako.com/media/extract-audio) | Pull the audio track out as MP3 |
 | [Audio to text](https://tools.nhako.com/media/transcribe) | Whisper `tiny.en`, running on your device |
 
-### Image — `/image/*`
+### Image `/image/*`
 
 | Tool | What it does |
 |---|---|
@@ -57,7 +57,7 @@ your file never appears in it.
 | [Convert](https://tools.nhako.com/image/convert) | Move between JPG, PNG, WebP and AVIF |
 | [Resize](https://tools.nhako.com/image/resize) | Scale to exact dimensions, aspect ratio preserved |
 
-### Developer — `/dev/*`
+### Developer `/dev/*`
 
 | Tool | What it does |
 |---|---|
@@ -67,7 +67,7 @@ your file never appears in it.
 | [Word count](https://tools.nhako.com/dev/word-count) | Live word, character, sentence and reading-time counts |
 | [Hash](https://tools.nhako.com/dev/hash) | SHA-1/256/384/512 via Web Crypto |
 | [UUID](https://tools.nhako.com/dev/uuid) | Bulk v4 UUIDs from the platform CSPRNG |
-| [QR code](https://tools.nhako.com/dev/qr) | Encodes your text directly — no tracking redirect |
+| [QR code](https://tools.nhako.com/dev/qr) | Encodes your text directly, with no tracking redirect |
 | [Text diff](https://tools.nhako.com/dev/diff) | Compare by line, word or character |
 | [CSS shadow](https://tools.nhako.com/dev/css-shadow) | Build `box-shadow` with a live preview |
 
@@ -99,12 +99,12 @@ entry records your theme preference.
 
 What the browser does request:
 
-- The page, its JavaScript, and the self-hosted fonts — all from this domain.
+- The page, its JavaScript, and the self-hosted fonts, all from this domain.
 - For the media tools, the ffmpeg WebAssembly core (~31 MB), also from this domain,
   cached after first use.
 - For `Audio to text` only, the Whisper weights (~39 MB) from the Hugging Face CDN on
   first use, then cached. This is the one third-party request, and it is a download
-  of the model — never an upload of your audio.
+  of the model, never an upload of your audio.
 
 ---
 
@@ -122,7 +122,7 @@ own dependencies, which is why:
 
 | Page | JS transferred (raw) |
 |---|---|
-| Homepage | **0 KB** — the nav, theme toggle and ⌘K palette are vanilla |
+| Homepage | **0 KB**. The nav, theme toggle and ⌘K palette are vanilla |
 | `/about`, `/privacy` | **0 KB** |
 | Any tool page | **32 KB** |
 
@@ -166,8 +166,8 @@ npm run dev
 | `npm run preview` | Serve the build with production headers |
 | `npm run typecheck` | `astro check` + `tsc --noEmit` |
 | `npm run lint` | ESLint |
-| `npm test` | Vitest — 114 unit tests |
-| `npm run test:e2e` | Playwright — 30 tests (16 functional, 14 accessibility) |
+| `npm test` | Vitest, 114 unit tests |
+| `npm run test:e2e` | Playwright, 30 tests (16 functional, 14 accessibility) |
 | `npm run vendor` | Copy ffmpeg core into `public/vendor` (runs automatically) |
 | `npm run icons` | Rasterise `public/favicon.svg` into the PNG icon sizes |
 
@@ -190,20 +190,20 @@ npm run dev
   It is not a substitute for a real screen reader, which is still outstanding.
 
 Lighthouse scores 100 across performance, accessibility, best practices and SEO on
-the homepage and both tool-page types, with 0 ms blocking time and 0 layout shift —
-measured against localhost, so paint timings there are optimistic.
+the homepage and both tool-page types, with 0 ms blocking time and 0 layout shift.
+That was measured against localhost, so the paint timings are optimistic.
 
 ---
 
 ## Design
 
-`public/favicon.svg` is the single source for the mark — a geometric N whose stems
+`public/favicon.svg` is the single source for the mark: a geometric N whose stems
 and diagonal share one 3.6u width on a 32u grid, dark on brand pink at 9.23:1, so it
 stays legible at 16 px. `npm run icons` rasterises every other size from it.
 
 The visual system and the reasoning behind it live in
-[`.design/nhako-tools-rebuild/`](.design/nhako-tools-rebuild/) — brief, information
-architecture, and screenshots.
+[`.design/nhako-tools-rebuild/`](.design/nhako-tools-rebuild/), covering the brief,
+information architecture, and screenshots.
 
 `#FF91E7` is the Nhako brand accent. It is pale, so it cannot carry text on a light
 background (white on it is 2.01:1, well under the 4.5:1 AA threshold). It is kept as
@@ -214,4 +214,4 @@ token test enforces this.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).

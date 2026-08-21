@@ -37,6 +37,7 @@ const jsonLd = {
   path={`/${tool.category}/${tool.slug}`}
   keywords={tool.keywords}
   jsonLd={jsonLd}
+  category={tool.category}
 >
   <div class="mx-auto max-w-3xl px-4 py-10 sm:px-6">
     <nav aria-label="Breadcrumb" class="mb-6 text-2xs text-muted">
@@ -58,27 +59,26 @@ const jsonLd = {
 
     <div class="mt-10 space-y-8 border-t border-border pt-8">
       {tool.about && (
-        <section>
+        <section data-reveal>
           <h2 class="mb-2 text-sm font-semibold">What this does</h2>
           <p class="text-sm leading-relaxed text-muted">{tool.about}</p>
         </section>
       )}
 
       {tool.limits && tool.limits.length > 0 && (
-        <section>
+        <section data-reveal>
           <h2 class="mb-2 text-sm font-semibold">Limits</h2>
           <ul class="space-y-1.5">
             {tool.limits.map((limit) => (
-              <li class="flex gap-2.5 text-sm leading-relaxed text-muted">
-                <span aria-hidden="true" class="text-border-strong">—</span>
-                <span>{limit}</span>
+              <li class="relative pl-4 text-sm leading-relaxed text-muted before:absolute before:left-0 before:top-[0.6em] before:size-1 before:rounded-full before:bg-border-strong">
+                {limit}
               </li>
             ))}
           </ul>
         </section>
       )}
 
-      <section>
+      <section data-reveal>
         <h2 class="mb-2 text-sm font-semibold">Is this private?</h2>
         <p class="text-sm leading-relaxed text-muted">
           Yes, and you can check rather than take our word for it. Open your browser's
@@ -88,7 +88,7 @@ const jsonLd = {
       </section>
 
       {related.length > 0 && (
-        <section>
+        <section data-reveal>
           <h2 class="mb-3 text-sm font-semibold">Related tools</h2>
           <div class="grid gap-2.5 sm:grid-cols-3">
             {related.map((r) => (

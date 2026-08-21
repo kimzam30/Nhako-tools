@@ -28,7 +28,7 @@ export const TOOLS: readonly ToolMeta[] = [
     description: 'Split a PDF into single pages in your browser. Returns a ZIP, with no upload and no page limit.',
     keywords: ['split', 'separate', 'extract pages', 'divide', 'burst', 'pdf'],
     accept: 'application/pdf,.pdf',
-    options: [{ kind: 'text', key: 'range', label: 'Pages', default: '', placeholder: 'all — or 1-5, 8, 11-13', help: 'Leave empty to split every page.' }],
+    options: [{ kind: 'text', key: 'range', label: 'Pages', default: '', placeholder: 'all, or 1-5, 8, 11-13', help: 'Leave empty to split every page.' }],
     about: 'Each selected page becomes its own PDF, bundled into a ZIP. Pages are copied, not re-rendered, so quality is untouched.',
     limits: ['Output arrives as a ZIP even for a single page.'],
     related: ['pdf/merge', 'pdf/rotate', 'pdf/to-image'],
@@ -41,12 +41,12 @@ export const TOOLS: readonly ToolMeta[] = [
     accept: 'application/pdf,.pdf',
     options: [
       { kind: 'select', key: 'mode', label: 'Mode', default: 'lossless', choices: [
-        { value: 'lossless', label: 'Lossless — keeps text selectable' },
-        { value: 'strong', label: 'Strong — rasterises pages' },
+        { value: 'lossless', label: 'Lossless (keeps text selectable)' },
+        { value: 'strong', label: 'Strong (rasterises pages)' },
       ], help: 'Strong re-encodes each page as an image. Much smaller, but text stops being selectable or searchable.' },
       { kind: 'range', key: 'quality', label: 'Image quality', min: 30, max: 95, step: 5, default: 70, suffix: '%', help: 'Strong mode only.' },
     ],
-    about: 'Lossless mode repacks the file structure with object streams — safe, but the saving is usually small and close to zero on image-heavy files. Strong mode renders each page and re-encodes it as a JPEG, which shrinks scanned documents dramatically at the cost of selectable text.',
+    about: 'Lossless mode repacks the file structure with object streams. That is safe, but the saving is usually small, and close to zero on image-heavy files. Strong mode renders each page and re-encodes it as a JPEG, which shrinks scanned documents dramatically at the cost of selectable text.',
     limits: ['Strong mode makes text non-selectable and non-searchable.', 'Lossless mode often saves only a few percent. That is the honest ceiling for structural compression.'],
     related: ['pdf/to-image', 'image/compress', 'pdf/merge'],
   },
@@ -59,7 +59,7 @@ export const TOOLS: readonly ToolMeta[] = [
     options: [
       { kind: 'select', key: 'format', label: 'Format', default: 'jpg', choices: [{ value: 'jpg', label: 'JPG' }, { value: 'png', label: 'PNG' }] },
       { kind: 'select', key: 'scale', label: 'Resolution', default: '2', choices: [
-        { value: '1', label: '72 dpi — screen' }, { value: '2', label: '144 dpi — default' }, { value: '3', label: '216 dpi — print' },
+        { value: '1', label: '72 dpi, screen' }, { value: '2', label: '144 dpi, default' }, { value: '3', label: '216 dpi, print' },
       ] },
     ],
     about: 'Each page is rendered at the chosen resolution and exported as an image, bundled into a ZIP.',
@@ -73,7 +73,7 @@ export const TOOLS: readonly ToolMeta[] = [
     keywords: ['pdf to text', 'extract text', 'copy text', 'txt', 'scrape', 'read'],
     accept: 'application/pdf,.pdf',
     about: 'Pulls the embedded text layer out of the document, page by page.',
-    limits: ['Scanned PDFs have no text layer — this returns nothing for them. OCR is not included.', 'Complex multi-column layouts may extract out of reading order.'],
+    limits: ['Scanned PDFs have no text layer, so this returns nothing for them. OCR is not included.', 'Complex multi-column layouts may extract out of reading order.'],
     related: ['pdf/to-image', 'media/transcribe', 'dev/word-count'],
   },
   {
@@ -86,7 +86,7 @@ export const TOOLS: readonly ToolMeta[] = [
       { kind: 'select', key: 'angle', label: 'Rotate by', default: '90', choices: [
         { value: '90', label: '90° clockwise' }, { value: '180', label: '180°' }, { value: '270', label: '90° anticlockwise' },
       ] },
-      { kind: 'text', key: 'range', label: 'Pages', default: '', placeholder: 'all — or 1-5, 8', help: 'Leave empty to rotate every page.' },
+      { kind: 'text', key: 'range', label: 'Pages', default: '', placeholder: 'all, or 1-5, 8', help: 'Leave empty to rotate every page.' },
     ],
     about: 'Rotation is applied to the page metadata, so nothing is re-rendered and quality is untouched.',
     limits: ['Rotation is a multiple of 90°. Arbitrary angles would require rasterising the page.'],
@@ -104,7 +104,7 @@ export const TOOLS: readonly ToolMeta[] = [
       { kind: 'range', key: 'opacity', label: 'Opacity', min: 5, max: 100, step: 5, default: 20, suffix: '%' },
       { kind: 'range', key: 'angle', label: 'Angle', min: -90, max: 90, step: 15, default: 45, suffix: '°' },
     ],
-    about: 'Draws the text once per page, centred, beneath nothing — it sits on top of the existing content.',
+    about: 'Draws the text once per page, centred. It sits on top of the existing content.',
     limits: ['Text watermarks only. Image watermarks are not supported.', 'A watermark is not security: it can be removed by anyone with the right tool.'],
     related: ['pdf/rotate', 'pdf/merge', 'pdf/compress'],
   },
@@ -119,11 +119,11 @@ export const TOOLS: readonly ToolMeta[] = [
     options: [
       { kind: 'number', key: 'targetMB', label: 'Target size', min: 1, max: 2000, step: 1, default: 15, suffix: 'MB', help: 'The encoder aims for this. Expect to land within a few percent.' },
       { kind: 'select', key: 'audio', label: 'Audio', default: '128', choices: [
-        { value: '128', label: '128 kbps — default' }, { value: '96', label: '96 kbps' }, { value: '64', label: '64 kbps — smaller' }, { value: 'none', label: 'Remove audio' },
+        { value: '128', label: '128 kbps, the default' }, { value: '96', label: '96 kbps' }, { value: '64', label: '64 kbps, smaller file' }, { value: 'none', label: 'Remove audio' },
       ] },
     ],
     about: 'Computes the bitrate needed to land on your target size given the video length, then re-encodes at that bitrate. Audio is re-encoded to a known bitrate so the size arithmetic is actually correct.',
-    limits: ['Runs at roughly real-time or slower — a 5 minute video takes minutes, not seconds.', 'Single-pass encoding, so the final size lands close to the target but rarely exactly on it.', 'Needs a desktop browser for anything large; mobile memory is the binding constraint.'],
+    limits: ['Runs at roughly real-time or slower. A 5 minute video takes minutes, not seconds.', 'Single-pass encoding, so the final size lands close to the target but rarely exactly on it.', 'Needs a desktop browser for anything large; mobile memory is the binding constraint.'],
     related: ['media/extract-audio', 'media/transcribe', 'image/compress'],
   },
   {
@@ -133,7 +133,7 @@ export const TOOLS: readonly ToolMeta[] = [
     keywords: ['extract audio', 'video to mp3', 'rip audio', 'soundtrack', 'strip', 'convert', 'mp3'],
     accept: 'video/*',
     options: [{ kind: 'select', key: 'bitrate', label: 'Quality', default: '192', choices: [
-      { value: '320', label: '320 kbps' }, { value: '192', label: '192 kbps — default' }, { value: '128', label: '128 kbps' },
+      { value: '320', label: '320 kbps' }, { value: '192', label: '192 kbps, the default' }, { value: '128', label: '128 kbps' },
     ] }],
     about: 'Discards the video stream and re-encodes the audio to MP3.',
     limits: ['Re-encoding to MP3 is lossy. The source audio is already compressed, so this is a second generation.'],
@@ -142,11 +142,11 @@ export const TOOLS: readonly ToolMeta[] = [
   {
     slug: 'transcribe', category: 'media', name: 'Audio to text', kind: 'file', heavy: true,
     blurb: 'Transcribe speech with Whisper, on your device.',
-    description: 'Transcribe audio to text in your browser with Whisper. The model runs on your device — the audio is never uploaded.',
+    description: 'Transcribe audio to text in your browser with Whisper. The model runs on your device, so the audio is never uploaded.',
     keywords: ['transcribe', 'transcription', 'speech to text', 'audio to text', 'whisper', 'subtitles', 'captions', 'dictation', 'stt'],
     accept: 'audio/*,video/*',
     about: 'Runs OpenAI Whisper (tiny.en) locally through WebAssembly. The model is downloaded once, around 39 MB, then cached by your browser for every later run.',
-    limits: ['English only — this is the `tiny.en` model.', 'First run downloads roughly 39 MB of model weights. After that it is offline.', 'Accuracy is well below the full-size cloud models, especially with accents, crosstalk or background noise.', 'Long recordings are slow: expect a sizeable fraction of the audio duration.'],
+    limits: ['English only. This is the `tiny.en` model.', 'First run downloads roughly 39 MB of model weights. After that it is offline.', 'Accuracy is well below the full-size cloud models, especially with accents, crosstalk or background noise.', 'Long recordings are slow: expect a sizeable fraction of the audio duration.'],
     related: ['media/extract-audio', 'dev/word-count', 'pdf/to-text'],
   },
 
@@ -160,7 +160,7 @@ export const TOOLS: readonly ToolMeta[] = [
     options: [
       { kind: 'range', key: 'quality', label: 'Quality', min: 30, max: 95, step: 5, default: 75, suffix: '%' },
       { kind: 'select', key: 'format', label: 'Output', default: 'auto', choices: [
-        { value: 'auto', label: 'Keep original format' }, { value: 'webp', label: 'WebP — usually smallest' }, { value: 'jpeg', label: 'JPG' },
+        { value: 'auto', label: 'Keep original format' }, { value: 'webp', label: 'WebP, usually the smallest' }, { value: 'jpeg', label: 'JPG' },
       ] },
     ],
     about: 'Decodes each image and re-encodes it at the chosen quality. WebP typically beats JPG by a wide margin at the same visual quality.',
@@ -212,16 +212,16 @@ export const TOOLS: readonly ToolMeta[] = [
       { kind: 'toggle', key: 'sortKeys', label: 'Sort keys', default: false },
     ],
     about: 'Parses with the browser’s own JSON parser, so what validates here is exactly what validates in your code. Errors report the line and column.',
-    limits: ['Strict JSON only — no comments, no trailing commas, no single quotes.'],
+    limits: ['Strict JSON only. No comments, no trailing commas, no single quotes.'],
     related: ['dev/jwt', 'dev/base64', 'dev/diff'],
   },
   {
     slug: 'jwt', category: 'dev', name: 'JWT decoder', kind: 'text',
     blurb: 'Decode a token’s header and payload.',
-    description: 'Decode JSON Web Tokens in your browser. The token is never sent anywhere — which matters, because tokens are credentials.',
+    description: 'Decode JSON Web Tokens in your browser. The token is never sent anywhere, which matters, because tokens are credentials.',
     keywords: ['jwt', 'json web token', 'decode', 'token', 'bearer', 'auth', 'claims', 'jwt.io'],
     about: 'Splits the token, base64url-decodes the header and payload, and renders the claims. Timestamp claims (`exp`, `iat`, `nbf`) are shown as readable dates alongside their raw values.',
-    limits: ['Decoding only — the signature is not verified. A decoded token is not a trusted token.', 'Never paste a production token into a tool that uploads it. This one does not, and you can confirm that in your network tab.'],
+    limits: ['Decoding only. The signature is not verified, and a decoded token is not a trusted token.', 'Never paste a production token into a tool that uploads it. This one does not, and you can confirm that in your network tab.'],
     related: ['dev/base64', 'dev/json', 'dev/hash'],
   },
   {
@@ -233,7 +233,7 @@ export const TOOLS: readonly ToolMeta[] = [
       { kind: 'select', key: 'mode', label: 'Mode', default: 'encode', choices: [{ value: 'encode', label: 'Encode' }, { value: 'decode', label: 'Decode' }] },
       { kind: 'toggle', key: 'urlSafe', label: 'URL-safe alphabet', default: false, help: 'Uses - and _ instead of + and /, and drops padding.' },
     ],
-    about: 'Handles multi-byte UTF-8 correctly in both directions — emoji and non-Latin scripts round-trip exactly.',
+    about: 'Handles multi-byte UTF-8 correctly in both directions, so emoji and non-Latin scripts round-trip exactly.',
     limits: ['Text only. For files, use the file tools.'],
     related: ['dev/jwt', 'dev/hash', 'dev/json'],
   },
@@ -254,7 +254,7 @@ export const TOOLS: readonly ToolMeta[] = [
     options: [{ kind: 'select', key: 'algo', label: 'Algorithm', default: 'SHA-256', choices: [
       { value: 'SHA-1', label: 'SHA-1' }, { value: 'SHA-256', label: 'SHA-256' }, { value: 'SHA-384', label: 'SHA-384' }, { value: 'SHA-512', label: 'SHA-512' },
     ] }],
-    about: 'Uses the browser’s built-in Web Crypto implementation — the same primitive your runtime uses.',
+    about: 'Uses the browser’s built-in Web Crypto implementation, the same primitive your runtime uses.',
     limits: ['MD5 is not offered. Web Crypto deliberately omits it because it is broken for anything security-related.', 'SHA-1 is included for checking legacy checksums only. Do not use it for security.'],
     related: ['dev/uuid', 'dev/base64', 'dev/jwt'],
   },
@@ -269,7 +269,7 @@ export const TOOLS: readonly ToolMeta[] = [
       { kind: 'toggle', key: 'braces', label: 'Wrap in braces', default: false },
     ],
     about: 'Uses `crypto.randomUUID()`, which draws from the platform CSPRNG. These are suitable for real identifiers, not just placeholders.',
-    limits: ['Version 4 only — random, not time-ordered. If you need sortable ids, you want UUIDv7 or ULID.'],
+    limits: ['Version 4 only, which is random rather than time-ordered. If you need sortable ids, you want UUIDv7 or ULID.'],
     related: ['dev/hash', 'dev/qr'],
   },
   {
@@ -280,11 +280,11 @@ export const TOOLS: readonly ToolMeta[] = [
     options: [
       { kind: 'range', key: 'size', label: 'Size', min: 128, max: 1024, step: 64, default: 512, suffix: 'px' },
       { kind: 'select', key: 'ec', label: 'Error correction', default: 'M', choices: [
-        { value: 'L', label: 'L — 7%' }, { value: 'M', label: 'M — 15%' }, { value: 'Q', label: 'Q — 25%' }, { value: 'H', label: 'H — 30%' },
+        { value: 'L', label: 'L (7%)' }, { value: 'M', label: 'M (15%)' }, { value: 'Q', label: 'Q (25%)' }, { value: 'H', label: 'H (30%)' },
       ], help: 'Higher survives more damage, at the cost of a denser code.' },
       { kind: 'toggle', key: 'margin', label: 'Quiet zone border', default: true },
     ],
-    about: 'The QR code encodes your text directly. Many online generators encode a redirect through their own domain, so the code stops working when they do — this one does not.',
+    about: 'The QR code encodes your text directly. Many online generators encode a redirect through their own domain, so the code stops working when they do. This one does not.',
     limits: ['Around 2,900 characters at the lowest error correction, far fewer at the highest.'],
     related: ['dev/uuid', 'image/convert'],
   },
@@ -300,7 +300,7 @@ export const TOOLS: readonly ToolMeta[] = [
       { kind: 'toggle', key: 'ignoreWhitespace', label: 'Ignore whitespace', default: false },
     ],
     about: 'A standard diff over the two inputs, with additions and removals marked inline.',
-    limits: ['Plain text only — no syntax awareness and no three-way merge.'],
+    limits: ['Plain text only. No syntax awareness and no three-way merge.'],
     related: ['dev/json', 'dev/word-count'],
   },
   {

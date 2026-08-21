@@ -18,8 +18,8 @@ describe('byte formatting', () => {
   });
 
   it('does not render NaN or negatives as a size', () => {
-    expect(bytes(Number.NaN)).toBe('—');
-    expect(bytes(-1)).toBe('—');
+    expect(bytes(Number.NaN)).toBe('n/a');
+    expect(bytes(-1)).toBe('n/a');
   });
 });
 
@@ -32,7 +32,7 @@ describe('duration formatting', () => {
     expect(duration(125_000)).toBe('2m 5s');
   });
   it('handles nonsense input', () => {
-    expect(duration(Number.NaN)).toBe('—');
+    expect(duration(Number.NaN)).toBe('n/a');
   });
 });
 
@@ -41,7 +41,7 @@ describe('percentage saved', () => {
     expect(pct(50, 100)).toBe('50%');
   });
   it('does not divide by zero', () => {
-    expect(pct(10, 0)).toBe('—');
+    expect(pct(10, 0)).toBe('n/a');
   });
 });
 

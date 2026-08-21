@@ -1,0 +1,80 @@
+---
+import { TOOLS } from '../../tools/registry';
+
+/**
+ * The hero set piece: a terminal-style readout of what is true about this page
+ * right now.
+ *
+ * Every line has to be literally true. This project's whole voice is refusing
+ * to overclaim, and the hero is the worst possible place to start. That rules
+ * out the obvious flourish of a "wasm ████░░ ready" progress bar, because
+ * ffmpeg is not loaded on the homepage and should not be. The facts supply the
+ * content; the typing and the cursor supply the motion.
+ *
+ * The full text ships in the HTML, so it is what a crawler sees and what a
+ * reader gets with JavaScript disabled. The script re-hides and re-types it
+ * rather than building it from nothing.
+ */
+const ROWS: [string, string][] = [
+  ['runtime', 'local'],
+  ['uploaded', '0 bytes'],
+  ['tools', `${TOOLS.length} ready`],
+  ['queue', 'none'],
+  ['account', 'not required'],
+];
+---
+
+<div
+  data-readout
+  aria-hidden="true"
+  class="rounded-lg border border-border bg-surface p-4 font-mono text-xs leading-[1.9] sm:p-5 sm:text-sm"
+>
+  {ROWS.map(([key, value]) => (
+    <div data-row class="flex gap-3 whitespace-nowrap">
+      <span class="text-accent">&gt;</span>
+      <span class="w-[9ch] shrink-0 text-muted">{key}</span>
+      <span class="text-text">{value}</span>
+    </div>
+  ))}
+  <div data-row class="flex gap-3">
+    <span class="readout-cursor text-accent">_</span>
+  </div>
+</div>
+
+<script>
+  const readout = document.querySelector<HTMLElement>('[data-readout]');
+  const rows = readout ? [...readout.querySelectorAll<HTMLElement>('[data-row]')] : [];
+
+  if (readout && rows.length && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    // Taking control only now means the static text above is what renders if
+    // this script never runs.
+    readout.dataset.typing = '';
+
+    let timer: ReturnType<typeof setTimeout>;
+
+    const show = (i: number) => {
+      if (i >= rows.length) {
+        // Hold the completed frame, then run it again.
+        timer = setTimeout(() => {
+          for (const row of rows) delete row.dataset.shown;
+          timer = setTimeout(() => show(0), 420);
+        }, 4200);
+        return;
+      }
+      rows[i]!.dataset.shown = '';
+      timer = setTimeout(() => show(i + 1), i === rows.length - 1 ? 220 : 150);
+    };
+
+    show(0);
+
+    // Stop when the tab is hidden; a loop nobody is watching is just battery.
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        clearTimeout(timer);
+      } else {
+        for (const row of rows) delete row.dataset.shown;
+        show(0);
+      }
+    });
+  }
+</script>

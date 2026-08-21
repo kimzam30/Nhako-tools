@@ -55,8 +55,8 @@ export const run: TextRun = async (input) => {
     output: JSON.stringify({ header, payload: annotate(payload) }, null, 2),
     language: 'json',
     stats: [
-      { label: 'Algorithm', value: String(header.alg ?? '—') },
-      { label: 'Type', value: String(header.typ ?? '—') },
+      { label: 'Algorithm', value: String(header.alg ?? 'n/a') },
+      { label: 'Type', value: String(header.typ ?? 'n/a') },
       { label: 'Status', value: exp === null ? 'no expiry' : expired ? 'EXPIRED' : 'valid' },
       { label: 'Signature', value: 'not verified' },
     ],

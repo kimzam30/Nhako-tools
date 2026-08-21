@@ -1,0 +1,132 @@
+/* ==========================================================================
+   Motion
+   
+   The governing principle (see DESIGN_BRIEF.md §4): motion must read as
+   machinery working, never as decoration. Terminal readouts, stepped reveals
+   and monospace tickers reinforce the instrument. Easing overshoot,
+   hover-scale and bouncy entrances still do not.
+
+   Two hard rules:
+     1. Nothing on a tool page's critical path moves. The drop zone, options
+        and result row stay still. Someone waiting for their file should never
+        be watching an animation instead.
+     2. Everything reserves its space up front. CLS is 0 and stays 0.
+
+   Almost all of this is CSS-only. Scroll-driven animations and cross-document
+   view transitions both degrade to "no animation, content fully visible" where
+   unsupported, which is the correct fallback, and both cost zero JavaScript.
+   The homepage ships 0 KB of external JS and that is not negotiable here.
+   ========================================================================== */
+
+@layer base {
+  /* --- Cross-document route transitions --------------------------------- */
+  /* One at-rule replaces what Astro's <ClientRouter /> would ship a whole
+     client runtime to do. */
+  @view-transition {
+    navigation: auto;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 140ms;
+    animation-timing-function: var(--ease-out);
+  }
+
+  /* The chrome persists across navigations instead of flashing. */
+  .vt-nav { view-transition-name: nav; }
+  .vt-logo { view-transition-name: logo; }
+  /* The footer is deliberately not named. Promoting a below-the-fold element
+     to its own layer buys nothing visible and confuses full-page capture. */
+
+  /* --- Scroll-driven reveals -------------------------------------------- */
+  /* Guarded so browsers without scroll timelines never run the keyframes and
+     never leave content stuck at opacity 0. */
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      [data-reveal] {
+        animation: reveal-rise linear both;
+        animation-timeline: view();
+        animation-range: entry 0% entry 46%;
+      }
+
+      /* Section rules draw themselves in from the left. */
+      [data-reveal-rule] {
+        transform-origin: left center;
+        animation: reveal-rule linear both;
+        animation-timeline: view();
+        animation-range: entry 6% entry 40%;
+      }
+    }
+  }
+
+  /* Movement only, never opacity.
+     Fading text in means it spends the animation below AA contrast, which axe
+     caught at 1.87:1 on the tool page prose. Anyone who stops scrolling
+     mid-range would be looking at unreadable text. Translating instead keeps
+     every character at full contrast for the whole reveal, and a mechanical
+     settle suits the instrument better than a fade anyway. */
+  @keyframes reveal-rise {
+    from { transform: translateY(12px); }
+    to   { transform: none; }
+  }
+
+  @keyframes reveal-rule {
+    from { transform: scaleX(0); opacity: 0; }
+    to   { transform: scaleX(1); opacity: 1; }
+  }
+
+  /* --- Local runtime indicator ------------------------------------------ */
+  /* A slow pulse in the nav. It is the one piece of ambient motion that runs
+     on a tool page, so it is deliberately small and off to the side. */
+  .runtime-dot {
+    animation: runtime-pulse 2.8s var(--ease-in-out) infinite;
+  }
+
+  @keyframes runtime-pulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.35; }
+  }
+
+  /* --- Hero readout ------------------------------------------------------ */
+  .readout-cursor {
+    animation: cursor-blink 1.05s steps(1, end) infinite;
+  }
+
+  @keyframes cursor-blink {
+    0%, 49%   { opacity: 1; }
+    50%, 100% { opacity: 0; }
+  }
+
+  /* Rows are hidden only once the script has taken control, so with no JS the
+     whole readout renders as static text. */
+  [data-readout][data-typing] [data-row] {
+    visibility: hidden;
+  }
+  [data-readout][data-typing] [data-row][data-shown] {
+    visibility: visible;
+  }
+
+  /* --- Reduced motion ---------------------------------------------------- */
+  /* tokens.css already flattens durations globally. These are the cases that
+     need the end state asserted rather than merely shortened. */
+  @media (prefers-reduced-motion: reduce) {
+    @view-transition { navigation: none; }
+
+    [data-reveal],
+    [data-reveal-rule] {
+      opacity: 1 !important;
+      transform: none !important;
+      animation: none !important;
+    }
+
+    .runtime-dot,
+    .readout-cursor {
+      animation: none !important;
+      opacity: 1 !important;
+    }
+
+    [data-readout][data-typing] [data-row] {
+      visibility: visible !important;
+    }
+  }
+}

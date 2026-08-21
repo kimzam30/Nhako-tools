@@ -7,7 +7,7 @@ export const run: FileRun = async (files, opts, ctx) => {
   const file = files[0];
   if (!file) throw new ToolError('No file selected.');
 
-  const duration = await probeDuration(file);
+  const duration = await probeDuration(file, (label) => ctx.onProgress(0, label));
   const audioChoice = String(opts.audio ?? '128');
   const audioKbps = audioChoice === 'none' ? 0 : Number(audioChoice);
   const plan = planBitrate(duration, Number(opts.targetMB), audioKbps);

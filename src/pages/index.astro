@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ToolCard from '../components/astro/ToolCard.astro';
+import HeroReadout from '../components/astro/HeroReadout.astro';
 import { TOOLS, toolsIn } from '../tools/registry';
 import { CATEGORIES, CATEGORY_LABEL } from '../tools/types';
 
@@ -25,14 +26,15 @@ const jsonLd = {
   jsonLd={jsonLd}
 >
   <div class="mx-auto max-w-6xl px-4 sm:px-6">
-    <section class="pt-12 pb-10 sm:pt-16 sm:pb-12">
+    <section class="grid items-center gap-10 pt-12 pb-10 sm:pt-16 sm:pb-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:gap-14">
+      <div>
       <h1 class="max-w-3xl text-3xl font-bold leading-[1.12] tracking-tight sm:text-4xl">
         {TOOLS.length} tools that run in your browser.
         <span class="block text-muted">Nothing uploads. Nothing waits.</span>
       </h1>
       <p class="mt-4 max-w-xl text-base text-muted">
         Every tool here works on your device. There is no upload step, so there is no
-        queue, no file size cap and no daily limit — and no account to make.
+        queue, no file size cap and no daily limit, and no account to make.
       </p>
 
       <div class="mt-7 max-w-md">
@@ -46,13 +48,16 @@ const jsonLd = {
         />
         <p id="search-status" role="status" class="mt-2 h-4 text-2xs text-muted"></p>
       </div>
+      </div>
+
+      <HeroReadout />
     </section>
 
     {CATEGORIES.map((category) => (
       <section id={category} class="scroll-mt-20 border-t border-border py-8" data-category-section={category}>
         <div class="mb-4 flex items-baseline gap-3">
           <h2 class="text-2xs font-semibold uppercase tracking-[0.14em] text-muted">{CATEGORY_LABEL[category]}</h2>
-          <span class="h-px flex-1 bg-border" aria-hidden="true"></span>
+          <span data-reveal-rule class="h-px flex-1 bg-border" aria-hidden="true"></span>
           <span data-numeric class="text-2xs text-muted">{toolsIn(category).length}</span>
         </div>
         <div class="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
@@ -62,7 +67,7 @@ const jsonLd = {
     ))}
 
     <p data-empty hidden class="py-16 text-center text-sm text-muted">
-      No tool matches that. Try a different word — the search covers what each tool does, not just its name.
+      No tool matches that. Try a different word: the search covers what each tool does, not just its name.
     </p>
   </div>
 </BaseLayout>

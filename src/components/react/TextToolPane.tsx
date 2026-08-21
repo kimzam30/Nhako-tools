@@ -152,7 +152,7 @@ function placeholderFor(id: string): string {
     'dev/json': '{ "paste": "your JSON here" }',
     'dev/jwt': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9…',
     'dev/base64': 'Paste text to encode, or Base64 to decode…',
-    'dev/word-count': 'Start typing — counts update live.',
+    'dev/word-count': 'Start typing. Counts update live.',
     'dev/hash': 'Text to hash…',
     'dev/qr': 'https://example.com',
     'dev/diff': 'Paste the original text…',

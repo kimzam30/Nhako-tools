@@ -17,7 +17,7 @@ export const run: TextRun = async (input, opts) => {
       language: 'image',
       stats: [
         { label: 'Size', value: `${size}×${size}` },
-        { label: 'Correction', value: `${ec} — ${({ L: '7', M: '15', Q: '25', H: '30' })[ec]}%` },
+        { label: 'Correction', value: `${ec} (${({ L: '7', M: '15', Q: '25', H: '30' })[ec]}%)` },
         { label: 'Encoded', value: `${input.length} ch` },
       ],
     };

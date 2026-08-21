@@ -6,6 +6,7 @@ const { tool } = Astro.props;
 <a
   href={`/${tool.category}/${tool.slug}`}
   data-tool-card
+  data-reveal
   data-name={tool.name.toLowerCase()}
   data-keywords={tool.keywords.join(' ')}
   data-category={tool.category}

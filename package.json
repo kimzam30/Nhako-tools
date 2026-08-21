@@ -15,7 +15,8 @@
     "vendor": "node scripts/vendor-ffmpeg.mjs",
     "prebuild": "node scripts/vendor-ffmpeg.mjs",
     "predev": "node scripts/vendor-ffmpeg.mjs",
-    "icons": "node scripts/icons.mjs"
+    "icons": "node scripts/icons.mjs",
+    "og": "node scripts/og-images.mjs"
   },
   "dependencies": {
     "@astrojs/preact": "^4.1.3",

@@ -77,6 +77,29 @@ counts, elapsed times. This is the single most load-bearing detail in the
 philosophy: it is what makes the thing read as an instrument rather than a
 brochure, and it costs nothing.
 
+### Amendment, 2026-08-22: motion
+
+The original brief said decorative motion "reads as slow and is therefore off
+the table". That was too blunt, and it is now amended rather than quietly
+contradicted:
+
+> **Motion must read as machinery working, never as decoration.** Terminal
+> readouts, stepped reveals and monospace tickers reinforce the instrument.
+> Easing overshoot, hover-scale and bouncy entrances still do not.
+
+Two rules keep this from costing what the philosophy bought:
+
+1. **Nothing on a tool page's critical path moves.** The drop zone, options and
+   result row stay still. Reveals apply only to the prose below the fold.
+   Someone waiting for a file should never be watching an animation instead.
+2. **Everything reserves its space, and text never fades.** Revealing by opacity
+   puts text below AA contrast for the length of the animation, which axe caught
+   at 1.87:1 on the tool page prose. Reveals translate instead. CLS stays 0.
+
+Implemented in `src/styles/motion.css`. Route transitions and scroll reveals are
+CSS-only, so the homepage still ships 0 KB of external JavaScript; the hero
+readout is the single exception and its script is inlined.
+
 ### Type
 
 - **Instrument Sans** (variable 400–700) — UI and headings. A slightly

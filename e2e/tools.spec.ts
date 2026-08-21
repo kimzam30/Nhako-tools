@@ -92,7 +92,7 @@ test.describe('navigation and chrome', () => {
       expect(response.status(), path).toBe(200);
     }
     await page.goto('/pdf/merge');
-    await expect(page).toHaveTitle('Merge PDF — Nhako Tools');
+    await expect(page).toHaveTitle('Merge PDF');
   });
 
   test('an unknown URL 404s instead of rendering a working-looking page', async ({ request }) => {

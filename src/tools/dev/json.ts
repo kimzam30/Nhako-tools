@@ -50,23 +50,23 @@ export function explainParseError(err: unknown, input: string): string {
   const explicit = raw.match(/\(line (\d+) column (\d+)\)/);
   if (explicit) {
     const head = raw.slice(0, raw.indexOf(' in JSON at position'));
-    return `${head} — line ${explicit[1]}, column ${explicit[2]}`;
+    return `${head} at line ${explicit[1]}, column ${explicit[2]}`;
   }
 
   const pos = raw.match(/position (\d+)/);
   if (pos?.[1]) {
     const { line, col } = lineCol(input, Number(pos[1]));
-    return `${raw.replace(/ in JSON at position \d+.*/, '')} — line ${line}, column ${col}`;
+    return `${raw.replace(/ in JSON at position \d+.*/, '')} at line ${line}, column ${col}`;
   }
 
   if (/Unexpected end of JSON input/.test(raw)) {
     const { line } = lineCol(input, input.length);
-    return `Unexpected end of input — the document is incomplete. It ends at line ${line}.`;
+    return `Unexpected end of input. The document is incomplete, ending at line ${line}.`;
   }
 
   // "Unexpected token 'X', \"...\" is not valid JSON" — strip the echoed source.
   const token = raw.match(/Unexpected token '(.+?)'/);
-  if (token) return `Unexpected ${token[1] === '}' ? "'}'" : `token '${token[1]}'`} — check for a trailing comma or a missing value.`;
+  if (token) return `Unexpected ${token[1] === '}' ? "'}'" : `token '${token[1]}'`}. Check for a trailing comma or a missing value.`;
 
   return raw;
 }

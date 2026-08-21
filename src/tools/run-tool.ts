@@ -1,5 +1,6 @@
 import type { FileToolResult, OptionValues } from './types';
 import { loadTool } from './loaders';
+import { WORKER_TOOLS } from '../workers/worker-tools';
 
 /**
  * Tools whose work is pure computation over ArrayBuffers, with no DOM
@@ -13,13 +14,7 @@ import { loadTool } from './loaders';
  *   - media/transcribe             needs AudioContext, and transformers.js
  *                                  already threads its inference
  */
-const WORKER_SAFE = new Set([
-  'pdf/merge',
-  'pdf/split',
-  'pdf/rotate',
-  'pdf/watermark',
-  'pdf/to-text',
-]);
+const WORKER_SAFE = new Set(Object.keys(WORKER_TOOLS));
 
 export interface RunHandle {
   result: Promise<FileToolResult>;

@@ -20,7 +20,7 @@ export const run: FileRun = async (files, _opts, ctx) => {
 
   if (characters === 0) {
     throw new ToolError(
-      'This PDF has no text layer — it is almost certainly a scan. Extracting text from it would need OCR, which this tool does not do.',
+      'This PDF has no text layer, so it is almost certainly a scan. Extracting text from it would need OCR, which this tool does not do.',
     );
   }
 

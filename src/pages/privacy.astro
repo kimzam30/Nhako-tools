@@ -3,7 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 <BaseLayout
   title="Privacy"
-  description="Nhako Tools has no backend. Files are processed on your device and never uploaded — and you can verify that yourself in about ten seconds."
+  description="Nhako Tools has no backend. Files are processed on your device and never uploaded, and you can verify that yourself in about ten seconds."
   path="/privacy"
 >
   <div class="mx-auto max-w-2xl px-4 py-12 sm:px-6">
@@ -18,7 +18,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <section>
         <h2 class="mb-2 text-sm font-semibold text-text">Verify it yourself</h2>
         <p>
-          Don't take this on trust — it takes about ten seconds to check, and the
+          Don't take this on trust. It takes about ten seconds to check, and the
           instructions work equally well on any site making the same claim.
         </p>
         <ol class="mt-3 space-y-1.5">
@@ -32,13 +32,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <h2 class="mb-2 text-sm font-semibold text-text">What does get requested</h2>
         <p>Being precise, because "nothing leaves your machine" deserves the fine print:</p>
         <ul class="mt-3 space-y-1.5">
-          <li>— The page itself, its JavaScript, and the self-hosted fonts. All from this domain.</li>
+          <li>The page itself, its JavaScript, and the self-hosted fonts. All from this domain.</li>
           <li>
-            — For the video and audio tools, the ffmpeg WebAssembly engine (about 31 MB), also
+            For the video and audio tools, the ffmpeg WebAssembly engine (about 31 MB), also
             from this domain. It is cached after the first use.
           </li>
           <li>
-            — For <a class="text-accent underline underline-offset-2" href="/media/transcribe">Audio to text</a>,
+            For <a class="text-accent underline underline-offset-2" href="/media/transcribe">Audio to text</a>,
             the Whisper model weights (about 39 MB) are downloaded from the Hugging Face CDN
             on first use, then cached by your browser. This is the one request that goes to a
             third party, and it is a download of the model, never an upload of your audio.
@@ -58,7 +58,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <h2 class="mb-2 text-sm font-semibold text-text">The practical consequence</h2>
         <p>
           Because nothing is uploaded, the limit on file size is your device's memory rather
-          than someone's upload cap — and there is no queue, no daily allowance, and nothing
+          than someone's upload cap. There is no queue, no daily allowance, and nothing
           to sign up for.
         </p>
       </section>

@@ -123,7 +123,7 @@ export default function FileToolRunner({ tool }: Props) {
         <span className="text-2xs text-muted">
           {files.length > 0
             ? files.map((f) => f.name).join(', ').slice(0, 90)
-            : 'Runs the moment the file lands — there is no upload step'}
+            : 'Runs the moment the file lands. There is no upload step'}
         </span>
       </button>
 
