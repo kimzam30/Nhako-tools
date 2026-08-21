@@ -1,0 +1,105 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import FileToolRunner from '../../components/react/FileToolRunner';
+import TextToolPane from '../../components/react/TextToolPane';
+import { TOOLS, TOOLS_BY_ID } from '../../tools/registry';
+import { CATEGORY_LABEL, type ToolMeta } from '../../tools/types';
+
+export function getStaticPaths() {
+  // Every route on the site comes from the registry. A slug with no entry
+  // simply has no page — which is why /tool/<anything> can no longer render a
+  // working-looking page that does nothing, as the old build did.
+  return TOOLS.map((tool) => ({
+    params: { category: tool.category, tool: tool.slug },
+    props: { tool },
+  }));
+}
+
+interface Props { tool: ToolMeta }
+const { tool } = Astro.props;
+const related = (tool.related ?? []).map((id) => TOOLS_BY_ID.get(id)).filter((t): t is ToolMeta => Boolean(t));
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: tool.name,
+  applicationCategory: 'UtilitiesApplication',
+  operatingSystem: 'Any browser',
+  description: tool.description,
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+  featureList: tool.keywords,
+};
+---
+
+<BaseLayout
+  title={tool.name}
+  description={tool.description}
+  path={`/${tool.category}/${tool.slug}`}
+  keywords={tool.keywords}
+  jsonLd={jsonLd}
+>
+  <div class="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+    <nav aria-label="Breadcrumb" class="mb-6 text-2xs text-muted">
+      <a href="/" class="transition-colors hover:text-accent">Tools</a>
+      <span aria-hidden="true"> / </span>
+      <a href={`/#${tool.category}`} class="transition-colors hover:text-accent">{CATEGORY_LABEL[tool.category]}</a>
+    </nav>
+
+    <header class="mb-7">
+      <h1 class="text-2xl font-bold tracking-tight">{tool.name}</h1>
+      <p class="mt-1.5 text-sm text-muted">{tool.blurb}</p>
+    </header>
+
+    {/* The tool sits above the fold. The prose is below it — most tool sites
+        invert this and make you scroll past marketing to reach the thing. */}
+    {tool.kind === 'file'
+      ? <FileToolRunner client:load tool={tool} />
+      : <TextToolPane client:load tool={tool} />}
+
+    <div class="mt-10 space-y-8 border-t border-border pt-8">
+      {tool.about && (
+        <section>
+          <h2 class="mb-2 text-sm font-semibold">What this does</h2>
+          <p class="text-sm leading-relaxed text-muted">{tool.about}</p>
+        </section>
+      )}
+
+      {tool.limits && tool.limits.length > 0 && (
+        <section>
+          <h2 class="mb-2 text-sm font-semibold">Limits</h2>
+          <ul class="space-y-1.5">
+            {tool.limits.map((limit) => (
+              <li class="flex gap-2.5 text-sm leading-relaxed text-muted">
+                <span aria-hidden="true" class="text-border-strong">—</span>
+                <span>{limit}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <section>
+        <h2 class="mb-2 text-sm font-semibold">Is this private?</h2>
+        <p class="text-sm leading-relaxed text-muted">
+          Yes, and you can check rather than take our word for it. Open your browser's
+          network tab and run the tool: your file never appears in it, because there is
+          no server to send it to. The whole site is static files{tool.heavy ? ', plus the WebAssembly engine that does the work, which is served from this same domain' : ''}.
+        </p>
+      </section>
+
+      {related.length > 0 && (
+        <section>
+          <h2 class="mb-3 text-sm font-semibold">Related tools</h2>
+          <div class="grid gap-2.5 sm:grid-cols-3">
+            {related.map((r) => (
+              <a href={`/${r.category}/${r.slug}`} class="group rounded-lg border border-border bg-surface p-3 transition-colors duration-[120ms] hover:border-accent hover:bg-sunken">
+                <span class="block text-sm font-medium transition-colors group-hover:text-accent">{r.name}</span>
+                <span class="mt-0.5 block text-2xs leading-snug text-muted">{r.blurb}</span>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+  </div>
+</BaseLayout>

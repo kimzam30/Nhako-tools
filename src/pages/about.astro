@@ -1,0 +1,42 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { TOOLS } from '../tools/registry';
+---
+<BaseLayout
+  title="About"
+  description="Nhako Tools is a set of file and developer utilities that run entirely in your browser. No upload, no account, no ads."
+  path="/about"
+>
+  <div class="mx-auto max-w-2xl px-4 py-12 sm:px-6">
+    <h1 class="text-2xl font-bold tracking-tight">About</h1>
+
+    <div class="mt-7 space-y-6 text-sm leading-relaxed text-muted">
+      <p class="text-base text-text">
+        {TOOLS.length} utilities for PDFs, media, images and code — all of which run on your
+        device rather than on a server.
+      </p>
+
+      <p>
+        Most online tools work by uploading your file, processing it somewhere else, and
+        sending it back. That means an upload wait, a queue, a size cap, usually a daily
+        limit, and often an account before you can download the result. None of that is
+        necessary any more: browsers can do this work directly.
+      </p>
+
+      <p>
+        So these tools have no upload step. That makes them faster — usually finished
+        before the upload would have completed — and it happens to make them private,
+        because a file that is never sent anywhere cannot leak. See
+        <a class="text-accent underline underline-offset-2" href="/privacy">Privacy</a>
+        for how to verify that claim rather than trust it.
+      </p>
+
+      <p>
+        No ads, no trackers, no cookie banner, no upsell. The site is open source under
+        the MIT licence — the
+        <a class="text-accent underline underline-offset-2" href="https://github.com/kimzam30/Nhako-tools" rel="noopener noreferrer">source is on GitHub</a>
+        if you want to read it or run it yourself.
+      </p>
+    </div>
+  </div>
+</BaseLayout>

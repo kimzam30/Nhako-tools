@@ -1,0 +1,115 @@
+---
+import { TOOLS } from '../../tools/registry';
+import { toolId } from '../../tools/types';
+
+// The index is serialised into the page rather than imported by the client
+// script, so the full registry never ships to the browser as executable code.
+const index = TOOLS.map((t) => ({
+  id: toolId(t), name: t.name, category: t.category, blurb: t.blurb, keywords: t.keywords,
+}));
+---
+
+<button
+  type="button"
+  id="palette-open"
+  class="flex h-8 items-center gap-2 rounded border border-border px-2.5 text-xs text-muted transition-colors duration-[120ms] hover:border-border-strong hover:text-text"
+  aria-label="Open command palette"
+>
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+    <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" stroke-linecap="round" />
+  </svg>
+  <span class="hidden sm:inline">Search</span>
+  <kbd class="hidden rounded border border-border px-1 font-mono text-[10px] sm:inline">&#8984;K</kbd>
+</button>
+
+<div id="palette" hidden class="fixed inset-0 z-50 flex items-start justify-center bg-black/40 p-4 pt-[12vh]">
+  <div role="dialog" aria-modal="true" aria-label="Command palette" class="w-full max-w-lg overflow-hidden rounded-lg border border-border bg-bg shadow-2xl">
+    <label class="sr-only" for="palette-input">Search tools</label>
+    <input
+      id="palette-input" type="text" autocomplete="off" placeholder={`Search ${TOOLS.length} tools...`}
+      role="combobox" aria-expanded="true" aria-controls="palette-list"
+      class="w-full border-b border-border bg-transparent px-4 py-3 text-sm outline-none placeholder:text-muted"
+    />
+    <ul id="palette-list" role="listbox" aria-label="Results" class="max-h-80 overflow-y-auto p-1.5"></ul>
+  </div>
+</div>
+
+<script type="application/json" id="tool-index" set:html={JSON.stringify(index)}></script>
+
+<script>
+  import { searchTools, type SearchableTool } from '../react/search';
+
+  const tools: SearchableTool[] = JSON.parse(document.getElementById('tool-index')?.textContent ?? '[]');
+  const openBtn = document.getElementById('palette-open');
+  const overlay = document.getElementById('palette');
+  const input = document.getElementById('palette-input') as HTMLInputElement | null;
+  const list = document.getElementById('palette-list');
+
+  const escape = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c] ?? c);
+
+  let active = 0;
+  let results: SearchableTool[] = [];
+
+  function render() {
+    if (!list) return;
+    results = searchTools(tools, input?.value ?? '').slice(0, 8);
+    if (active >= results.length) active = 0;
+
+    // A listbox option must not contain interactive children, so the option
+    // itself carries the content and the navigation — no nested <a>.
+    list.innerHTML = results.length === 0
+      ? '<li class="px-3 py-6 text-center text-sm text-muted">No tool matches that.</li>'
+      : results.map((t, i) => `
+          <li
+            role="option"
+            id="cmd-opt-${i}"
+            aria-selected="${i === active}"
+            data-index="${i}"
+            data-href="/${t.id}"
+            class="flex cursor-pointer items-baseline gap-3 rounded px-3 py-2 ${i === active ? 'bg-sunken' : ''}"
+          >
+            <span class="text-sm font-medium">${escape(t.name)}</span>
+            <span class="min-w-0 flex-1 truncate text-2xs text-muted">${escape(t.blurb)}</span>
+            <span class="text-[10px] uppercase tracking-wider text-muted">${escape(t.category)}</span>
+          </li>`).join('');
+
+    for (const el of list.querySelectorAll<HTMLElement>('li[data-index]')) {
+      el.addEventListener('mouseenter', () => { active = Number(el.dataset.index); render(); });
+      el.addEventListener('click', () => { location.href = el.dataset.href ?? '/'; });
+    }
+
+    // Point the combobox at the active option so screen readers follow along.
+    input?.setAttribute('aria-activedescendant', results.length ? `cmd-opt-${active}` : '');
+  }
+
+  function setOpen(open: boolean) {
+    overlay?.toggleAttribute('hidden', !open);
+    if (open) {
+      if (input) input.value = '';
+      active = 0;
+      render();
+      requestAnimationFrame(() => input?.focus());
+    } else {
+      openBtn?.focus();
+    }
+  }
+
+  openBtn?.addEventListener('click', () => setOpen(true));
+  overlay?.addEventListener('mousedown', (e) => { if (e.target === overlay) setOpen(false); });
+  input?.addEventListener('input', render);
+
+  input?.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); active = Math.min(active + 1, results.length - 1); render(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); active = Math.max(active - 1, 0); render(); }
+    else if (e.key === 'Enter') { e.preventDefault(); const t = results[active]; if (t) location.href = `/${t.id}`; }
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      setOpen(overlay?.hasAttribute('hidden') ?? true);
+    } else if (e.key === 'Escape' && !overlay?.hasAttribute('hidden')) {
+      setOpen(false);
+    }
+  });
+</script>

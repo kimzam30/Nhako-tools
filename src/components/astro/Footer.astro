@@ -1,0 +1,29 @@
+---
+import Logo from './Logo.astro';
+
+// Deliberately thin. The old footer carried nine links to pages that did not
+// exist (Blog, Best practices, Pro experience, Contact, Legal…) plus three
+// <div>s styled as social buttons. An empty footer is more honest.
+const year = new Date().getFullYear();
+---
+
+<footer class="mt-20 border-t border-border">
+  <div class="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-8 text-xs text-muted sm:flex-row sm:items-center sm:justify-between sm:px-6">
+    <p class="flex items-center gap-2">
+      <Logo class="size-4 rounded-sm" />
+      <span class="font-semibold text-text"><span class="text-accent">Nhako</span>Tools</span>
+      <span>— every tool runs in your browser. Nothing is uploaded.</span>
+    </p>
+    <ul class="flex items-center gap-5">
+      <li><a class="transition-colors hover:text-accent" href="/about">About</a></li>
+      <li><a class="transition-colors hover:text-accent" href="/privacy">Privacy</a></li>
+      <li>
+        <a class="transition-colors hover:text-accent" href="https://github.com/kimzam30/Nhako-tools" rel="noopener noreferrer">
+          Source
+        </a>
+      </li>
+      <li aria-hidden="true">·</li>
+      <li>MIT © {year}</li>
+    </ul>
+  </div>
+</footer>

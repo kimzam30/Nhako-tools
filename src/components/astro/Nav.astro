@@ -1,0 +1,33 @@
+---
+import { CATEGORIES, CATEGORY_LABEL } from '../../tools/types';
+import Logo from './Logo.astro';
+import ThemeToggle from './ThemeToggle.astro';
+import CommandPalette from './CommandPalette.astro';
+---
+
+<header class="sticky top-0 z-40 border-b border-border bg-bg/85 backdrop-blur-sm">
+  <nav class="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4 sm:px-6" aria-label="Main">
+    <a href="/" class="flex shrink-0 items-center gap-2 text-base font-bold tracking-tight">
+      <Logo class="size-6 rounded-md" />
+      <span><span class="text-accent">Nhako</span>Tools</span>
+    </a>
+
+    <ul class="hidden items-center gap-1 md:flex">
+      {CATEGORIES.map((c) => (
+        <li>
+          <a
+            href={`/#${c}`}
+            class="rounded px-2.5 py-1.5 text-sm text-muted transition-colors duration-[120ms] hover:bg-sunken hover:text-text"
+          >
+            {CATEGORY_LABEL[c]}
+          </a>
+        </li>
+      ))}
+    </ul>
+
+    <div class="ml-auto flex items-center gap-2">
+      <CommandPalette />
+      <ThemeToggle />
+    </div>
+  </nav>
+</header>

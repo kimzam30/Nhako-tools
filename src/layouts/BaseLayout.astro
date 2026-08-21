@@ -1,0 +1,100 @@
+---
+import '../styles/tokens.css';
+import Nav from '../components/astro/Nav.astro';
+import Footer from '../components/astro/Footer.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Canonical path, e.g. "/pdf/merge". Defaults to the current URL. */
+  path?: string;
+  keywords?: string[];
+  jsonLd?: Record<string, unknown>;
+}
+
+const { title, description, path, keywords, jsonLd } = Astro.props;
+const canonical = new URL(path ?? Astro.url.pathname, Astro.site ?? 'https://tools.nhako.com');
+const fullTitle = title === 'Nhako Tools' ? title : `${title} — Nhako Tools`;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    {keywords && keywords.length > 0 && <meta name="keywords" content={keywords.join(', ')} />}
+    <link rel="canonical" href={canonical.href} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical.href} />
+    <meta property="og:site_name" content="Nhako Tools" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="theme-color" content="#0b0b0e" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+
+    {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
+
+    {/*
+      Blocking, inline, before first paint. The old build resolved the theme in
+      a useEffect that only ever ran on the homepage, so loading a tool page
+      directly ignored the saved theme entirely — and even on the homepage the
+      class landed after hydration, flashing the wrong theme on every load.
+    */}
+    <script is:inline>
+      (() => {
+        try {
+          const saved = localStorage.getItem('theme');
+          const dark = saved ? saved === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+          document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+        } catch {
+          document.documentElement.dataset.theme = 'light';
+        }
+      })();
+    </script>
+  </head>
+
+  <body class="min-h-screen flex flex-col">
+    <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-3 focus:rounded focus:bg-accent focus:px-4 focus:py-2 focus:text-accent-on">
+      Skip to content
+    </a>
+    <Nav />
+    <main id="main" class="flex-1 w-full">
+      <slot />
+    </main>
+    <Footer />
+
+    <script is:inline>
+      // Offline support. Registered after load so it never competes with the
+      // page's own resources for bandwidth on a first visit.
+      if ('serviceWorker' in navigator) {
+        addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(() => {
+            // Unsupported, blocked, or a non-secure origin — the site works
+            // exactly the same without it.
+          });
+        });
+      }
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;
+  }
+  .focus\:not-sr-only:focus {
+    position: static; width: auto; height: auto; margin: 0;
+    overflow: visible; clip: auto; white-space: normal;
+  }
+</style>

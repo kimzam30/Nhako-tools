@@ -1,0 +1,17 @@
+---
+interface Props { class?: string }
+const { class: className = '' } = Astro.props;
+---
+<svg
+  viewBox="0 0 32 32"
+  class={className}
+  aria-hidden="true"
+  focusable="false"
+  fill="none"
+>
+  <rect width="32" height="32" rx="6" class="fill-accent" />
+  <path
+    d="M9 9h3.6v14H9z M19.4 9H23v14h-3.6z M9 9h3.6L23 23h-3.6z"
+    class="fill-accent-on"
+  />
+</svg>

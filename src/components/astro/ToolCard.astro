@@ -1,0 +1,16 @@
+---
+import type { ToolMeta } from '../../tools/types';
+interface Props { tool: ToolMeta }
+const { tool } = Astro.props;
+---
+<a
+  href={`/${tool.category}/${tool.slug}`}
+  data-tool-card
+  data-name={tool.name.toLowerCase()}
+  data-keywords={tool.keywords.join(' ')}
+  data-category={tool.category}
+  class="group flex flex-col gap-1 rounded-lg border border-border bg-surface p-3.5 transition-colors duration-[120ms] hover:border-accent hover:bg-sunken"
+>
+  <span class="text-sm font-medium transition-colors group-hover:text-accent">{tool.name}</span>
+  <span class="text-2xs leading-snug text-muted">{tool.blurb}</span>
+</a>
