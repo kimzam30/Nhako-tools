@@ -1,7 +1,7 @@
 /**
  * Rasterise favicon.svg into the PNG sizes browsers and PWAs still want.
  * Uses the Playwright chromium that is already installed rather than adding an
- * image dependency — the SVG stays the single source of truth for the mark.
+ * image dependency. The SVG stays the single source of truth for the mark.
  */
 import { chromium } from '@playwright/test';
 import { readFileSync, writeFileSync } from 'node:fs';

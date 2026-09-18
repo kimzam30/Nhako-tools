@@ -2,8 +2,8 @@
  * Runs a tool's pure `run()` off the main thread.
  *
  * Only tools that are CPU-bound and DOM-free are routed here (see
- * WORKER_SAFE in run-tool.ts). Anything needing DOM APIs — pdf.js canvas
- * rendering, ffmpeg's own worker, the AudioContext in transcribe — stays on
+ * WORKER_SAFE in run-tool.ts). Anything needing DOM APIs (pdf.js canvas
+ * rendering, ffmpeg's own worker, the AudioContext in transcribe) stays on
  * the main thread, where it already has what it needs.
  */
 import { WORKER_TOOLS } from './worker-tools';

@@ -1,4 +1,4 @@
-# Information Architecture — Nhako Tools
+# Information Architecture: Nhako Tools
 
 Derived from `DESIGN_BRIEF.md`. This document is **load-bearing for the code**:
 `src/tools/registry.ts` is the single source of truth and Astro's
@@ -7,10 +7,10 @@ route table.
 
 ## 1. URL structure
 
-`/<category>/<tool>` — flat, two segments, no `/tool/` prefix. Each segment is a
+`/<category>/<tool>`: flat, two segments, no `/tool/` prefix. Each segment is a
 word someone would actually search for.
 
-### PDF — `/pdf/*`
+### PDF: `/pdf/*`
 
 | URL | Tool | Replaces |
 |---|---|---|
@@ -22,7 +22,7 @@ word someone would actually search for.
 | `/pdf/rotate` | Rotate & reorder pages | `edit-pdf` (was dead) |
 | `/pdf/watermark` | Add watermark | new |
 
-### Media — `/media/*`
+### Media: `/media/*`
 
 | URL | Tool | Replaces |
 |---|---|---|
@@ -30,7 +30,7 @@ word someone would actually search for.
 | `/media/extract-audio` | Extract audio from video | `extract-assets` |
 | `/media/transcribe` | Audio to text (Whisper) | `audio-to-text` |
 
-### Image — `/image/*` (all new, all zero-dependency)
+### Image: `/image/*` (all new, all zero-dependency)
 
 | URL | Tool |
 |---|---|
@@ -38,7 +38,7 @@ word someone would actually search for.
 | `/image/convert` | Convert between JPG/PNG/WebP/AVIF |
 | `/image/resize` | Resize and crop |
 
-### Developer — `/dev/*`
+### Developer: `/dev/*`
 
 | URL | Tool | Replaces |
 |---|---|---|
@@ -60,7 +60,7 @@ the URL for brevity; "Developer tools" remains the display name.
 
 `/` · `/about` · `/privacy` · `/404`
 
-## 2. Redirects — `vercel.json`, 301
+## 2. Redirects: `vercel.json`, 301
 
 Every current URL must survive. Search equity is the only asset the old site has.
 
@@ -82,7 +82,7 @@ Every current URL must survive. Search equity is the only asset the old site has
 
 ## 3. Navigation
 
-Deliberately thin. The nav is not where discovery happens — search is.
+Deliberately thin. The nav is not where discovery happens; search is.
 
 ```
 ┌────────────────────────────────────────────────────┐
@@ -91,18 +91,18 @@ Deliberately thin. The nav is not where discovery happens — search is.
 ```
 
 - Four category links, each to an anchor on the homepage grid.
-- **`⌘K` command palette** — the primary navigation for returning users. Fuzzy
+- **`⌘K` command palette**: the primary navigation for returning users. Fuzzy
   match over tool names *and* keywords, so "transcribe" finds Audio to Text
   (which today's search fails at) and "minify" finds the JSON tool.
 - Theme toggle, present on **every** page. Today it exists only on the homepage.
 - No account, no pricing, no CTA. Nothing to sign up for.
 
-Footer carries the real links (About, Privacy, GitHub, licence) — the current
+Footer carries the real links (About, Privacy, GitHub, licence). The current
 footer's `<div>`s styled as links and `href="#"` stubs are all removed.
 
 ## 4. Page structures
 
-### Homepage — directory, search-first
+### Homepage: directory, search-first
 
 ```
 ┌──────────────────────────────────────────────┐
@@ -128,7 +128,7 @@ footer's `<div>`s styled as links and `href="#"` stubs are all removed.
 Cards are compact: name, one line, category. No gradient blob, no `h-72`, no
 hover-scale. Typing filters live across all categories at once.
 
-### Tool page — the product
+### Tool page: the product
 
 This is the template that gets the craft budget. It must convert a cold visitor
 from Google in seconds.
@@ -162,7 +162,7 @@ Three structural points:
 1. **The tool is above the fold. The prose is below it.** Most tool sites invert
    this for SEO and make the visitor scroll past marketing copy to reach the
    thing they came for.
-2. **The result row replaces the drop zone in place** — no modal, no scroll, no
+2. **The result row replaces the drop zone in place**: no modal, no scroll, no
    navigation.
 3. **The prose section is real content**, not keyword filler: what the tool
    actually does, what it cannot do, where the limits are. Honest limits are
@@ -201,17 +201,17 @@ Every one of these is currently an `alert()` or nothing at all.
 
 | State | Treatment |
 |---|---|
-| Wrong file type | Inline, before any work: "That's a .docx — this tool takes PDFs." |
+| Wrong file type | Inline, before any work: "That's a .docx, and this tool takes PDFs." |
 | Corrupt / unparseable | Inline error in the result row, tool stays usable |
 | File too large for RAM | Warn ahead of time with the actual number, don't crash |
 | Whisper model downloading | The one honest progress bar: "Downloading model · 39 MB · once" |
 | No JS | Static page renders fully; drop zone replaced by a note |
-| Unknown URL | Real 404 with search — today `/tool/anything` renders a working-looking page |
+| Unknown URL | Real 404 with search; today `/tool/anything` renders a working-looking page |
 
 ## 7. What was cut
 
 - The "Buy me a coffee" and "About" nav stubs (`href="#"`).
-- The footer's Features / Learn More / Support columns — nine fake links to
+- The footer's Features / Learn More / Support columns: nine fake links to
   pages that do not exist (Blog, Best practices, Pro experience…).
 - The `IG / IN / X` `<div>`s styled as social buttons.
 - The gradient blob on every card.

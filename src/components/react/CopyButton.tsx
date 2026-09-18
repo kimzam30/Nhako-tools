@@ -25,7 +25,10 @@ export default function CopyButton({ text, label = 'Copy' }: { text: string; lab
       disabled={!text}
       className="rounded border border-border px-2 py-1 text-2xs font-medium text-muted transition-colors duration-[120ms] hover:border-border-strong hover:text-text disabled:opacity-40 disabled:hover:border-border disabled:hover:text-muted"
     >
-      <span aria-live="polite">{copied ? 'Copied' : label}</span>
+      {copied ? 'Copied' : label}
+      {/* Announce the outcome only. A live region around the label itself
+          announced "Copy" every time the button appeared. */}
+      <span className="sr-only" role="status">{copied ? 'Copied to clipboard' : ''}</span>
     </button>
   );
 }

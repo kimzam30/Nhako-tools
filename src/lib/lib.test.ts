@@ -24,7 +24,7 @@ describe('byte formatting', () => {
 });
 
 describe('duration formatting', () => {
-  it('uses milliseconds under a second — the common case', () => {
+  it('uses milliseconds under a second, the common case', () => {
     expect(duration(412)).toBe('412ms');
   });
   it('switches to seconds and minutes as needed', () => {

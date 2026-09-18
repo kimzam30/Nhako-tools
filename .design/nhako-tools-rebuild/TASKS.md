@@ -1,4 +1,4 @@
-# Tasks — Nhako Tools rebuild
+# Tasks: Nhako Tools rebuild
 
 Derived from `DESIGN_BRIEF.md` and `INFORMATION_ARCHITECTURE.md`.
 Status as of 2026-08-21, branch `rebuild/astro`.
@@ -14,24 +14,24 @@ Status as of 2026-08-21, branch `rebuild/astro`.
 - [x] Custom preview server so COOP/COEP match production locally
 
 ### Design system
-- [x] `tokens.css` — Precision Instrument philosophy, light + dark
+- [x] `tokens.css`: Precision Instrument philosophy, light + dark
 - [x] Pink ramp derived from `#FF91E7` with AA-passing interactive variants
 - [x] Instrument Sans + JetBrains Mono, self-hosted via Fontsource
 - [x] Contrast enforced by `tokens.test.ts`, which parses the CSS directly
 
-### Tools — all 22
+### Tools: all 22
 - [x] PDF: merge, split, compress (two honest modes), to-image, to-text, rotate, watermark
 - [x] Media: compress-video (corrected bitrate maths), extract-audio, transcribe
-- [x] Image: compress, convert, resize — all zero-dependency canvas work
+- [x] Image: compress, convert, resize, all zero-dependency canvas work
 - [x] Dev: json, jwt, base64, word-count, hash, uuid, qr, diff, css-shadow
 
 ### UI
 - [x] `BaseLayout` with per-tool title/meta/canonical/OG/JSON-LD, sitemap, robots
-- [x] Blocking inline theme script — no flash, works on every page
+- [x] Blocking inline theme script: no flash, works on every page
 - [x] Homepage directory, search-first, filtering works with JS disabled
 - [x] Tool page template: tool above the fold, prose and honest limits below
-- [x] `FileToolRunner` — runs on drop, no Run button, elapsed time on completion
-- [x] `TextToolPane` — live output, real JSON syntax highlighting, stats row
+- [x] `FileToolRunner`: runs on drop, no Run button, elapsed time on completion
+- [x] `TextToolPane`: live output, real JSON syntax highlighting, stats row
 - [x] Vanilla `⌘K` command palette and theme toggle (no React in the global nav)
 - [x] 301 redirects for all 13 legacy URLs, validated by test
 
@@ -48,10 +48,10 @@ Status as of 2026-08-21, branch `rebuild/astro`.
 - [x] `alert()` as the only error channel, seven times over
 - [x] Search could not find "transcribe"
 
-## Remaining — all closed 2026-08-22
+## Remaining: all closed 2026-08-22
 
 - [x] **PWA / offline.** `scripts/build-sw.mjs` generates `dist/sw.js` at build time.
-      Precache is deliberately narrow — 29 files, 722 KB: HTML routes, CSS, latin font
+      Precache is deliberately narrow: 29 files, 722 KB: HTML routes, CSS, latin font
       subsets. It excludes every JS chunk, because precaching them would make a
       first-time visitor download transformers.js (802 KB), pdf-lib (425 KB), pdf.js
       (394 KB) and jszip (95 KB) just for landing on the homepage, undoing the
@@ -64,7 +64,7 @@ Status as of 2026-08-21, branch `rebuild/astro`.
 - [x] **Web Workers for CPU-bound tools.** `src/tools/run-tool.ts` routes the five
       DOM-free tools (`pdf/merge`, `split`, `rotate`, `watermark`, `to-text`) to
       `src/workers/tool.worker.ts`. Verified: 1 worker constructed on `/pdf/merge`,
-      0 on `/image/resize`. The rest stay on the main thread for concrete reasons —
+      0 on `/image/resize`. The rest stay on the main thread for concrete reasons:
       pdf.js rendering and the image tools need a canvas, ffmpeg runs its own worker,
       and transcribe needs an AudioContext. Falls back to inline if a worker cannot
       start, so a worker failure degrades to a busy tab rather than a broken tool.
@@ -81,20 +81,20 @@ Status as of 2026-08-21, branch `rebuild/astro`.
       `<li role="option">` (`nested-interactive`), which is invalid ARIA. Options now
       carry their own content and navigation, with `aria-activedescendant` tracking.
       **Still outstanding:** a pass with an actual screen reader. axe can tell you an
-      announcement exists, not whether it is *useful* — that judgement needs a human.
+      announcement exists, not whether it is *useful*; that judgement needs a human.
 
 - [x] **Deleted `_legacy/`.**
 
-- [x] **Flagship homepage tool — decided: no.** Three reasons. The homepage currently
+- [x] **Flagship homepage tool: decided no.** Three reasons. The homepage currently
       ships 0 KB of JavaScript; embedding a live tool would pull Preact and a tool
       dependency onto it and contradict the measurement the positioning rests on.
-      Homepage visitors arrive browsing rather than task-focused — someone who typed
+      Homepage visitors arrive browsing rather than task-focused. Someone who typed
       the URL wants to *find* a tool, not be handed an arbitrary one. And the speed
       claim lands harder on the tool page, where it is actually experienced. The
       directory plus ⌘K stays. (No autofocus on the search box either: it hijacks
       scroll position and is hostile to screen reader users; ⌘K covers power users.)
 
-- [x] **Preact/compat — adopted.** Measured with identical methodology, real
+- [x] **Preact/compat: adopted.** Measured with identical methodology, real
       transferred JS on a tool page:
 
       | | Tool page JS (raw) |
@@ -105,7 +105,7 @@ Status as of 2026-08-21, branch `rebuild/astro`.
       An 84% reduction on the page the brief calls "the product". The islands use
       only `useState`/`useEffect`/`useRef`/`useCallback`/`useMemo`, all supported.
       `@astrojs/preact@6` targets Astro 6 and fails to resolve `astro:preact:opts`
-      on Astro 5 — v4 is the correct pairing. `react`/`react-dom` remain as
+      on Astro 5, so v4 is the correct pairing. `react`/`react-dom` remain as
       dependencies because compat aliases them and the `.tsx` sources still import
       from `react`.
 
@@ -116,10 +116,10 @@ Status as of 2026-08-21, branch `rebuild/astro`.
       rasterises the 180/192/512 PNGs from it, so every size is one design.
       Wired into the head, the nav, the footer and the web manifest.
 
-## Round 3 — motion, copy, metadata (2026-08-22)
+## Round 3: motion, copy, metadata (2026-08-22)
 
 - [x] **Tab titles are the page name alone.** `Merge PDF`, not
-      `Merge PDF — Nhako Tools`. `og:title` and `twitter:title` keep the brand, since a
+      `Merge PDF | Nhako Tools`. `og:title` and `twitter:title` keep the brand, since a
       social card has no other context to sit in.
 
 - [x] **Em-dashes removed from everything a person reads.** Roughly 90 in site copy and
@@ -127,7 +127,7 @@ Status as of 2026-08-21, branch `rebuild/astro`.
       than swapped for hyphens, which reads equally machine-made. Verified: the rendered
       HTML contains zero. The only ones left in `dist` are three inside a vendored
       cp1252 character table in pdf.js, which is not ours to touch.
-      Value placeholders moved from `'—'` to `'n/a'` (`format.ts`, `jwt.ts`, plus the
+      Value placeholders moved from an em dash character to `'n/a'` (`format.ts`, `jwt.ts`, plus the
       four assertions pinning them), and the limits bullet became a real list marker.
       Code comments and `.design/` keep theirs, as agreed.
 
@@ -158,9 +158,20 @@ Verified after the change: Lighthouse still 100/100/100/100 with CLS 0 and TBT 0
 three page types; 114 unit tests; 30 e2e; homepage external JS still 0; readout renders
 in full with JS disabled; reduced motion shows the final frame with nothing animating.
 
-## Still open
+## Audit and fix round (2026-09-18)
 
-- [ ] **Screen-reader pass with a real screen reader** (see above — the automated
-      audit is green, but that is not the same claim).
-- [ ] **Lighthouse against a deployed URL**, to get realistic network numbers.
-- [ ] **Confirm parity in production** before this replaces the live site.
+22 confirmed bugs plus 4 suspected ones fixed, each re-verified; WebKit and a desktop
+accessibility-bus pass then found 7 more, also fixed. Verified: lint, typecheck,
+134 unit, 92 e2e (46 each in Chromium and WebKit), 22/22 `scripts/sweep.mjs`.
+
+- [x] **Lighthouse against a deployed URL.** tools.nhako.com (the build before this
+      round), Chrome 2026-09-18: 100/100/100/100 on `/`, `/pdf/merge`, `/dev/json`.
+      LCP 1.1-1.4 s, TBT 0-80 ms, CLS 0-0.001. Re-run once this round is deployed.
+- [~] **Screen-reader pass.** Done at the accessibility-API level: an isolated Chrome
+      with `--force-renderer-accessibility`, read through AT-SPI (what Orca consumes),
+      covering names, roles, landmarks, live-region announcements and focus. It found
+      the palette's focus leak, the Search button's label-in-name failure, `⌘K` read
+      as a symbol, and live regions reading whole outputs on every keystroke. Still
+      not done: listening to Orca's actual speech, and VoiceOver on a Mac.
+- [ ] **Confirm parity in production** before this replaces the live site. Needs a
+      deploy; the Vercel connector can then read the deployment.

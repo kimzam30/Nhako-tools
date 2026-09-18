@@ -3,10 +3,11 @@ import { defineConfig } from 'astro/config';
 import preact from '@astrojs/preact';
 import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
+import { FFMPEG_BASE, ORT_BASE } from './scripts/versions.mjs';
 
 const COI_HEADERS = {
   // ffmpeg.wasm needs SharedArrayBuffer, which needs cross-origin isolation.
-  // Mirrored in vercel.json for production — changing one without the other
+  // Mirrored in vercel.json for production. Changing one without the other
   // silently breaks every media tool.
   'Cross-Origin-Opener-Policy': 'same-origin',
   'Cross-Origin-Embedder-Policy': 'require-corp',
@@ -25,5 +26,10 @@ export default defineConfig({
     preview: { headers: COI_HEADERS },
     optimizeDeps: { exclude: ['@ffmpeg/ffmpeg', '@ffmpeg/util'] },
     worker: { format: 'es' },
+    // Versioned vendor paths, see scripts/versions.mjs.
+    define: {
+      __FFMPEG_BASE__: JSON.stringify(FFMPEG_BASE),
+      __ORT_BASE__: JSON.stringify(ORT_BASE),
+    },
   },
 });

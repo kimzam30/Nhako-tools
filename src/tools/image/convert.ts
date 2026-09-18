@@ -9,7 +9,7 @@ export const run: FileRun = async (files, opts, ctx) => {
   const converted: { name: string; blob: Blob }[] = [];
   for (const [i, file] of files.entries()) {
     const bitmap = await decode(file);
-    const blob = await toBlob(draw(bitmap, bitmap.width, bitmap.height), mime, quality);
+    const blob = await toBlob(draw(bitmap, bitmap.width, bitmap.height, mime), mime, quality);
     bitmap.close();
     converted.push({ name: replaceExtension(file.name, EXTENSION[mime]), blob });
     ctx.onProgress((i + 1) / files.length);

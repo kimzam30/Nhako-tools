@@ -7,7 +7,7 @@ import { CATEGORY_LABEL, type ToolMeta } from '../../tools/types';
 
 export function getStaticPaths() {
   // Every route on the site comes from the registry. A slug with no entry
-  // simply has no page — which is why /tool/<anything> can no longer render a
+  // simply has no page, which is why /tool/<anything> can no longer render a
   // working-looking page that does nothing, as the old build did.
   return TOOLS.map((tool) => ({
     params: { category: tool.category, tool: tool.slug },
@@ -18,6 +18,15 @@ export function getStaticPaths() {
 interface Props { tool: ToolMeta }
 const { tool } = Astro.props;
 const related = (tool.related ?? []).map((id) => TOOLS_BY_ID.get(id)).filter((t): t is ToolMeta => Boolean(t));
+
+// Heavy tools download a runtime. Say exactly where from; for transcription
+// that includes the one third-party request on the whole site.
+const privacyNote =
+  tool.category === 'media' && tool.slug === 'transcribe'
+    ? 'The speech-recognition runtime is served from this same domain. The Whisper model is downloaded once from Hugging Face: a download of the model, never an upload of your audio.'
+    : tool.heavy
+      ? 'The whole site is static files, plus the WebAssembly engine that does the work, which is served from this same domain.'
+      : 'The whole site is static files.';
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -51,7 +60,7 @@ const jsonLd = {
       <p class="mt-1.5 text-sm text-muted">{tool.blurb}</p>
     </header>
 
-    {/* The tool sits above the fold. The prose is below it — most tool sites
+    {/* The tool sits above the fold. The prose is below it. Most tool sites
         invert this and make you scroll past marketing to reach the thing. */}
     {tool.kind === 'file'
       ? <FileToolRunner client:load tool={tool} />
@@ -83,7 +92,7 @@ const jsonLd = {
         <p class="text-sm leading-relaxed text-muted">
           Yes, and you can check rather than take our word for it. Open your browser's
           network tab and run the tool: your file never appears in it, because there is
-          no server to send it to. The whole site is static files{tool.heavy ? ', plus the WebAssembly engine that does the work, which is served from this same domain' : ''}.
+          no server to send it to. {privacyNote}
         </p>
       </section>
 

@@ -5,7 +5,7 @@ import type { ToolMeta } from './types';
  *
  * Routes, page metadata, the homepage grid, the command palette and the sitemap
  * are all derived from this array. A tool that is not here has no page, and a
- * duplicate id fails the build (see registry.test.ts) — which structurally
+ * duplicate id fails the build (see registry.test.ts), which structurally
  * eliminates the four bugs the old build shipped: a dead `css-generator` slug
  * that rendered a working-looking page doing nothing, a dead `edit-pdf`,
  * `convert-pdf` listed twice, and `/tool/<anything>` returning a real page.
@@ -105,7 +105,7 @@ export const TOOLS: readonly ToolMeta[] = [
       { kind: 'range', key: 'angle', label: 'Angle', min: -90, max: 90, step: 15, default: 45, suffix: '°' },
     ],
     about: 'Draws the text once per page, centred. It sits on top of the existing content.',
-    limits: ['Text watermarks only. Image watermarks are not supported.', 'A watermark is not security: it can be removed by anyone with the right tool.'],
+    limits: ['Text watermarks only. Image watermarks are not supported.', 'Latin characters only. The stamp uses a built-in PDF font, which cannot draw Cyrillic, Greek, CJK or emoji.', 'A watermark is not security: it can be removed by anyone with the right tool.'],
     related: ['pdf/rotate', 'pdf/merge', 'pdf/compress'],
   },
 
@@ -158,13 +158,13 @@ export const TOOLS: readonly ToolMeta[] = [
     keywords: ['compress image', 'shrink', 'reduce', 'optimise', 'optimize', 'jpg', 'png', 'webp', 'smaller', 'tinypng'],
     accept: 'image/*', multiple: true,
     options: [
-      { kind: 'range', key: 'quality', label: 'Quality', min: 30, max: 95, step: 5, default: 75, suffix: '%' },
+      { kind: 'range', key: 'quality', label: 'Quality', min: 30, max: 95, step: 5, default: 75, suffix: '%', help: 'Has no effect on PNG, which is lossless.' },
       { kind: 'select', key: 'format', label: 'Output', default: 'auto', choices: [
         { value: 'auto', label: 'Keep original format' }, { value: 'webp', label: 'WebP, usually the smallest' }, { value: 'jpeg', label: 'JPG' },
       ] },
     ],
     about: 'Decodes each image and re-encodes it at the chosen quality. WebP typically beats JPG by a wide margin at the same visual quality.',
-    limits: ['Re-encoding is lossy. Compressing an already-compressed image degrades it further.', 'PNG transparency is preserved only when the output stays PNG or WebP.'],
+    limits: ['Re-encoding is lossy. Compressing an already-compressed image degrades it further.', 'PNG is lossless, so keeping PNG rarely saves anything. Choose WebP to actually shrink a PNG.', 'If re-encoding would make a file larger, the original is returned unchanged.', 'Transparency is kept in PNG and WebP. JPG has none, so transparent areas become white.'],
     related: ['image/convert', 'image/resize', 'pdf/compress'],
   },
   {

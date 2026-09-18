@@ -28,13 +28,26 @@ export const run: FileRun = async (files, _opts, ctx) => {
   const { pipeline, env } = await import('@xenova/transformers');
   env.allowLocalModels = false;
   env.useBrowserCache = true;
+  // Self-hosted ONNX runtime (scripts/vendor.mjs). By default transformers.js
+  // pulls it from cdn.jsdelivr.net, a second third party the privacy page
+  // did not mention.
+  env.backends.onnx.wasm.wasmPaths = __ORT_BASE__;
 
   ctx.onProgress(0, 'Loading model');
+  // Progress arrives per file (config, tokenizer, encoder, decoder), each
+  // running 0 to 100%. Reporting each one directly made the bar run up and
+  // snap back four times. Sum bytes across files instead, and never go back.
+  const downloads = new Map<string, { loaded: number; total: number }>();
+  let shown = 0;
   const transcriber = await pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny.en', {
-    progress_callback: (data: { status: string; progress?: number }) => {
-      if (data.status === 'progress' && typeof data.progress === 'number') {
-        ctx.onProgress(data.progress / 200, 'Downloading model (once)');
-      }
+    progress_callback: (data: { status: string; file?: string; loaded?: number; total?: number }) => {
+      if (data.status !== 'progress' || !data.file || !data.total) return;
+      downloads.set(data.file, { loaded: data.loaded ?? 0, total: data.total });
+      let loaded = 0;
+      let total = 0;
+      for (const f of downloads.values()) { loaded += f.loaded; total += f.total; }
+      shown = Math.max(shown, (loaded / total) * 0.5); // download is the first half
+      ctx.onProgress(shown, 'Downloading model (once)');
     },
   });
 

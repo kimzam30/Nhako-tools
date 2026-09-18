@@ -6,15 +6,16 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build && node scripts/build-sw.mjs",
-    "preview": "astro preview",
+    "preview": "node scripts/preview.mjs",
     "typecheck": "astro check && tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test",
-    "vendor": "node scripts/vendor-ffmpeg.mjs",
-    "prebuild": "node scripts/vendor-ffmpeg.mjs",
-    "predev": "node scripts/vendor-ffmpeg.mjs",
+    "test:e2e": "playwright test --project=chromium",
+    "test:e2e:all": "playwright test",
+    "vendor": "node scripts/vendor.mjs",
+    "prebuild": "node scripts/vendor.mjs",
+    "predev": "node scripts/vendor.mjs",
     "icons": "node scripts/icons.mjs",
     "og": "node scripts/og-images.mjs"
   },
@@ -41,6 +42,7 @@
     "tailwindcss": "^4.2.1"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.10",
     "@axe-core/playwright": "^4.13.0",
     "@eslint/js": "^9.39.1",
     "@playwright/test": "^1.50.0",

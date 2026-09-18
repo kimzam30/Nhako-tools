@@ -6,6 +6,8 @@
  * fraction of the cost of pulling in an editor.
  */
 
+import type { DiffSegment } from '../../tools/types';
+
 type Token = { text: string; className: string };
 
 const JSON_PATTERN =
@@ -38,7 +40,23 @@ function diffLineClass(line: string): string {
   return '';
 }
 
-export default function HighlightedOutput({ text, language }: { text: string; language: string }) {
+export default function HighlightedOutput({ text, language, segments }: { text: string; language: string; segments?: DiffSegment[] }) {
+  if (language === 'diff-inline' && segments) {
+    // Colour alone would fail colour-blind readers, so removals are also
+    // struck through and additions underlined. Screen readers get the change
+    // spelled out (naming <ins>/<del> with aria-label is prohibited by ARIA).
+    return (
+      <pre className="overflow-x-auto whitespace-pre-wrap break-words p-3 font-mono text-xs leading-relaxed">
+        <code>
+          {segments.map((s, i) =>
+            s.kind === 'add' ? <ins key={i} className="bg-ok/10 text-ok underline decoration-1 underline-offset-2"><span className="sr-only">[added: </span>{s.text}<span className="sr-only">]</span></ins>
+            : s.kind === 'del' ? <del key={i} className="bg-err/10 text-err line-through"><span className="sr-only">[removed: </span>{s.text}<span className="sr-only">]</span></del>
+            : <span key={i}>{s.text}</span>)}
+        </code>
+      </pre>
+    );
+  }
+
   if (language === 'json') {
     return (
       <pre className="overflow-x-auto p-3 font-mono text-xs leading-relaxed">
@@ -51,7 +69,7 @@ export default function HighlightedOutput({ text, language }: { text: string; la
     );
   }
 
-  if (text.includes('\n') && /^[+-] /m.test(text)) {
+  if (language === 'diff') {
     return (
       <pre className="overflow-x-auto p-3 font-mono text-xs leading-relaxed">
         <code>

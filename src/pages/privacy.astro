@@ -39,9 +39,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           </li>
           <li>
             For <a class="text-accent underline underline-offset-2" href="/media/transcribe">Audio to text</a>,
-            the Whisper model weights (about 39 MB) are downloaded from the Hugging Face CDN
-            on first use, then cached by your browser. This is the one request that goes to a
-            third party, and it is a download of the model, never an upload of your audio.
+            the speech-recognition runtime (about 10 MB), also from this domain, and the
+            Whisper model weights (about 39 MB) from Hugging Face on first use, then cached by
+            your browser. The model download is the one request that goes to a third party,
+            and it is a download of the model, never an upload of your audio.
           </li>
         </ul>
       </section>
@@ -50,7 +51,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <h2 class="mb-2 text-sm font-semibold text-text">What is stored on your device</h2>
         <p>
           One <code class="font-mono text-xs text-text">localStorage</code> entry recording whether
-          you prefer the light or dark theme. Nothing else, and it never leaves your browser.
+          you prefer the light or dark theme. Beyond that, the browser's cache storage keeps copies
+          of this site's own files so it works offline, plus the ffmpeg engine and Whisper model
+          once a tool has used them, so they are not downloaded twice. None of it contains your
+          files or results, and none of it ever leaves your browser. Clearing site data removes all
+          of it.
         </p>
       </section>
 

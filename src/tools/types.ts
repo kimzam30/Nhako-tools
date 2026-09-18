@@ -19,7 +19,7 @@ export const CATEGORY_LABEL: Record<Category, string> = {
   dev: 'Developer',
 };
 
-/** Declarative option spec — lets one generic renderer serve every tool. */
+/** Declarative option spec that lets one generic renderer serve every tool. */
 export type OptionSpec =
   | { kind: 'select'; key: string; label: string; choices: { value: string; label: string }[]; default: string; help?: string }
   | { kind: 'number'; key: string; label: string; min: number; max: number; step?: number; default: number; suffix?: string; help?: string }
@@ -33,7 +33,7 @@ export interface ToolMeta {
   /** Path segment within the category, e.g. 'merge' -> /pdf/merge */
   slug: string;
   category: Category;
-  /** Display name and <h1>. Never derived from the slug — the old build did
+  /** Display name and <h1>. Never derived from the slug: the old build did
    *  `toolId.replace('-', ' ')`, which only replaces the first hyphen. */
   name: string;
   /** One line. Card subtitle and page subtitle. */
@@ -41,7 +41,7 @@ export interface ToolMeta {
   /** <meta name="description">. Written for a search result, not for the page. */
   description: string;
   /** Search synonyms. Drives the command palette and on-page search, so
-   *  "transcribe" finds Audio to Text — which the old search could not do. */
+   *  "transcribe" finds Audio to Text, which the old search could not do. */
   keywords: string[];
   /** 'text2' renders two input panes (diff). 'file' renders a drop zone. */
   kind: 'file' | 'text' | 'text2';
@@ -56,17 +56,26 @@ export interface ToolMeta {
   about?: string;
   /** Fully-qualified ids, e.g. 'pdf/split'. */
   related?: string[];
-  /** Produces output from options alone — the input pane is hidden (uuid). */
+  /** Produces output from options alone; the input pane is hidden (uuid). */
   generator?: boolean;
   /** Needs a large runtime (ffmpeg / Whisper). Only heavy tools get a real
-   *  progress bar — a bar on a 400ms task makes it feel slower. */
+   *  progress bar: a bar on a 400ms task makes it feel slower. */
   heavy?: boolean;
 }
 
+export interface DiffSegment { text: string; kind: 'add' | 'del' | 'same' }
+
 export interface TextToolResult {
   output: string;
-  /** Hint for the output pane renderer. 'image' means `output` is a data URL. */
-  language?: 'json' | 'text' | 'css' | 'image';
+  /**
+   * Hint for the output pane renderer. 'image' means `output` is a data URL.
+   * 'diff' is line-marked output; 'diff-inline' is rendered from `segments`.
+   * Declared explicitly so ordinary text that happens to start a line with
+   * "- " is never coloured as a diff.
+   */
+  language?: 'json' | 'text' | 'css' | 'image' | 'diff' | 'diff-inline';
+  /** Inline change runs for 'diff-inline'. `output` holds a copyable form. */
+  segments?: DiffSegment[];
   /** Inline CSS applied to a live preview swatch (css-shadow). */
   preview?: string;
   /** Key/value readout shown above the output, rendered in mono. */

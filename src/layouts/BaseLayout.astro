@@ -63,7 +63,7 @@ const ogImage = new URL(`/og/${category ?? 'default'}.png`, site);
     {/*
       Blocking, inline, before first paint. The old build resolved the theme in
       a useEffect that only ever ran on the homepage, so loading a tool page
-      directly ignored the saved theme entirely — and even on the homepage the
+      directly ignored the saved theme entirely, and even on the homepage the
       class landed after hydration, flashing the wrong theme on every load.
     */}
     <script is:inline>

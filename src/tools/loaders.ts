@@ -8,7 +8,7 @@ import type { ToolModule } from './types';
  * The old build imported all four statically at the top of ToolPage.jsx, so
  * opening the word counter downloaded the Whisper runtime.
  *
- * Keys must match `${category}/${slug}` in the registry — asserted by
+ * Keys must match `${category}/${slug}` in the registry, asserted by
  * loaders.test.ts, which fails the build if a tool has no implementation or an
  * implementation has no tool.
  */

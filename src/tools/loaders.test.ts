@@ -6,7 +6,7 @@ import { toolId } from './types';
 describe('registry and implementations agree', () => {
   it('has an implementation for every registered tool', () => {
     // Without this, a registry entry would generate a page whose Run button
-    // does nothing — exactly the `css-generator` failure from the old build,
+    // does nothing: exactly the `css-generator` failure from the old build,
     // which shipped a slug with no engine behind it.
     for (const tool of TOOLS) {
       expect(Object.keys(LOADERS), `no loader for ${toolId(tool)}`).toContain(toolId(tool));

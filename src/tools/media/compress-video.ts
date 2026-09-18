@@ -23,6 +23,11 @@ export const run: FileRun = async (files, opts, ctx) => {
     const args = [
       '-i', input,
       '-c:v', 'libx264', '-b:v', `${plan.videoKbps}k`,
+      // 8-bit 4:2:0 is what browsers, QuickTime and chat apps can play. A
+      // 10-bit or 4:4:4 source (screen recordings, iPhone HDR) otherwise
+      // becomes a High 4:4:4 file many players refuse. 4:2:0 needs even
+      // dimensions, hence the scale.
+      '-pix_fmt', 'yuv420p', '-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2',
       '-preset', 'medium',
       ...(audioKbps === 0 ? ['-an'] : ['-c:a', 'aac', '-b:a', `${audioKbps}k`]),
       '-movflags', '+faststart',

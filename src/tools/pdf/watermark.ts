@@ -17,6 +17,18 @@ export const run: FileRun = async (files, opts, ctx) => {
   }
 
   const font = await doc.embedFont(StandardFonts.HelveticaBold);
+
+  // The built-in PDF fonts only cover Western European text (WinAnsi). Name
+  // the characters that cannot be drawn instead of surfacing pdf-lib's raw
+  // "WinAnsi cannot encode" error.
+  const supported = new Set(font.getCharacterSet());
+  const unsupported = [...new Set([...text].filter((c) => !supported.has(c.codePointAt(0)!)))];
+  if (unsupported.length > 0) {
+    throw new ToolError(
+      `The watermark font covers Latin characters only and cannot draw: ${unsupported.slice(0, 8).join(' ')}. ` +
+      'Remove those characters and try again.',
+    );
+  }
   const size = Number(opts.size ?? 52);
   const angle = Number(opts.angle ?? 45);
   const opacity = Math.min(Math.max(Number(opts.opacity ?? 20) / 100, 0.01), 1);

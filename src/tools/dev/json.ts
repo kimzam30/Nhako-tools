@@ -35,54 +35,161 @@ function countNodes(value: unknown): { keys: number; depth: number } {
   return { keys, depth };
 }
 
+class SyntaxAt extends Error {
+  constructor(message: string, readonly index: number) { super(message); }
+}
+
 /**
- * V8 emits two different shapes. Most carry an explicit location:
- *   Expected ':' after property name in JSON at position 5 (line 1 column 6)
- * but the "Unexpected token" variant carries none:
- *   Unexpected token '}', "{ ... }" is not valid JSON
- * Use V8's own line/column when it gives one, derive it from `position` when
- * that is all there is, and otherwise report cleanly rather than inventing a
- * location that might be wrong.
+ * Find the first syntax error in `text` and describe it.
+ *
+ * Each engine words JSON.parse errors differently, and only V8 gives a
+ * position at all: Safari says just "JSON Parse error: Expected '}'", so the
+ * promised line and column never appeared there. This strict scanner locates
+ * the error itself, so every browser reports the same message. It only runs
+ * after JSON.parse has already failed.
  */
+export function locateJsonError(text: string): { message: string; index: number } | null {
+  let i = 0;
+  const ws = () => { while (i < text.length && ' \t\n\r'.includes(text[i]!)) i++; };
+  const fail = (message: string): never => {
+    throw new SyntaxAt(i >= text.length ? 'EOF' : message, i);
+  };
+  const found = () => `found ${JSON.stringify(text[i])}`;
+
+  const string = () => {
+    i++; // opening quote
+    for (;;) {
+      if (i >= text.length) fail('Unterminated string');
+      const c = text[i]!;
+      if (c === '"') { i++; return; }
+      if (c.charCodeAt(0) < 0x20) fail('Unescaped control character (such as a raw line break) inside a string');
+      if (c === '\\') {
+        const e = text[i + 1];
+        if (e === 'u') {
+          if (!/^[0-9a-fA-F]{4}$/.test(text.slice(i + 2, i + 6))) { i++; fail('Invalid \\u escape: it needs four hex digits'); }
+          i += 6;
+        } else if (e !== undefined && '"\\/bfnrt'.includes(e)) i += 2;
+        else { i++; fail(`Invalid escape "\\${e ?? ''}"`); }
+      } else i++;
+    }
+  };
+
+  const value = (): void => {
+    ws();
+    const c = text[i];
+    if (c === undefined) fail('EOF');
+    if (c === '{') return object();
+    if (c === '[') return array();
+    if (c === '"') return string();
+    if (c === '-' || (c! >= '0' && c! <= '9')) {
+      const m = /^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?/.exec(text.slice(i));
+      if (!m) fail('Invalid number');
+      i += m![0].length;
+      return;
+    }
+    for (const word of ['true', 'false', 'null']) {
+      if (text.startsWith(word, i)) { i += word.length; return; }
+    }
+    fail(c === "'" ? 'Strings must use double quotes, not single quotes' : `Expected a value, ${found()}`);
+  };
+
+  const object = () => {
+    i++; ws();
+    if (text[i] === '}') { i++; return; }
+    for (;;) {
+      ws();
+      if (text[i] !== '"') fail(text[i] === "'" ? 'Property names must use double quotes, not single quotes' : `Expected a double-quoted property name, ${found()}`);
+      string(); ws();
+      if (text[i] !== ':') fail(`Expected ':' after the property name, ${found()}`);
+      i++; value(); ws();
+      if (text[i] === '}') { i++; return; }
+      if (text[i] !== ',') fail(`Expected ',' or '}' after the property value, ${found()}`);
+      i++; ws();
+      if (text[i] === '}') fail("Trailing comma before '}'. JSON does not allow one");
+    }
+  };
+
+  const array = () => {
+    i++; ws();
+    if (text[i] === ']') { i++; return; }
+    for (;;) {
+      value(); ws();
+      if (text[i] === ']') { i++; return; }
+      if (text[i] !== ',') fail(`Expected ',' or ']' after the array element, ${found()}`);
+      i++; ws();
+      if (text[i] === ']') fail("Trailing comma before ']'. JSON does not allow one");
+    }
+  };
+
+  try {
+    value(); ws();
+    if (i < text.length) fail(`Unexpected content after the JSON value, ${found()}`);
+    return null;
+  } catch (err) {
+    if (err instanceof SyntaxAt) return { message: err.message, index: err.index };
+    return null; // e.g. absurd nesting depth: fall back to the engine's message
+  }
+}
+
+/** Turn a failed parse into a message with a real line and column. */
 export function explainParseError(err: unknown, input: string): string {
-  const raw = err instanceof Error ? err.message : String(err);
-
-  const explicit = raw.match(/\(line (\d+) column (\d+)\)/);
-  if (explicit) {
-    const head = raw.slice(0, raw.indexOf(' in JSON at position'));
-    return `${head} at line ${explicit[1]}, column ${explicit[2]}`;
-  }
-
-  const pos = raw.match(/position (\d+)/);
-  if (pos?.[1]) {
-    const { line, col } = lineCol(input, Number(pos[1]));
-    return `${raw.replace(/ in JSON at position \d+.*/, '')} at line ${line}, column ${col}`;
-  }
-
-  if (/Unexpected end of JSON input/.test(raw)) {
+  const located = locateJsonError(input);
+  if (located?.message === 'EOF') {
     const { line } = lineCol(input, input.length);
     return `Unexpected end of input. The document is incomplete, ending at line ${line}.`;
   }
+  if (located) {
+    const { line, col } = lineCol(input, located.index);
+    return `${located.message} at line ${line}, column ${col}.`;
+  }
+  // Not located (should not happen): the engine's own words, trimmed so a
+  // long document is never echoed back inside the message.
+  const raw = err instanceof Error ? err.message : String(err);
+  return raw.length > 160 ? `${raw.slice(0, 157)}...` : raw;
+}
 
-  // "Unexpected token 'X', \"...\" is not valid JSON" — strip the echoed source.
-  const token = raw.match(/Unexpected token '(.+?)'/);
-  if (token) return `Unexpected ${token[1] === '}' ? "'}'" : `token '${token[1]}'`}. Check for a trailing comma or a missing value.`;
+const TOKEN = /"(?:\\.|[^"\\])*"|-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?/g;
 
-  return raw;
+/**
+ * Parse without changing any number.
+ *
+ * JSON.parse turns every number into a double, so 12345678901234567890
+ * became 12345678901234567000 and 1.10 became 1.1: a formatter silently
+ * editing the data. Any literal that would not survive the round trip is
+ * swapped for a unique placeholder string before parsing, and swapped back
+ * verbatim after stringifying. `input` must already be known-valid JSON, so
+ * outside string literals the pattern can only ever match a number.
+ */
+function parsePreservingNumbers(input: string): { value: unknown; restore: (json: string) => string } {
+  const nonce = Math.random().toString(36).slice(2);
+  const literals: string[] = [];
+  const substituted = input.replace(TOKEN, (match) => {
+    if (match.startsWith('"') || String(Number(match)) === match) return match;
+    literals.push(match);
+    // The JSON escape, not a raw NUL: raw control characters are invalid JSON.
+    return `"\\u0000${nonce}:${literals.length - 1}"`;
+  });
+  if (literals.length === 0) return { value: JSON.parse(input), restore: (json) => json };
+
+  const placeholder = new RegExp(`"\\\\u0000${nonce}:(\\d+)"`, 'g');
+  return {
+    value: JSON.parse(substituted),
+    restore: (json) => json.replace(placeholder, (_, i: string) => literals[Number(i)]!),
+  };
 }
 
 export const run: TextRun = async (input, opts) => {
-  let parsed: unknown;
   try {
-    parsed = JSON.parse(input);
+    JSON.parse(input);
   } catch (err) {
     throw new ToolError(explainParseError(err, input));
   }
+  const { value: parsed, restore } = parsePreservingNumbers(input);
 
   const value = opts.sortKeys ? sortDeep(parsed) : parsed;
   const indentOpt = String(opts.indent ?? '2');
   const indent = indentOpt === 'tab' ? '\t' : Number(indentOpt);
-  const output = JSON.stringify(value, null, indent === 0 ? undefined : indent) ?? '';
+  const output = restore(JSON.stringify(value, null, indent === 0 ? undefined : indent) ?? '');
 
   const { keys, depth } = countNodes(parsed);
   const saved = input.length - output.length;

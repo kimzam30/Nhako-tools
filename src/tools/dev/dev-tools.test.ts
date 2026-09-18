@@ -10,6 +10,49 @@ import { run as diff } from './diff';
 import { run as cssShadow } from './css-shadow';
 
 describe('JSON formatter', () => {
+  it('never changes a number, even beyond double precision', async () => {
+    const r = await json('{"id": 12345678901234567890, "v": 1.10, "e": 1e5, "z": -0, "n": [42, 0.5]}', { indent: '0' });
+    expect(r.output).toBe('{"id":12345678901234567890,"v":1.10,"e":1e5,"z":-0,"n":[42,0.5]}');
+  });
+
+  it('keeps preserved numbers attached to the right keys when sorting', async () => {
+    const r = await json('{"b": 98765432109876543210, "a": 1.50}', { indent: '0', sortKeys: true });
+    expect(r.output).toBe('{"a":1.50,"b":98765432109876543210}');
+  });
+
+  it('leaves number-like text inside strings alone', async () => {
+    const r = await json('{"s": "12345678901234567890 and 1.10"}', { indent: '0' });
+    expect(r.output).toBe('{"s":"12345678901234567890 and 1.10"}');
+  });
+
+  it('reports trailing content cleanly, with no mangled location', async () => {
+    await expect(json('{"a":1} x', { indent: '2' })).rejects.toThrow(/^Unexpected content after the JSON value, found "x" at line 1, column 9\.$/);
+  });
+
+  it('locates errors itself, independent of the engine message (Safari gives no position)', async () => {
+    const cases: [string, RegExp][] = [
+      ['{\n  "a": 1\n  "b": 2\n}', /Expected ',' or '}' after the property value, found "\\"" at line 3, column 3/],
+      ['{"a":1,}', /Trailing comma before '}'.* at line 1, column 8/],
+      ['[1,2,]', /Trailing comma before ']'.* at line 1, column 6/],
+      ["{'a':1}", /double quotes.* at line 1, column 2/],
+      ['{"a" 1}', /Expected ':' .* at line 1, column 6/],
+      ['{"a":"x\ny"}', /control character .* at line 1, column 8/],
+      ['{"a":01}', /Expected ',' or '}' .* at line 1, column 7/],
+      ['{"a":tru}', /Expected a value, found "t" at line 1, column 6/],
+    ];
+    for (const [doc, expected] of cases) {
+      await expect(json(doc, { indent: '2' }), doc).rejects.toThrow(expected);
+    }
+  });
+
+  it('agrees with JSON.parse about what is valid', async () => {
+    const { locateJsonError } = await import('./json');
+    for (const doc of ['{}', '[]', '0', '-1.5e+3', '"\\u00e9"', '{"a":[1,{"b":null}],"c":true}', ' [ 1 , 2 ] ']) {
+      expect(() => JSON.parse(doc)).not.toThrow();
+      expect(locateJsonError(doc), doc).toBeNull();
+    }
+  });
+
   it('pretty-prints with the requested indent', async () => {
     const r = await json('{"a":1}', { indent: '2', sortKeys: false });
     expect(r.output).toBe('{\n  "a": 1\n}');
@@ -97,6 +140,19 @@ describe('Base64', () => {
 });
 
 describe('JWT decoder', () => {
+  const b64url = (s: string) => Buffer.from(s).toString('base64url');
+
+  it('rejects a payload that is JSON but not an object', async () => {
+    for (const payload of ['null', '[]', '42']) {
+      await expect(jwt(`${b64url('{"alg":"HS256"}')}.${b64url(payload)}.sig`, {}), payload).rejects.toThrow(/not to an object/);
+    }
+  });
+
+  it('does not crash on a timestamp outside the valid date range', async () => {
+    const r = await jwt(`${b64url('{"alg":"HS256"}')}.${b64url('{"exp":1e17}')}.sig`, {});
+    expect(r.output).toContain('not a valid date');
+  });
+
   // Signature is irrelevant here: this tool decodes, it does not verify.
   const make = (header: object, payload: object) =>
     `${encode(JSON.stringify(header), true)}.${encode(JSON.stringify(payload), true)}.sig`;
@@ -252,7 +308,32 @@ describe('text diff', () => {
 
   it('counts added and removed lines', async () => {
     const r = await diff('a\nb\n', { granularity: 'line', ignoreWhitespace: false }, 'a\nb\nc\nd\n');
-    expect(r.stats?.find((s) => s.label === 'Added')?.value).toBe('+2');
+    expect(r.stats?.find((s) => s.label === 'Added')?.value).toBe('+2 lines');
+  });
+
+  it('marks line diffs explicitly, so plain text is never coloured as one', async () => {
+    const r = await diff('a', { granularity: 'line' }, 'b');
+    expect(r.language).toBe('diff');
+  });
+
+  it('marks word changes inline rather than one fragment per line', async () => {
+    const r = await diff('the quick brown fox', { granularity: 'word', ignoreWhitespace: false }, 'the slow brown dog');
+    expect(r.output).not.toContain('\n');
+    expect(r.output).toBe('the [-quick-]{+slow+} brown [-fox-]{+dog+}');
+    expect(r.language).toBe('diff-inline');
+    expect(r.segments?.filter((s) => s.kind !== 'same').map((s) => s.text)).toEqual(['quick', 'slow', 'fox', 'dog']);
+  });
+
+  it('counts words in word mode, not changed fragments', async () => {
+    const r = await diff('one two three', { granularity: 'word', ignoreWhitespace: false }, 'one');
+    expect(r.stats?.find((s) => s.label === 'Removed')?.value).toBe('-2 words');
+  });
+
+  it('honours ignore whitespace in character mode too', async () => {
+    const r = await diff('a b', { granularity: 'char', ignoreWhitespace: true }, 'a  b');
+    expect(r.output).toMatch(/identical/);
+    const strict = await diff('a b', { granularity: 'char', ignoreWhitespace: false }, 'a  b');
+    expect(strict.output).not.toMatch(/identical/);
   });
 });
 

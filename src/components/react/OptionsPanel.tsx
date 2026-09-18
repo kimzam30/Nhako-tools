@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { OptionSpec, OptionValues } from '../../tools/types';
 
 /**
@@ -65,18 +66,7 @@ export default function OptionsPanel({
 
                 {spec.kind === 'number' && (
                   <div className="flex items-center gap-2">
-                    <input
-                      id={id} type="number" disabled={disabled}
-                      min={spec.min} max={spec.max} step={spec.step ?? 1}
-                      value={Number(value)}
-                      // Guard against the empty-input NaN that the old build
-                      // fed straight into its bitrate arithmetic.
-                      onChange={(e) => {
-                        const n = e.target.valueAsNumber;
-                        onChange(spec.key, Number.isFinite(n) ? n : spec.min);
-                      }}
-                      className="w-28 rounded border border-border bg-surface px-2.5 py-1.5 font-mono text-sm tabular-nums transition-colors hover:border-border-strong"
-                    />
+                    <NumberField spec={spec} id={id} value={Number(value)} disabled={disabled} onCommit={(n) => onChange(spec.key, n)} />
                     {spec.suffix && <span className="text-xs text-muted">{spec.suffix}</span>}
                   </div>
                 )}
@@ -97,5 +87,61 @@ export default function OptionsPanel({
         );
       })}
     </div>
+  );
+}
+
+type NumberSpec = Extract<OptionSpec, { kind: 'number' }>;
+
+/**
+ * A number input that keeps what is typed separately from what is committed.
+ *
+ * Binding the input straight to the committed number meant clearing it
+ * snapped the field to the minimum mid-edit, and every intermediate value
+ * ("1" on the way to "15") was sent to the tool. Only a complete, in-range
+ * number is committed; anything else is shown as invalid and left alone.
+ */
+function NumberField({ spec, id, value, disabled, onCommit }: {
+  spec: NumberSpec; id: string; value: number; disabled?: boolean; onCommit: (n: number) => void;
+}) {
+  const [draft, setDraft] = useState(String(value));
+  const [committed, setCommitted] = useState(value);
+
+  // The value changed from outside (not from typing here): follow it.
+  if (value !== committed) {
+    setCommitted(value);
+    setDraft(String(value));
+  }
+
+  const n = Number(draft);
+  const valid = draft.trim() !== '' && Number.isFinite(n) && n >= spec.min && n <= spec.max;
+  const errorId = `${id}-error`;
+
+  return (
+    <>
+      <input
+        id={id} type="number" inputMode="decimal" disabled={disabled}
+        min={spec.min} max={spec.max} step={spec.step ?? 1}
+        value={draft}
+        aria-invalid={valid ? undefined : true}
+        aria-describedby={valid ? undefined : errorId}
+        onChange={(e) => {
+          const raw = e.target.value;
+          setDraft(raw);
+          const next = Number(raw);
+          if (raw.trim() !== '' && Number.isFinite(next) && next >= spec.min && next <= spec.max) {
+            setCommitted(next);
+            onCommit(next);
+          }
+        }}
+        // Leaving the field with an unusable value restores the last good one.
+        onBlur={() => { if (!valid) setDraft(String(committed)); }}
+        className="w-28 rounded border border-border bg-surface px-2.5 py-1.5 font-mono text-sm tabular-nums transition-colors hover:border-border-strong aria-invalid:border-err"
+      />
+      {!valid && (
+        <span id={errorId} className="text-2xs text-err">
+          {spec.min} to {spec.max}
+        </span>
+      )}
+    </>
   );
 }

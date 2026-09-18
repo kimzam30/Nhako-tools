@@ -5,6 +5,8 @@ const TIME_CLAIMS = new Set(['exp', 'iat', 'nbf', 'auth_time', 'updated_at']);
 
 function describeTime(seconds: number): string {
   const ms = seconds * 1000;
+  // Beyond +/-8.64e15 ms a Date is invalid and toISOString throws.
+  if (!Number.isFinite(ms) || Math.abs(ms) > 8.64e15) return 'not a valid date';
   const iso = new Date(ms).toISOString().replace('.000Z', 'Z');
   const delta = ms - Date.now();
   const abs = Math.abs(delta);
@@ -25,6 +27,21 @@ function annotate(claims: Record<string, unknown>): Record<string, unknown> {
   return out;
 }
 
+const isObject = (v: unknown): v is Record<string, unknown> =>
+  typeof v === 'object' && v !== null && !Array.isArray(v);
+
+/** Decode one segment. Both must be JSON objects; `null` or `[]` used to crash. */
+function decodePart(segment: string, name: 'header' | 'payload'): Record<string, unknown> {
+  let value: unknown;
+  try {
+    value = JSON.parse(b64decode(segment));
+  } catch {
+    throw new ToolError(`The ${name} is not valid Base64-encoded JSON.`);
+  }
+  if (!isObject(value)) throw new ToolError(`The ${name} decodes to JSON, but not to an object, so this is not a JWT.`);
+  return value;
+}
+
 export const run: TextRun = async (input) => {
   const token = input.trim().replace(/^Bearer\s+/i, '');
   const parts = token.split('.');
@@ -35,18 +52,8 @@ export const run: TextRun = async (input) => {
     );
   }
 
-  let header: Record<string, unknown>;
-  let payload: Record<string, unknown>;
-  try {
-    header = JSON.parse(b64decode(parts[0]!)) as Record<string, unknown>;
-  } catch {
-    throw new ToolError('The header is not valid Base64-encoded JSON.');
-  }
-  try {
-    payload = JSON.parse(b64decode(parts[1]!)) as Record<string, unknown>;
-  } catch {
-    throw new ToolError('The payload is not valid Base64-encoded JSON.');
-  }
+  const header = decodePart(parts[0]!, 'header');
+  const payload = decodePart(parts[1]!, 'payload');
 
   const exp = typeof payload.exp === 'number' ? payload.exp : null;
   const expired = exp !== null && exp * 1000 < Date.now();

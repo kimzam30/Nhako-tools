@@ -1,4 +1,5 @@
 import type * as PdfJs from 'pdfjs-dist';
+import { ToolError } from '../tools/types';
 
 let cached: typeof PdfJs | null = null;
 
@@ -12,7 +13,17 @@ export async function getPdfJs(): Promise<typeof PdfJs> {
   return pdfjs;
 }
 
+/** Open a PDF, turning pdf.js's internal exceptions into a message a person can act on. */
 export async function loadDocument(file: File) {
   const pdfjs = await getPdfJs();
-  return pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+  try {
+    return await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+  } catch (err) {
+    const locked = err instanceof Error && err.name === 'PasswordException';
+    throw new ToolError(
+      locked
+        ? `"${file.name}" is password-protected. Unlock it first, then try again.`
+        : `Could not read "${file.name}". It may be corrupt or not a PDF.`,
+    );
+  }
 }

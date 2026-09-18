@@ -27,6 +27,6 @@ export const run: FileRun = async (files, _opts, ctx) => {
   return {
     blob: new Blob([chunks.join('\n')], { type: 'text/plain;charset=utf-8' }),
     filename: file.name.replace(/\.pdf$/i, '') + '.txt',
-    summary: `${doc.numPages} pages · ${characters.toLocaleString()} characters`,
+    summary: `${doc.numPages} page${doc.numPages === 1 ? '' : 's'} · ${characters.toLocaleString()} characters`,
   };
 };

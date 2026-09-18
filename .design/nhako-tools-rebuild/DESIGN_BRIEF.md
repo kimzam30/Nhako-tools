@@ -1,11 +1,11 @@
-# Design Brief — Nhako Tools rebuild
+# Design Brief: Nhako Tools rebuild
 
 Feature slug: `nhako-tools-rebuild` · Started 2026-08-21 · Branch `rebuild/astro`
 
 ## 1. The problem with the current design
 
-The site's differentiation is stated as an ethical claim — "Your Files are Yours",
-"no backend to leak them" — in the one place a first-time visitor has no way to
+The site's differentiation is stated as an ethical claim ("Your Files are Yours",
+"no backend to leak them") in the one place a first-time visitor has no way to
 verify it. Someone arriving from a search for "merge pdf online" does not choose
 the fourth result over iLovePDF because of its privacy posture.
 
@@ -14,8 +14,8 @@ and the site currently sells none of it:
 
 | iLovePDF / Smallpdf | Nhako |
 |---|---|
-| upload bar | — |
-| server queue | — |
+| upload bar | none |
+| server queue | none |
 | file size cap | limited only by device RAM |
 | "2 of 2 free files today" | unlimited |
 | account wall on some outputs | none |
@@ -44,14 +44,14 @@ Primary: someone who arrived from a search engine with one file and one job, has
 no intention of making an account, and will leave the moment they are asked to.
 They are not loyal and they are not reading the footer.
 
-Secondary: the returning user who bookmarked the hub — developers reaching for
+Secondary: the returning user who bookmarked the hub: developers reaching for
 JSON/JWT/base64 many times a day, for whom the interaction has to be
 keyboard-fast and stay out of the way.
 
 Explicitly **not** designing for: enterprise buyers, teams, anyone needing
 accounts, storage, or history.
 
-## 4. Aesthetic philosophy — "Precision Instrument"
+## 4. Aesthetic philosophy: "Precision Instrument"
 
 The current visual language is soft consumer SaaS: `rounded-3xl`, gradient blobs
 behind every card, pill buttons, glow shadows, and a bounce easing
@@ -72,7 +72,7 @@ hot accent does real work.
 | Numbers | body font | **mono, always** |
 | Density | airy, `h-72` cards | tight, information-dense |
 
-**Numbers are always monospace** — file sizes, page counts, durations, byte
+**Numbers are always monospace**: file sizes, page counts, durations, byte
 counts, elapsed times. This is the single most load-bearing detail in the
 philosophy: it is what makes the thing read as an instrument rather than a
 brochure, and it costs nothing.
@@ -102,9 +102,9 @@ readout is the single exception and its script is inlined.
 
 ### Type
 
-- **Instrument Sans** (variable 400–700) — UI and headings. A slightly
+- **Instrument Sans** (variable 400–700): UI and headings. A slightly
   condensed grotesque with more character than Inter, and far less worn out.
-- **JetBrains Mono** (variable) — all numerics, code panes, file names, readouts.
+- **JetBrains Mono** (variable): all numerics, code panes, file names, readouts.
 
 Both **self-hosted** via Fontsource, not the Google Fonts CDN. Consistent with
 self-hosting the ffmpeg core, and required for the offline PWA goal.
@@ -112,7 +112,7 @@ self-hosting the ffmpeg core, and required for the offline PWA goal.
 ### Colour
 
 `#FF91E7` is fixed as the Nhako accent. But it is a *pale* pink, and the current
-code uses it as `bg-nhakoPink text-white` for every primary button — **white on
+code uses it as `bg-nhakoPink text-white` for every primary button: **white on
 `#FF91E7` is roughly 2.1:1, a clear WCAG failure.** It is a live accessibility
 bug, not a matter of taste.
 
@@ -159,7 +159,7 @@ machine" becomes unqualified and the design can afford to be quiet about it.
 - **No layout shift** on load. Theme is resolved by a blocking inline script
   before first paint.
 - **`prefers-reduced-motion` respected** for real.
-- **Dark mode is a first-class theme,** not an inverted afterthought — it must
+- **Dark mode is a first-class theme,** not an inverted afterthought; it must
   be reachable from every page, which today it is not.
 
 ## 8. Success criteria

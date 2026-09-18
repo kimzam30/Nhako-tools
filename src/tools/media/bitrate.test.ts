@@ -8,14 +8,14 @@ describe('video bitrate planning', () => {
     expect(plan.predictedMB).toBeCloseTo(15, 1);
   });
 
-  it('is accurate for audio bitrates other than 128 — the old bug', () => {
+  it('is accurate for audio bitrates other than 128 (the old bug)', () => {
     // The previous build hardcoded a 128 kbps assumption while passing
     // `-c:a copy`. With 320 kbps source audio it overshot by (320-128) kbps
     // for the whole duration. Every one of these must land on target.
     for (const audioKbps of [64, 96, 128, 192, 320]) {
       const plan = planBitrate(120, 25, audioKbps);
       expect(plan.predictedMB, `audio ${audioKbps}k`).toBeCloseTo(25, 1);
-      // Flooring must never push the plan OVER the target — undershooting by
+      // Flooring must never push the plan OVER the target. Undershooting by
       // up to 1 kbps is fine, overshooting defeats the point of a target size.
       expect(plan.predictedMB, `audio ${audioKbps}k`).toBeLessThanOrEqual(25);
       expect(plan.videoKbps + plan.audioKbps).toBeGreaterThan((25 * 8192) / 120 - 1);

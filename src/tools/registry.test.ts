@@ -6,7 +6,7 @@ import { toolId, CATEGORIES } from './types';
 describe('registry integrity', () => {
   it('has no duplicate ids', () => {
     // The old build listed `convert-pdf` twice in ALL_TOOLS. Because pages are
-    // now generated from this array, a duplicate would be a silent collision —
+    // now generated from this array, a duplicate would be a silent collision:
     // so it fails here instead.
     const ids = TOOLS.map(toolId);
     expect(ids).toHaveLength(new Set(ids).size);

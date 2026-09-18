@@ -101,14 +101,16 @@ async function describe(file: File): Promise<Meta> {
 }
 
 export default function FilePreview({ files, nextStep }: { files: File[]; nextStep?: string }) {
-  const [metas, setMetas] = useState<(Meta | null)[]>([]);
+  // Descriptions are stored with the file list they describe, so a new list
+  // shows placeholders immediately without a synchronous reset in the effect.
+  const [described, setDescribed] = useState<{ files: File[]; metas: Meta[] }>({ files: [], metas: [] });
+  const metas: (Meta | null)[] = described.files === files ? described.metas : [];
   const urls = useRef<string[]>([]);
 
   useEffect(() => {
     let cancelled = false;
     for (const u of urls.current) URL.revokeObjectURL(u);
     urls.current = [];
-    setMetas(files.map(() => null));
 
     // Only the first few are described; a 200-file batch does not need 200
     // thumbnails, and rendering them would be slower than the tool itself.
@@ -118,7 +120,7 @@ export default function FilePreview({ files, nextStep }: { files: File[]; nextSt
         return;
       }
       urls.current = result.map((m) => m.thumb).filter((u): u is string => !!u?.startsWith('blob:'));
-      setMetas(result);
+      setDescribed({ files, metas: result });
     });
 
     return () => { cancelled = true; };

@@ -12,6 +12,9 @@ import { surface, toBlob } from '../../lib/canvas';
  * lossless mode, with realistic expectations stated in the registry, and a
  * mode that actually reduces size is offered alongside it.
  */
+/** Pixels per PDF point when rasterising: 108 dpi, legible without bloating. */
+const RENDER_SCALE = 1.5;
+
 export const run: FileRun = async (files, opts, ctx) => {
   const file = files[0];
   if (!file) throw new ToolError('No file selected.');
@@ -48,7 +51,11 @@ export const run: FileRun = async (files, opts, ctx) => {
 
   for (let i = 1; i <= source.numPages; i++) {
     const page = await source.getPage(i);
-    const viewport = page.getViewport({ scale: 1.5 });
+    // Rendered at 1.5x for legibility, but placed on a page of the ORIGINAL
+    // size. Using the render size for the page too made every page 150% as
+    // large as the source (A4 came out 892 x 1263 pt).
+    const natural = page.getViewport({ scale: 1 });
+    const viewport = page.getViewport({ scale: RENDER_SCALE });
     const canvas = surface(Math.ceil(viewport.width), Math.ceil(viewport.height));
     const ctx2d = canvas.getContext('2d');
     if (!ctx2d) throw new ToolError('Could not get a drawing context.');
@@ -61,8 +68,8 @@ export const run: FileRun = async (files, opts, ctx) => {
 
     const jpeg = await toBlob(canvas, 'image/jpeg', quality);
     const embedded = await out.embedJpg(await jpeg.arrayBuffer());
-    const target = out.addPage([viewport.width, viewport.height]);
-    target.drawImage(embedded, { x: 0, y: 0, width: viewport.width, height: viewport.height });
+    const target = out.addPage([natural.width, natural.height]);
+    target.drawImage(embedded, { x: 0, y: 0, width: natural.width, height: natural.height });
     ctx.onProgress(i / source.numPages);
   }
 

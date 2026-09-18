@@ -95,16 +95,18 @@ Things this project does **not** do, stated here rather than discovered later:
 ## Privacy, precisely
 
 No backend, no database, no analytics, no cookies, no account. One `localStorage`
-entry records your theme preference.
+entry records your theme preference; cache storage holds the site's own files for offline
+use, plus the ffmpeg core and Whisper model once a tool has needed them.
 
 What the browser does request:
 
 - The page, its JavaScript, and the self-hosted fonts, all from this domain.
 - For the media tools, the ffmpeg WebAssembly core (~31 MB), also from this domain,
   cached after first use.
-- For `Audio to text` only, the Whisper weights (~39 MB) from the Hugging Face CDN on
-  first use, then cached. This is the one third-party request, and it is a download
-  of the model, never an upload of your audio.
+- For `Audio to text` only, the ONNX runtime (~10 MB) from this domain, and the
+  Whisper weights (~39 MB) from Hugging Face on first use, then cached. The model
+  download is the one third-party request, and it is a download of the model, never
+  an upload of your audio.
 
 ---
 
@@ -166,9 +168,9 @@ npm run dev
 | `npm run preview` | Serve the build with production headers |
 | `npm run typecheck` | `astro check` + `tsc --noEmit` |
 | `npm run lint` | ESLint |
-| `npm test` | Vitest, 114 unit tests |
-| `npm run test:e2e` | Playwright, 30 tests (16 functional, 14 accessibility) |
-| `npm run vendor` | Copy ffmpeg core into `public/vendor` (runs automatically) |
+| `npm test` | Vitest unit tests |
+| `npm run test:e2e` | Playwright functional and accessibility tests |
+| `npm run vendor` | Copy the ffmpeg core and ONNX runtime into `public/vendor/<name>/<version>` (runs automatically) |
 | `npm run icons` | Rasterise `public/favicon.svg` into the PNG icon sizes |
 
 > **Cross-origin isolation.** `ffmpeg.wasm` needs `SharedArrayBuffer`, which needs the
@@ -185,13 +187,19 @@ npm run dev
   legacy redirect pointing at a tool that no longer exists fails the build.
 - `src/tools/media/bitrate.test.ts` covers the size-targeting arithmetic across a
   range of audio bitrates.
-- `e2e/a11y.spec.ts` runs axe-core over six pages in both themes. It caught a real
-  ARIA bug (an `<a>` nested inside `<li role="option">` in the command palette).
-  It is not a substitute for a real screen reader, which is still outstanding.
+- `e2e/a11y.spec.ts` runs axe-core over six pages in both themes, plus focus
+  containment in the command palette, label-in-name, and what text tools announce.
+  It caught a real ARIA bug (an `<a>` nested inside `<li role="option">` in the
+  command palette). Axe is not a screen reader; see TASKS.md for what the
+  accessibility-API pass covered and what still needs a human.
+- `npm run test:e2e:all` runs the e2e suite in WebKit as well as Chromium. WebKit
+  found two bugs Chromium could not (Safari's position-less JSON errors, and input
+  lost before hydration). It needs `npx playwright install webkit`.
 
-Lighthouse scores 100 across performance, accessibility, best practices and SEO on
-the homepage and both tool-page types, with 0 ms blocking time and 0 layout shift.
-That was measured against localhost, so the paint timings are optimistic.
+Lighthouse against the deployed site (tools.nhako.com, Chrome, 2026-09-18) scores
+100 across performance, accessibility, best practices and SEO on the homepage and
+both tool-page types, with LCP 1.1-1.4 s, blocking time 0-80 ms and layout shift at
+most 0.001.
 
 ---
 

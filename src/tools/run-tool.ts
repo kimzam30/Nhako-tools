@@ -18,6 +18,7 @@ const WORKER_SAFE = new Set(Object.keys(WORKER_TOOLS));
 
 export interface RunHandle {
   result: Promise<FileToolResult>;
+  /** Stop the work. The result promise never settles after this. */
   cancel(): void;
 }
 
@@ -27,6 +28,12 @@ let nextTicket = 1;
 function getWorker(): Worker {
   worker ??= new Worker(new URL('../workers/tool.worker.ts', import.meta.url), { type: 'module' });
   return worker;
+}
+
+/** Throw the current worker away so the next run starts a fresh one. */
+function discardWorker(w: Worker) {
+  w.terminate();
+  if (worker === w) worker = null;
 }
 
 /**
@@ -43,18 +50,19 @@ export function runFileTool(
   onProgress: (progress: number, label?: string) => void,
 ): RunHandle {
   if (!WORKER_SAFE.has(id) || typeof Worker === 'undefined') {
-    return { result: runInline(id, files, options, onProgress), cancel: () => {} };
+    return inlineHandle(id, files, options, onProgress);
   }
 
   try {
     const w = getWorker();
     const ticket = nextTicket++;
     let settled = false;
+    let cleanup = () => {};
 
     const result = new Promise<FileToolResult>((resolve, reject) => {
       const onMessage = (event: MessageEvent) => {
         const msg = event.data as { ticket: number; kind: string; [k: string]: unknown };
-        if (msg.ticket !== ticket) return;
+        if (msg.ticket !== ticket || settled) return;
 
         if (msg.kind === 'progress') {
           onProgress(msg.progress as number, msg.label as string | undefined);
@@ -62,27 +70,61 @@ export function runFileTool(
         }
 
         settled = true;
-        w.removeEventListener('message', onMessage);
+        cleanup();
         if (msg.kind === 'done') resolve(msg.result as FileToolResult);
         else reject(new Error(msg.message as string));
       };
 
-      w.addEventListener('message', onMessage);
-      w.addEventListener('error', () => {
+      const onError = () => {
         if (settled) return;
         settled = true;
-        w.removeEventListener('message', onMessage);
-        // The worker died — redo the work inline rather than failing the user.
+        cleanup();
+        // A worker that failed once is not reused: it may never answer again,
+        // which would leave every later run waiting forever.
+        discardWorker(w);
+        // Redo the work inline rather than failing the user.
         runInline(id, files, options, onProgress).then(resolve, reject);
-      }, { once: true });
+      };
 
+      cleanup = () => {
+        w.removeEventListener('message', onMessage);
+        w.removeEventListener('error', onError);
+      };
+
+      w.addEventListener('message', onMessage);
+      w.addEventListener('error', onError);
       w.postMessage({ ticket, id, files, options });
     });
 
-    return { result, cancel: () => { settled = true; } };
+    return {
+      result,
+      cancel: () => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        // The worker is single-threaded and busy with this job; terminating
+        // it is the only way to actually stop the work.
+        discardWorker(w);
+      },
+    };
   } catch {
-    return { result: runInline(id, files, options, onProgress), cancel: () => {} };
+    return inlineHandle(id, files, options, onProgress);
   }
+}
+
+/** Inline work cannot be interrupted, but its result can be ignored. */
+function inlineHandle(
+  id: string,
+  files: File[],
+  options: OptionValues,
+  onProgress: (progress: number, label?: string) => void,
+): RunHandle {
+  let cancelled = false;
+  const result = new Promise<FileToolResult>((resolve, reject) => {
+    runInline(id, files, options, (p, l) => { if (!cancelled) onProgress(p, l); })
+      .then((r) => { if (!cancelled) resolve(r); }, (e) => { if (!cancelled) reject(e); });
+  });
+  return { result, cancel: () => { cancelled = true; } };
 }
 
 async function runInline(

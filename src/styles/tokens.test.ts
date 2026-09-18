@@ -6,7 +6,7 @@ import { contrast, AA_TEXT, AA_LARGE } from '@/lib/color';
 /**
  * These assertions are the reason the rebuild exists in part: the previous
  * design used `bg-nhakoPink text-white` for every primary button, which is
- * 2.01:1 — a clear WCAG AA failure on every call to action on the site.
+ * 2.01:1, a clear WCAG AA failure on every call to action on the site.
  *
  * The test parses tokens.css directly rather than duplicating the values, so a
  * colour cannot be changed without this suite re-checking it.
@@ -45,7 +45,7 @@ const themes = [
 ] as const;
 
 describe('brand pink', () => {
-  it('is unchanged — #FF91E7 is fixed', () => {
+  it('is unchanged: #FF91E7 is fixed', () => {
     expect(resolve(root, '--pink-300').toLowerCase()).toBe('#ff91e7');
   });
 

@@ -1,7 +1,7 @@
 import type { FFmpeg } from '@ffmpeg/ffmpeg';
 import { ToolError } from '../tools/types';
 
-let instance: FFmpeg | null = null;
+let loading: Promise<FFmpeg> | null = null;
 let progressHandler: ((fraction: number) => void) | null = null;
 
 /**
@@ -9,11 +9,18 @@ let progressHandler: ((fraction: number) => void) | null = null;
  *
  * The old build fetched the core from unpkg at runtime, so every media tool
  * broke if unpkg was unreachable. `npm run vendor` copies it into
- * public/vendor/ffmpeg at build time instead.
+ * public/vendor/ffmpeg/<version> at build time instead.
  */
-export async function getFFmpeg(): Promise<FFmpeg> {
-  if (instance) return instance;
+export function getFFmpeg(): Promise<FFmpeg> {
+  // One shared load. Two tools asking at once used to start two 31 MB loads.
+  loading ??= loadFFmpeg().catch((err) => {
+    loading = null; // let the next attempt retry rather than cache a failure
+    throw err;
+  });
+  return loading;
+}
 
+async function loadFFmpeg(): Promise<FFmpeg> {
   if (typeof SharedArrayBuffer === 'undefined') {
     throw new ToolError(
       'This browser is not cross-origin isolated, so the media tools cannot run. ' +
@@ -28,11 +35,10 @@ export async function getFFmpeg(): Promise<FFmpeg> {
   });
 
   await ffmpeg.load({
-    coreURL: '/vendor/ffmpeg/ffmpeg-core.js',
-    wasmURL: '/vendor/ffmpeg/ffmpeg-core.wasm',
+    coreURL: `${__FFMPEG_BASE__}ffmpeg-core.js`,
+    wasmURL: `${__FFMPEG_BASE__}ffmpeg-core.wasm`,
   });
 
-  instance = ffmpeg;
   return ffmpeg;
 }
 

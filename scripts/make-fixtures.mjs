@@ -8,7 +8,7 @@ async function makePdf(pages, label) {
   const font = await doc.embedFont(StandardFonts.Helvetica);
   for (let i = 1; i <= pages; i++) {
     const page = doc.addPage([595, 842]);
-    page.drawText(`${label} — page ${i} of ${pages}`, { x: 60, y: 760, size: 22, font });
+    page.drawText(`${label}: page ${i} of ${pages}`, { x: 60, y: 760, size: 22, font });
   }
   return doc.save();
 }

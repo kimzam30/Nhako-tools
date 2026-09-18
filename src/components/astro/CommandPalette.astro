@@ -13,13 +13,18 @@ const index = TOOLS.map((t) => ({
   type="button"
   id="palette-open"
   class="flex h-8 items-center gap-2 rounded border border-border px-2.5 text-xs text-muted transition-colors duration-[120ms] hover:border-border-strong hover:text-text"
-  aria-label="Open command palette"
+  aria-label="Search tools"
+  aria-keyshortcuts="Control+K Meta+K"
+  aria-haspopup="dialog"
 >
   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
     <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" stroke-linecap="round" />
   </svg>
   <span class="hidden sm:inline">Search</span>
-  <kbd class="hidden rounded border border-border px-1 font-mono text-[10px] sm:inline">&#8984;K</kbd>
+  {/* The name starts with the visible word "Search" (WCAG 2.5.3), and the
+      shortcut hint is hidden from screen readers, which read "⌘" as "place
+      of interest sign". aria-keyshortcuts states it properly instead. */}
+  <kbd id="palette-shortcut" aria-hidden="true" class="hidden rounded border border-border px-1 font-mono text-[10px] sm:inline">Ctrl K</kbd>
 </button>
 
 <div id="palette" hidden class="fixed inset-0 z-50 flex items-start justify-center bg-black/40 p-4 pt-[12vh]">
@@ -45,6 +50,12 @@ const index = TOOLS.map((t) => ({
   const input = document.getElementById('palette-input') as HTMLInputElement | null;
   const list = document.getElementById('palette-list');
 
+  // Show the shortcut for this platform: ⌘K on Apple devices, Ctrl K elsewhere.
+  if (/Mac|iPhone|iPad/.test(navigator.platform)) {
+    const hint = document.getElementById('palette-shortcut');
+    if (hint) hint.textContent = '\u2318K';
+  }
+
   const escape = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c] ?? c);
 
   let active = 0;
@@ -56,7 +67,7 @@ const index = TOOLS.map((t) => ({
     if (active >= results.length) active = 0;
 
     // A listbox option must not contain interactive children, so the option
-    // itself carries the content and the navigation — no nested <a>.
+    // itself carries the content and the navigation, with no nested <a>.
     list.innerHTML = results.length === 0
       ? '<li class="px-3 py-6 text-center text-sm text-muted">No tool matches that.</li>'
       : results.map((t, i) => `
@@ -99,6 +110,10 @@ const index = TOOLS.map((t) => ({
   input?.addEventListener('input', render);
 
   input?.addEventListener('keydown', (e) => {
+    // aria-modal promises focus stays in the dialog. The input is its only
+    // tab stop (options are reached with the arrows), so Tab stays put.
+    // Without this, Tab walked out to the theme toggle behind the overlay.
+    if (e.key === 'Tab') { e.preventDefault(); return; }
     if (e.key === 'ArrowDown') { e.preventDefault(); active = Math.min(active + 1, results.length - 1); render(); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); active = Math.max(active - 1, 0); render(); }
     else if (e.key === 'Enter') { e.preventDefault(); const t = results[active]; if (t) location.href = `/${t.id}`; }

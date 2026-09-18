@@ -2,15 +2,21 @@
  * Exercise every tool in a real browser and report what actually happens.
  * Run against `npm run preview` (needs the COOP/COEP headers).
  */
+/* global window, document, DataTransfer */
 import { chromium } from '@playwright/test';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const BASE = process.env.BASE ?? 'http://localhost:4321';
 const only = process.argv[2];
 
 const PDF = fileURLToPath(new URL('../e2e/fixtures/three-pages.pdf', import.meta.url));
-const PNG = fileURLToPath(new URL('../dist/_fixtures/test.png', import.meta.url));
+// The image fixture is drawn here rather than read from disk: it used to
+// point at dist/_fixtures/test.png, which nothing ever created, so every
+// image tool reported THREW. Half of it is transparent on purpose.
+const PNG = join(mkdtempSync(join(tmpdir(), 'nhako-sweep-')), 'test.png');
 
 const TEXT_CASES = {
   'dev/json': '{"b":1,"a":{"d":2,"c":[3,4]}}',
@@ -68,7 +74,21 @@ window.__makeVideo = async (seconds = 3) => {
 const browser = await chromium.launch();
 const results = [];
 
-async function check(page, id) {
+{
+  const page = await browser.newPage();
+  const dataUrl = await page.evaluate(() => {
+    const c = document.createElement('canvas');
+    c.width = 400; c.height = 300;
+    const x = c.getContext('2d');
+    x.fillStyle = '#e0457b'; x.fillRect(0, 0, 200, 300);
+    x.fillStyle = '#3b82f6'; x.fillRect(40, 40, 120, 220);
+    return c.toDataURL('image/png');
+  });
+  writeFileSync(PNG, Buffer.from(dataUrl.split(',')[1], 'base64'));
+  await page.close();
+}
+
+async function check(page) {
   const body = await page.locator('body').innerText();
   const err = await page.locator('.text-err, [class*="text-err"]').allInnerTexts().catch(() => []);
   const done = /✓/.test(body) || (await page.getByRole('link', { name: 'Save' }).count()) > 0;
@@ -99,7 +119,7 @@ for (const [id, cfg] of Object.entries(FILE_CASES)) {
     const start = Date.now();
     let state;
     while (Date.now() - start < budget) {
-      state = await check(page, id);
+      state = await check(page);
       if (state.done || state.errText) break;
       await page.waitForTimeout(1000);
     }
@@ -108,7 +128,7 @@ for (const [id, cfg] of Object.entries(FILE_CASES)) {
       id,
       status: state.done ? 'PASS' : state.errText ? 'ERROR' : 'HANG',
       detail: state.done
-        ? (state.body.match(/✓\s*([^\n]{0,70})/) || [, ''])[1].trim()
+        ? (state.body.match(/✓\s*([^\n]{0,70})/) || [null, ''])[1].trim()
         : state.errText || `no result after ${secs}s`,
       secs,
       pageErrors: consoleErrors.slice(0, 1),

@@ -15,8 +15,13 @@ export default function TextToolPane({ tool }: Props) {
   const specs = tool.options ?? [];
   const twoInputs = tool.kind === 'text2';
 
-  const [input, setInput] = useState('');
-  const [inputB, setInputB] = useState('');
+  const inputId = `${tool.category}-${tool.slug}-input`;
+  const inputBId = `${tool.category}-${tool.slug}-input-b`;
+  // Start from whatever is already in the server-rendered textarea. Anything
+  // typed or pasted before the island hydrated stayed on screen but was never
+  // processed (reproduced in WebKit), because state started empty.
+  const [input, setInput] = useState(() => typedBeforeHydration(inputId));
+  const [inputB, setInputB] = useState(() => typedBeforeHydration(inputBId));
   const [options, setOptions] = useState<OptionValues>(() => defaultOptions(specs));
   const [result, setResult] = useState<TextToolResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -44,7 +49,7 @@ export default function TextToolPane({ tool }: Props) {
   useEffect(() => {
     if (idle) return;
     // `compute` is async and writes state only from a continuation, after
-    // awaiting the tool module and its result — never synchronously during the
+    // awaiting the tool module and its result, never synchronously during the
     // effect. The lint rule's static analysis cannot see across the await, so
     // it reports a cascading render that cannot happen here. Running an async
     // transform when its inputs change is exactly what an effect is for.
@@ -55,6 +60,15 @@ export default function TextToolPane({ tool }: Props) {
   const output = idle ? '' : result?.output ?? '';
   const shownError = idle ? null : error;
 
+  // What a screen reader hears. The whole output pane used to be a live
+  // region, so every keystroke announced a half-typed error and then read the
+  // entire formatted document aloud. Now one short summary is announced once
+  // typing pauses.
+  const summary = idle ? '' : shownError
+    ? `Error: ${shownError}`
+    : result ? `Output updated. ${(result.stats ?? []).map((s) => `${s.label} ${s.value}`).join(', ')}` : '';
+  const announced = useSettled(summary, 700);
+
   return (
     <section className="flex flex-col gap-4">
       {specs.length > 0 && (
@@ -63,11 +77,14 @@ export default function TextToolPane({ tool }: Props) {
         </div>
       )}
 
+      <p className="sr-only" role="status" aria-live="polite">{announced}</p>
+
       <div className={`grid gap-4 ${tool.generator ? '' : 'lg:grid-cols-2'}`}>
         {!tool.generator && (
           <div className="flex flex-col gap-4">
             <Pane title={twoInputs ? 'Original' : 'Input'}>
               <textarea
+                id={inputId}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 spellCheck={false}
@@ -79,6 +96,7 @@ export default function TextToolPane({ tool }: Props) {
             {twoInputs && (
               <Pane title="Changed">
                 <textarea
+                  id={inputBId}
                   value={inputB}
                   onChange={(e) => setInputB(e.target.value)}
                   spellCheck={false}
@@ -95,7 +113,7 @@ export default function TextToolPane({ tool }: Props) {
           title="Output"
           action={output && result?.language !== 'image' ? <CopyButton text={output} /> : null}
         >
-          <div className="min-h-56 overflow-auto" aria-live="polite">
+          <div className="min-h-56 overflow-auto">
             {shownError ? (
               <p className="p-3 font-mono text-xs leading-relaxed text-err">{shownError}</p>
             ) : result?.language === 'image' && output ? (
@@ -112,7 +130,7 @@ export default function TextToolPane({ tool }: Props) {
                     <div className="mx-auto size-20 rounded-md bg-bg" style={{ boxShadow: result.preview.replace('box-shadow: ', '') }} />
                   </div>
                 )}
-                <HighlightedOutput text={output} language={result?.language ?? 'text'} />
+                <HighlightedOutput text={output} language={result?.language ?? 'text'} segments={result?.segments} />
               </>
             ) : (
               <p className="p-3 font-mono text-xs text-muted">Output appears here as you type.</p>
@@ -145,6 +163,23 @@ function Pane({ title, action, children }: { title: string; action?: React.React
       {children}
     </div>
   );
+}
+
+/** `value`, but only once it has stopped changing for `ms`. */
+function useSettled(value: string, ms: number): string {
+  const [settled, setSettled] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setSettled(value), ms);
+    return () => clearTimeout(t);
+  }, [value, ms]);
+  return settled;
+}
+
+/** The live value of a server-rendered field, or '' during SSR. */
+function typedBeforeHydration(id: string): string {
+  if (typeof document === 'undefined') return '';
+  const el = document.getElementById(id);
+  return el instanceof HTMLTextAreaElement ? el.value : '';
 }
 
 function placeholderFor(id: string): string {
