@@ -41,7 +41,7 @@ describe('registry integrity', () => {
   });
 
   it('does not put file-only fields on text tools', () => {
-    for (const t of TOOLS.filter((x) => x.kind !== 'file')) {
+    for (const t of TOOLS.filter((x) => x.kind === 'text' || x.kind === 'text2')) {
       expect(t.accept).toBeUndefined();
       expect(t.multiple).toBeUndefined();
     }
@@ -70,6 +70,25 @@ describe('registry integrity', () => {
       for (const o of t.options ?? []) {
         if (o.kind === 'select') {
           expect(o.choices.map((c) => c.value), `${toolId(t)}.${o.key}`).toContain(o.default);
+        }
+      }
+    }
+  });
+});
+
+describe('preset pages', () => {
+  it('gives every variant a unique URL-safe slug and only real option values', () => {
+    for (const t of TOOLS) {
+      const slugs = (t.variants ?? []).map((v) => v.slug);
+      expect(slugs, toolId(t)).toHaveLength(new Set(slugs).size);
+      for (const v of t.variants ?? []) {
+        expect(v.slug).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
+        expect(v.description.length, `${toolId(t)}/${v.slug}`).toBeGreaterThan(70);
+        expect(v.description.length, `${toolId(t)}/${v.slug}`).toBeLessThan(185);
+        for (const [key, value] of Object.entries(v.defaults)) {
+          const spec = t.options?.find((o) => o.key === key);
+          expect(spec, `${toolId(t)}/${v.slug}: no option "${key}"`).toBeDefined();
+          if (spec?.kind === 'select') expect(spec.choices.map((c) => c.value), `${toolId(t)}/${v.slug}.${key}`).toContain(value);
         }
       }
     }

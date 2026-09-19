@@ -1,0 +1,79 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { TOOLS } from '../tools/registry';
+import { localePath, ui, type Locale } from '../i18n';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const t = ui(locale);
+const privacy = localePath(locale, '/privacy');
+const link = 'text-accent underline underline-offset-2';
+const repo = 'https://github.com/kimzam30/Nhako-tools';
+---
+<BaseLayout
+  title={t.about}
+  description={locale === 'ms'
+    ? 'Nhako Tools ialah koleksi alat fail, kalkulator dan pembangun yang berjalan sepenuhnya dalam pelayar anda. Tiada muat naik, tiada akaun, tiada iklan.'
+    : 'Nhako Tools is a set of file, calculator and developer utilities that run entirely in your browser. No upload, no account, no ads.'}
+  path="/about"
+  locale={locale}
+>
+  <div class="mx-auto max-w-2xl px-4 py-12 sm:px-6">
+    <h1 class="text-2xl font-bold tracking-tight">{t.about}</h1>
+
+    {locale === 'ms' ? (
+      <div class="mt-7 space-y-6 text-sm leading-relaxed text-muted">
+        <p class="text-base text-text">
+          {TOOLS.length} alat untuk PDF, imej, kalkulator, media dan kod, dan semuanya berjalan
+          pada peranti anda, bukan pada pelayan.
+        </p>
+        <p>
+          Kebanyakan alat dalam talian berfungsi dengan memuat naik fail anda, memprosesnya di
+          tempat lain, dan menghantarnya kembali. Itu bermaksud menunggu muat naik, giliran, had
+          saiz, biasanya had harian, dan selalunya akaun sebelum anda boleh memuat turun hasilnya.
+          Semua itu tidak perlu lagi: pelayar boleh melakukan kerja ini secara terus.
+        </p>
+        <p>
+          Jadi alat ini tiada langkah muat naik. Itu menjadikannya lebih pantas. Biasanya ia siap
+          sebelum muat naik pun sempat selesai. Ia juga menjadikannya peribadi, kerana fail yang
+          tidak pernah dihantar ke mana-mana tidak boleh bocor. Lihat
+          <a class={link} href={privacy}>Privasi</a> untuk cara mengesahkannya sendiri.
+        </p>
+        <p>
+          Tiada iklan, tiada kuki, tiada sepanduk kuki, tiada jualan tambahan. Satu-satunya ukuran
+          ialah kiraan paparan halaman tanpa kuki, yang diterangkan di halaman Privasi. Laman ini
+          sumber terbuka di bawah lesen MIT, dan
+          <a class={link} href={repo} rel="noopener noreferrer">kod sumbernya ada di GitHub</a>
+          jika anda mahu membaca atau menjalankannya sendiri.
+        </p>
+      </div>
+    ) : (
+      <div class="mt-7 space-y-6 text-sm leading-relaxed text-muted">
+        <p class="text-base text-text">
+          {TOOLS.length} utilities for PDFs, images, calculations, media and code, all of which
+          run on your device rather than on a server.
+        </p>
+        <p>
+          Most online tools work by uploading your file, processing it somewhere else, and
+          sending it back. That means an upload wait, a queue, a size cap, usually a daily
+          limit, and often an account before you can download the result. None of that is
+          necessary any more: browsers can do this work directly.
+        </p>
+        <p>
+          So these tools have no upload step. That makes them faster. They are usually finished
+          before the upload would even have completed. It also happens to make them private,
+          because a file that is never sent anywhere cannot leak. See
+          <a class={link} href={privacy}>Privacy</a>
+          for how to verify that claim rather than trust it.
+        </p>
+        <p>
+          No ads, no cookies, no cookie banner, no upsell. The only measurement is a cookieless
+          page-view count, described on the Privacy page. The site is open source under
+          the MIT licence, and the
+          <a class={link} href={repo} rel="noopener noreferrer">source is on GitHub</a>
+          if you want to read it or run it yourself.
+        </p>
+      </div>
+    )}
+  </div>
+</BaseLayout>

@@ -1,0 +1,349 @@
+import { test, expect, type Page } from '@playwright/test';
+import JSZip from 'jszip';
+
+/**
+ * Phase 3: the teleprompter. Scrolling is checked by reading the text's
+ * actual position over time, recording by reading the saved file's bytes,
+ * and the phone remote by driving a real second page through the live relay.
+ */
+
+const SETTINGS = 'nhako.teleprompter.settings';
+
+/** Start every test from a clean browser, with no countdown unless asked. */
+async function fresh(page: Page, settings: Record<string, unknown> = {}) {
+  await page.addInitScript(([key, s]) => {
+    if (sessionStorage.getItem('seeded')) return;
+    sessionStorage.setItem('seeded', '1');
+    localStorage.clear();
+    localStorage.setItem(key as string, JSON.stringify({ countdown: 0, ...(s as object) }));
+  }, [SETTINGS, settings] as const);
+}
+
+/**
+ * Playwright's fill is several steps (select all, then insert), and in WebKit
+ * hydration can land between them. A person's keystroke is one event, and
+ * typing before hydration has its own test below, so every other test waits
+ * for the island first.
+ */
+async function writeScript(page: Page, text: string) {
+  await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
+  await page.getByTestId('script').fill(text);
+}
+
+/** The text's offset under the reading line, in pixels scrolled. */
+const scrolled = (page: Page) => page.getByTestId('prompter-text').evaluate((el) => {
+  const m = /translate3d\(0px, (-?[\d.]+)px/.exec((el as HTMLElement).style.transform);
+  const view = el.parentElement!.clientHeight;
+  const guide = Number(localStorage.getItem('guide') ?? 0);
+  return { offset: m ? Number(m[1]) : NaN, view, guide, height: el.scrollHeight };
+});
+
+const lorem = (n: number, word = 'word') => Array.from({ length: n }, (_, i) => `${word}${i}`).join(' ');
+
+test.describe('teleprompter', () => {
+  test('scrolls at the words-per-minute you set', async ({ page }) => {
+    await fresh(page, { wpm: 180 });
+    await page.goto('/media/teleprompter');
+    await writeScript(page, Array.from({ length: 30 }, () => lorem(12)).join('\n\n'));
+    await expect(page.getByTestId('stats')).toContainText('360 words');
+    await page.getByTestId('start').click();
+    await expect(page.getByTestId('play')).toHaveText('Pause');
+
+    const a = await scrolled(page);
+    await page.waitForTimeout(2000);
+    const b = await scrolled(page);
+    const px = a.offset - b.offset;
+    // 180 wpm is 3 words a second; each word is height/360 px tall on average.
+    const expected = 3 * (a.height / 360) * 2;
+    expect(px).toBeGreaterThan(expected * 0.8);
+    expect(px).toBeLessThan(expected * 1.2);
+  });
+
+  test('stops at a [PAUSE] cue and carries on when tapped', async ({ page }) => {
+    await fresh(page, { wpm: 260, fontSize: 24 });
+    await page.goto('/media/teleprompter');
+    await writeScript(page, `${lorem(20)} [PAUSE] ${lorem(400, 'after')}`);
+    await page.getByTestId('start').click();
+    await expect(page.getByText('Paused at a cue. Tap to continue.')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('play')).toHaveText('Play');
+    const at = (await scrolled(page)).offset;
+    await page.waitForTimeout(600);
+    expect((await scrolled(page)).offset).toBe(at);
+
+    await page.getByTestId('prompter-view').click();
+    await expect(page.getByTestId('play')).toHaveText('Pause');
+    await page.waitForTimeout(600);
+    expect((await scrolled(page)).offset).toBeLessThan(at);
+  });
+
+  test('counts down before it starts', async ({ page }) => {
+    await fresh(page, { countdown: 3 });
+    await page.goto('/media/teleprompter');
+    await page.getByTestId('start').click();
+    await expect(page.getByTestId('countdown')).toHaveText('3');
+    await expect(page.getByTestId('countdown')).toHaveText('2');
+    await expect(page.getByTestId('countdown')).toBeHidden({ timeout: 4000 });
+    await expect(page.getByTestId('play')).toHaveText('Pause');
+  });
+
+  test('keys: space pauses, arrows change speed, Page Down jumps a section, Esc closes', async ({ page }) => {
+    await fresh(page, { wpm: 140 });
+    await page.goto('/media/teleprompter');
+    await writeScript(page, `# One\n${lorem(60)}\n# Two\n${lorem(60)}\n# Three\n${lorem(60)}`);
+    await page.getByTestId('start').click();
+    await expect(page.getByTestId('play')).toHaveText('Pause');
+    await page.keyboard.press('Space');
+    await expect(page.getByTestId('play')).toHaveText('Play');
+
+    await page.keyboard.press('ArrowRight');
+    await page.keyboard.press('ArrowRight');
+    await expect(page.getByTestId('wpm')).toHaveText('160 wpm');
+    await page.keyboard.press('ArrowLeft');
+    await expect(page.getByTestId('wpm')).toHaveText('150 wpm');
+
+    const tops = await page.locator('[data-section]').evaluateAll((els) => els.map((e) => (e as HTMLElement).offsetTop));
+    await page.keyboard.press('Home');
+    await page.waitForTimeout(700);
+    // From the very top, the next section is the first heading, then the second.
+    await page.keyboard.press('PageDown');
+    await page.waitForTimeout(700);
+    await page.keyboard.press('PageDown');
+    // The glide settles on the second heading.
+    await expect.poll(async () => {
+      const s = await scrolled(page);
+      return Math.abs(s.view * 0.22 - s.offset - tops[1]!) <= 1;
+    }, { timeout: 3000 }).toBe(true);
+
+    // Like Safari, WebKit spends the first Esc leaving full screen.
+    await page.keyboard.press('Escape');
+    if (await page.getByTestId('prompter-view').isVisible()) await page.keyboard.press('Escape');
+    await expect(page.getByTestId('prompter-view')).toBeHidden();
+    // Speed changes on the stage are remembered.
+    await page.reload();
+    await expect(page.locator('[data-setting=wpm]')).toHaveValue('150');
+  });
+
+  test('mirrors the text for a beam-splitter rig', async ({ page }) => {
+    await fresh(page, { mirrorX: true });
+    await page.goto('/media/teleprompter');
+    await page.getByTestId('start').click();
+    await expect(page.getByTestId('prompter-view')).toHaveCSS('transform', 'matrix(-1, 0, 0, 1, 0, 0)');
+  });
+
+  test('keeps scripts in the library across reloads, and imports Word files', async ({ page }) => {
+    await fresh(page);
+    await page.goto('/media/teleprompter');
+    await writeScript(page, '# My talk\nFirst line of my talk.');
+    await expect(page.getByTestId('library')).toContainText('My talk', { timeout: 3000 });
+
+    const zip = new JSZip();
+    zip.file('word/document.xml', '<w:document><w:body><w:p><w:pPr><w:pStyle w:val="Heading1"/></w:pPr><w:r><w:t>From Word</w:t></w:r></w:p><w:p><w:r><w:t>Hello &amp; welcome.</w:t></w:r></w:p></w:body></w:document>');
+    const buffer = await zip.generateAsync({ type: 'nodebuffer' });
+    await page.getByTestId('import').setInputFiles({ name: 'speech.docx', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', buffer });
+    await expect(page.getByTestId('script')).toHaveValue('# From Word\n\nHello & welcome.');
+
+    await page.waitForTimeout(600);
+    await page.reload();
+    await expect(page.getByTestId('script')).toHaveValue('# From Word\n\nHello & welcome.');
+    const titles = await page.getByTestId('library').locator('option').allTextContents();
+    expect(titles).toEqual(expect.arrayContaining(['speech', 'My talk']));
+  });
+
+  test('voice-follow moves the text to the words being spoken', async ({ page }) => {
+    // A stand-in for the browser's speech recogniser that the test can speak through.
+    await page.addInitScript(() => {
+      class FakeRecognition {
+        lang = ''; continuous = false; interimResults = false;
+        onresult: ((e: unknown) => void) | null = null; onend: (() => void) | null = null; onerror: unknown = null;
+        start() { (window as unknown as { say: (s: string) => void }).say = (s: string) => this.onresult?.({ resultIndex: 0, results: [Object.assign([{ transcript: s }], { isFinal: true })] }); }
+        stop() { this.onend?.(); }
+      }
+      Object.assign(window, { SpeechRecognition: FakeRecognition, webkitSpeechRecognition: FakeRecognition });
+    });
+    await fresh(page, { wpm: 60 });
+    await page.goto('/media/teleprompter');
+    const words = Array.from({ length: 300 }, (_, i) => `w${i}`);
+    words.splice(80, 3, 'purple', 'elephant', 'dancing');
+    await writeScript(page, words.join(' '));
+    await page.getByTestId('voice').check();
+    await page.getByTestId('start').click();
+    await expect(page.getByText('Listening')).toBeVisible();
+
+    const before = await scrolled(page);
+    await page.waitForTimeout(800);
+    // With voice-follow on, nothing moves until you speak.
+    expect((await scrolled(page)).offset).toBe(before.offset);
+
+    await page.evaluate(() => (window as unknown as { say: (s: string) => void }).say('w30 w31 w32'));
+    await page.waitForTimeout(1000);
+    const top33 = await page.locator('[data-w="33"]').evaluate((e) => (e as HTMLElement).offsetTop);
+    const s = await scrolled(page);
+    // The page and this test each round once: allow a pixel.
+    expect(Math.abs(s.view * 0.22 - s.offset - top33)).toBeLessThanOrEqual(1);
+
+    await page.evaluate(() => (window as unknown as { say: (s: string) => void }).say('purple elephant dancing'));
+    await page.waitForTimeout(1200);
+    const top83 = await page.locator('[data-w="83"]').evaluate((e) => (e as HTMLElement).offsetTop);
+    const s2 = await scrolled(page);
+    expect(Math.abs(s2.view * 0.22 - s2.offset - top83)).toBeLessThanOrEqual(1);
+
+    // Something far ahead or unrelated does not yank the text away.
+    await page.evaluate(() => (window as unknown as { say: (s: string) => void }).say('w290 w291 w292'));
+    await page.waitForTimeout(800);
+    expect((await scrolled(page)).offset).toBe(s2.offset);
+  });
+
+  test('a script typed before the page finished loading is kept', async ({ page }) => {
+    await fresh(page);
+    let release!: () => void;
+    const gate = new Promise<void>((r) => { release = r; });
+    await page.route(/\/_astro\/Teleprompter\.[^/]+\.js$/, async (route) => { await gate; await route.continue(); });
+    await page.goto('/media/teleprompter', { waitUntil: 'domcontentloaded' });
+    await page.locator('#prompter-script').fill('# Early bird\nTyped straight away.');
+    release();
+    await expect(page.getByTestId('stats')).toContainText('3 words');
+    await expect(page.getByTestId('script')).toHaveValue('# Early bird\nTyped straight away.');
+    await expect(page.getByTestId('library')).toContainText('Early bird');
+  });
+
+  test('select all before the page loads, paste after: the paste replaces the sample', async ({ page }) => {
+    await fresh(page);
+    let release!: () => void;
+    const gate = new Promise<void>((r) => { release = r; });
+    await page.route(/\/_astro\/Teleprompter\.[^/]+\.js$/, async (route) => { await gate; await route.continue(); });
+    await page.goto('/media/teleprompter', { waitUntil: 'domcontentloaded' });
+    await page.locator('#prompter-script').focus();
+    await page.keyboard.press('ControlOrMeta+a');
+    release();
+    await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
+    await page.waitForTimeout(300);
+    await page.keyboard.insertText('pasted after load');
+    await expect(page.getByTestId('script')).toHaveValue('pasted after load');
+    await expect(page.getByTestId('stats')).toContainText('3 words');
+  });
+
+  test('a file chosen for import before the page finished loading is imported, and the library kept', async ({ page }) => {
+    await fresh(page);
+    await page.goto('/media/teleprompter');
+    await writeScript(page, '# Keep me\nAlready saved.');
+    await expect(page.getByTestId('library')).toContainText('Keep me', { timeout: 3000 });
+    await page.waitForTimeout(600);
+
+    let release!: () => void;
+    const gate = new Promise<void>((r) => { release = r; });
+    await page.route(/\/_astro\/Teleprompter\.[^/]+\.js$/, async (route) => { await gate; await route.continue(); });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.getByTestId('import').setInputFiles({ name: 'early.txt', mimeType: 'text/plain', buffer: Buffer.from('Imported early.') });
+    release();
+    await expect(page.getByTestId('script')).toHaveValue('Imported early.');
+    const titles = await page.getByTestId('library').locator('option').allTextContents();
+    expect(titles).toEqual(expect.arrayContaining(['early', 'Keep me']));
+  });
+
+  test('the Malay page is in Malay', async ({ page }) => {
+    await fresh(page);
+    await page.goto('/ms/media/teleprompter');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Teleprompter');
+    await expect(page.getByTestId('start')).toHaveText('Mula');
+    await expect(page.getByTestId('script')).toHaveValue(/Selamat datang/);
+    await expect(page.getByTestId('stats')).toContainText('perkataan');
+  });
+});
+
+test.describe('recording', () => {
+  test.skip(({ browserName }) => browserName !== 'chromium', 'Chromium provides a fake camera and microphone');
+  test.use({ permissions: ['camera', 'microphone'] });
+
+  test('records camera and mic to a real video file that survives a reload', async ({ page }) => {
+    await fresh(page);
+    await page.goto('/media/teleprompter');
+    await page.getByTestId('start-record').click();
+    await expect(page.getByTestId('rec-badge')).toBeVisible();
+    await page.waitForTimeout(3000);
+    await page.getByTestId('record').click();
+    await expect(page.getByText(/^Saved take-.* on this device\.$/)).toBeVisible();
+    await page.getByTestId('close').click();
+
+    const take = page.getByTestId('takes').locator('li').first();
+    await expect(take).toContainText(/take-\d{8}-\d{6}\.(mp4|webm)/);
+    await expect(take).toContainText('Stored on this device');
+
+    const href = (await take.locator('a[download]').getAttribute('href'))!;
+    const head = await page.evaluate(async (h) => {
+      const b = new Uint8Array(await (await fetch(h)).arrayBuffer());
+      return { size: b.length, bytes: [...b.subarray(0, 12)] };
+    }, href);
+    expect(head.size).toBeGreaterThan(20_000);
+    const isWebm = head.bytes.slice(0, 4).join() === [0x1a, 0x45, 0xdf, 0xa3].join();
+    const isMp4 = String.fromCharCode(...head.bytes.slice(4, 8)) === 'ftyp';
+    expect(isWebm || isMp4).toBe(true);
+
+    // A video element can play it back, and it has sound and picture.
+    const meta = await page.evaluate(async (h) => {
+      const v = document.createElement('video');
+      v.src = h; v.muted = true;
+      await new Promise((r, j) => { v.onloadedmetadata = r; v.onerror = j; });
+      return { w: v.videoWidth, h: v.videoHeight };
+    }, href);
+    expect(meta.w).toBeGreaterThan(0);
+
+    await page.reload();
+    await expect(page.getByTestId('takes').locator('li')).toHaveCount(1);
+    page.once('dialog', (d) => void d.accept());
+    await page.getByTestId('takes').getByRole('button', { name: 'Delete' }).click();
+    await expect(page.getByText('Recordings you make appear here.', { exact: false })).toBeVisible();
+  });
+});
+
+test.describe('phone remote (live relay)', () => {
+  test('a phone page controls the tablet through the relay', async ({ browser }) => {
+    test.setTimeout(60_000);
+    const tabletCtx = await browser.newContext();
+    const tablet = await tabletCtx.newPage();
+    await fresh(tablet, { wpm: 140 });
+    await tablet.goto('/media/teleprompter');
+    await writeScript(tablet, `# Part one\n${lorem(200)}\n# Part two\n${lorem(200)}`);
+    await tablet.getByTestId('start').click();
+    await expect(tablet.getByTestId('play')).toHaveText('Pause');
+    await tablet.keyboard.press('Space');
+    await expect(tablet.getByTestId('play')).toHaveText('Play');
+    await tablet.getByTestId('remote').click();
+    const code = (await tablet.getByTestId('room-code').textContent())!;
+    expect(code).toMatch(/^[2-9A-HJKMNP-Z]{10}$/);
+    await expect(tablet.getByTestId('remote-qr').locator('svg')).toBeVisible();
+    await expect(tablet.getByText('Waiting for your phone…')).toBeVisible({ timeout: 20_000 });
+
+    const phoneCtx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const phone = await phoneCtx.newPage();
+    await phone.goto(`/media/teleprompter/remote#${code}`);
+    // The code is taken out of the address bar at once.
+    expect(new URL(phone.url()).hash).toBe('');
+    await expect(phone.getByTestId('remote-status')).toContainText('Connected', { timeout: 20_000 });
+    await expect(tablet.getByText('Phone connected.')).toBeVisible({ timeout: 10_000 });
+    await tablet.getByRole('button', { name: 'Done' }).click();
+
+    await phone.getByTestId('rc-faster').click();
+    await expect(tablet.getByTestId('wpm')).toHaveText('150 wpm', { timeout: 10_000 });
+    await expect(phone.getByTestId('rc-wpm')).toHaveText('150', { timeout: 10_000 });
+
+    await phone.getByTestId('rc-toggle').click();
+    await expect(tablet.getByTestId('play')).toHaveText('Pause', { timeout: 10_000 });
+    await expect(phone.getByTestId('remote-status')).toContainText('Playing', { timeout: 10_000 });
+    await phone.getByTestId('rc-toggle').click();
+    await expect(tablet.getByTestId('play')).toHaveText('Play', { timeout: 10_000 });
+
+    // A reload keeps the phone in the same room.
+    await phone.reload();
+    await expect(phone.getByTestId('remote-status')).toContainText('Connected', { timeout: 20_000 });
+
+    await tabletCtx.close();
+    await phoneCtx.close();
+  });
+
+  test('the remote asks for a code when opened without one', async ({ page }) => {
+    await page.goto('/media/teleprompter/remote');
+    await page.getByTestId('code').fill('abc');
+    await page.getByRole('button', { name: 'Connect' }).click();
+    await expect(page.getByRole('alert')).toHaveText('That code should be 10 letters and numbers.');
+  });
+});

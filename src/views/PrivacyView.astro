@@ -1,0 +1,246 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { localePath, ui, type Locale } from '../i18n';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const t = ui(locale);
+const link = 'text-accent underline underline-offset-2';
+const code = 'font-mono text-xs text-text';
+const h2 = 'mb-2 text-sm font-semibold text-text';
+---
+<BaseLayout
+  title={t.privacy}
+  description={locale === 'ms'
+    ? 'Nhako Tools tiada pelayan belakang. Fail diproses pada peranti anda dan tidak pernah dimuat naik, dan anda boleh mengesahkannya sendiri dalam kira-kira sepuluh saat.'
+    : 'Nhako Tools has no backend. Files are processed on your device and never uploaded, and you can verify that yourself in about ten seconds.'}
+  path="/privacy"
+  locale={locale}
+>
+  <div class="mx-auto max-w-2xl px-4 py-12 sm:px-6">
+    <h1 class="text-2xl font-bold tracking-tight">{t.privacy}</h1>
+
+    {locale === 'ms' ? (
+      <div class="mt-7 space-y-7 text-sm leading-relaxed text-muted">
+        <p class="text-base text-text">
+          Tiada pelayan belakang. Tiada titik muat naik, tiada pangkalan data, tiada kuki, tiada
+          akaun. Fail anda dibuka oleh pelayar anda dan diproses pada peranti anda.
+        </p>
+
+        <section>
+          <h2 class={h2}>Sahkan sendiri</h2>
+          <p>
+            Jangan hanya percaya. Ia mengambil kira-kira sepuluh saat untuk disemak, dan langkah
+            ini berfungsi sama baik pada mana-mana laman yang membuat dakwaan yang sama.
+          </p>
+          <ol class="mt-3 space-y-1.5">
+            <li>1. Buka alat pembangun (developer tools) pelayar anda dan pilih tab Network.</li>
+            <li>2. Buka mana-mana alat di laman ini dan jalankannya pada satu fail.</li>
+            <li>3. Perhatikan permintaan. Fail anda tiada di antaranya.</li>
+          </ol>
+        </section>
+
+        <section>
+          <h2 class={h2}>Apa yang diminta</h2>
+          <p>Secara tepat, kerana "tiada apa-apa meninggalkan komputer anda" patut ada butirannya:</p>
+          <ul class="mt-3 space-y-1.5">
+            <li>Halaman itu sendiri, JavaScript-nya dan fon yang dihoskan sendiri. Semuanya dari domain ini.</li>
+            <li>
+              Untuk alat video dan audio, enjin WebAssembly ffmpeg (kira-kira 31 MB), juga dari
+              domain ini. Ia disimpan dalam cache selepas penggunaan pertama.
+            </li>
+            <li>
+              Untuk <a class={link} href={localePath(locale, '/media/transcribe')}>Audio ke teks</a>,
+              masa jalan pengecaman pertuturan (kira-kira 10 MB) dari domain ini, dan pemberat model
+              Whisper yang anda pilih (41 MB hingga 250 MB) dari Hugging Face pada penggunaan pertama.
+            </li>
+            <li>
+              Untuk <a class={link} href={localePath(locale, '/image/passport-photo')}>Pembuat gambar pasport</a>,
+              hanya jika anda meminta latar belakang baharu: masa jalan yang sama dari domain ini, dan
+              model MODNet (kira-kira 6.6 MB) dari Hugging Face.
+            </li>
+            <li>
+              Untuk <a class={link} href={localePath(locale, '/image/remove-background')}>Buang latar belakang</a>,
+              masa jalan yang sama dari domain ini, dan model latar belakang yang anda pilih (kira-kira
+              45 MB, ISNet atau ormbg) dari Hugging Face.
+            </li>
+            <li>
+              Untuk alat OCR, enjin Tesseract dan data Bahasa Inggeris dan Melayu (kira-kira 15 MB),
+              dan untuk Office ke PDF, LibreOffice (kira-kira 77 MB). Kedua-duanya dari domain ini,
+              dimuat turun hanya pada penggunaan pertama.
+            </li>
+            <li>
+              Untuk Lindungi PDF dan Buka Kunci PDF, enjin qpdf (kira-kira 1.3 MB), dan untuk HEIC ke
+              JPG dalam pelayar yang tidak boleh membaca HEIC sendiri, penyahkod libheif (kira-kira
+              1.4 MB). Kedua-duanya dari domain ini, dimuat turun hanya pada penggunaan pertama.
+            </li>
+            <li>
+              Untuk <a class={link} href={localePath(locale, '/media/teleprompter')}>Teleprompter</a>,
+              hanya jika anda menggandingkan telefon sebagai alat kawalan: sambungan ke geganti
+              Supabase Realtime. Ia hanya membawa tekanan butang (main, jeda, kelajuan) dan status
+              ringkas (kedudukan, kelajuan, tajuk bahagian) antara dua peranti anda, di bawah kod
+              bilik rawak. Mesej dihantar terus dan tidak disimpan. Skrip, video dan audio anda tidak
+              pernah melaluinya.
+            </li>
+            <li>
+              Juga untuk Teleprompter, hanya jika anda menghidupkan ikut suara: pengecaman pertuturan
+              pelayar anda. Dalam Chrome dan Edge, audio mikrofon dihantar ke perkhidmatan pertuturan
+              Google semasa ia mendengar, dan Safari mungkin menggunakan perkhidmatan Apple. Ini
+              kawalan pelayar, bukan laman ini, dan ia tidak pernah dihidupkan secara lalai.
+            </li>
+            <li>
+              Muat turun model tersebut, geganti alat kawalan dan ikut suara ialah satu-satunya
+              permintaan kepada pihak ketiga, dan dua yang terakhir hanya apabila anda memilihnya.
+              Muat turun model tidak pernah memuat naik audio atau gambar anda.
+            </li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 class={h2}>Kiraan pelawat</h2>
+          <p>
+            Laman ini mengira paparan halaman dengan Vercel Web Analytics, supaya kami tahu alat
+            mana yang benar-benar digunakan. Ia tidak menetapkan kuki dan tidak menyimpan apa-apa
+            pada peranti anda. Ia merekodkan alamat halaman, laman yang merujuk, lokasi anggaran
+            (negara dan bandar), serta pelayar, sistem pengendalian dan jenis peranti anda. Tiada
+            apa-apa tentang fail anda, apa yang anda taip dalam alat, atau hasilnya. Skrip dan
+            laporannya pergi ke domain yang sama, jadi ia kelihatan dalam tab Network bersama yang
+            lain, di mana anda boleh menyemak kandungannya dengan tepat.
+          </p>
+        </section>
+
+        <section>
+          <h2 class={h2}>Apa yang disimpan pada peranti anda</h2>
+          <p>
+            Satu entri <code class={code}>localStorage</code> yang merekodkan sama ada anda memilih
+            tema cerah atau gelap. Jika anda menggunakan Teleprompter, skrip dan tetapannya juga
+            disimpan dalam <code class={code}>localStorage</code>, dan rakamannya dalam storan fail
+            peribadi pelayar, pada peranti ini sahaja. Selain itu, storan cache pelayar menyimpan salinan fail laman ini
+            supaya ia berfungsi tanpa talian, serta enjin dan model yang telah digunakan oleh alat,
+            supaya ia tidak dimuat turun dua kali. Cache itu tidak mengandungi fail atau hasil anda,
+            dan tiada apa-apa yang disimpan di sini meninggalkan pelayar anda. Mengosongkan data laman membuang semuanya.
+          </p>
+        </section>
+
+        <section>
+          <h2 class={h2}>Kesan praktikalnya</h2>
+          <p>
+            Kerana tiada apa-apa dimuat naik, had saiz fail ialah memori peranti anda, bukan had
+            muat naik orang lain. Tiada giliran, tiada kuota harian, dan tiada apa-apa untuk didaftar.
+          </p>
+        </section>
+      </div>
+    ) : (
+      <div class="mt-7 space-y-7 text-sm leading-relaxed text-muted">
+        <p class="text-base text-text">
+          There is no backend. No upload endpoint, no database, no cookies, no account.
+          Your files are opened by your browser and processed on your device.
+        </p>
+
+        <section>
+          <h2 class={h2}>Verify it yourself</h2>
+          <p>
+            Don't take this on trust. It takes about ten seconds to check, and the
+            instructions work equally well on any site making the same claim.
+          </p>
+          <ol class="mt-3 space-y-1.5">
+            <li>1. Open your browser's developer tools and select the Network tab.</li>
+            <li>2. Open any tool on this site and run it on a file.</li>
+            <li>3. Watch the requests. Your file is not among them.</li>
+          </ol>
+        </section>
+
+        <section>
+          <h2 class={h2}>What does get requested</h2>
+          <p>Being precise, because "nothing leaves your machine" deserves the fine print:</p>
+          <ul class="mt-3 space-y-1.5">
+            <li>The page itself, its JavaScript, and the self-hosted fonts. All from this domain.</li>
+            <li>
+              For the video and audio tools, the ffmpeg WebAssembly engine (about 31 MB), also
+              from this domain. It is cached after the first use.
+            </li>
+            <li>
+              For <a class={link} href="/media/transcribe">Audio to text</a>,
+              the speech-recognition runtime (about 10 MB), also from this domain, and the
+              Whisper model weights you choose (41 MB to 250 MB) from Hugging Face on first use.
+            </li>
+            <li>
+              For the <a class={link} href="/image/passport-photo">Passport photo maker</a>, only
+              if you ask for a new background: the same runtime from this domain, and the MODNet
+              model (about 6.6 MB) from Hugging Face.
+            </li>
+            <li>
+              For <a class={link} href="/image/remove-background">Remove background</a>, the same
+              runtime from this domain, and the background model you pick (about 45 MB, ISNet or
+              ormbg) from Hugging Face.
+            </li>
+            <li>
+              For the OCR tools, the Tesseract engine and its English and Malay data (about 15 MB),
+              and for Office to PDF, LibreOffice (about 77 MB). Both from this domain, downloaded only
+              on first use.
+            </li>
+            <li>
+              For Protect PDF and Unlock PDF, the qpdf engine (about 1.3 MB), and for HEIC to JPG
+              in browsers that cannot read HEIC themselves, the libheif decoder (about 1.4 MB).
+              Both from this domain, downloaded only on first use.
+            </li>
+            <li>
+              For the <a class={link} href="/media/teleprompter">Teleprompter</a>, only if you pair
+              a phone as a remote: a connection to a Supabase Realtime relay. It carries button
+              presses (play, pause, speed) and a small status (position, speed, section titles)
+              between your two devices, under a random room code. Messages are passed straight
+              through and not stored. Your script, video and audio never go through it.
+            </li>
+            <li>
+              Also for the Teleprompter, only if you turn on voice-follow: your browser's speech
+              recognition. In Chrome and Edge the microphone audio is sent to Google's speech
+              service while it listens, and Safari may use Apple's. That is the browser's feature,
+              not this site's, and it is never on by default.
+            </li>
+            <li>
+              Those model downloads, the remote relay and voice-follow are the only requests that
+              go to a third party, and the last two only when you choose them. A model download is
+              never an upload of your audio or photo.
+            </li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 class={h2}>Visit counts</h2>
+          <p>
+            The site counts page views with Vercel Web Analytics, so we can see which tools
+            people actually use. It sets no cookies and stores nothing on your device. It
+            records the page address, the referring site, an approximate location (country and
+            city), and your browser, operating system and device type. Nothing about your files,
+            what you type into a tool, or its results. The script and its
+            reports go to this same domain, so they show up in the Network tab next to
+            everything else, where you can check exactly what they contain.
+          </p>
+        </section>
+
+        <section>
+          <h2 class={h2}>What is stored on your device</h2>
+          <p>
+            One <code class={code}>localStorage</code> entry recording whether
+            you prefer the light or dark theme. If you use the Teleprompter, its scripts and
+            settings are kept in <code class={code}>localStorage</code> too, and its recordings in
+            the browser's private file storage, on this device only. Beyond that, the browser's cache storage keeps copies
+            of this site's own files so it works offline, plus the engines and models a tool has
+            used, so they are not downloaded twice. The cache holds none of your
+            files or results, and nothing stored here ever leaves your browser. Clearing site data removes all
+            of it.
+          </p>
+        </section>
+
+        <section>
+          <h2 class={h2}>The practical consequence</h2>
+          <p>
+            Because nothing is uploaded, the limit on file size is your device's memory rather
+            than someone's upload cap. There is no queue, no daily allowance, and nothing
+            to sign up for.
+          </p>
+        </section>
+      </div>
+    )}
+  </div>
+</BaseLayout>

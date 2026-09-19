@@ -1,10 +1,10 @@
 ---
 import type { ToolMeta } from '../../tools/types';
-interface Props { tool: ToolMeta }
-const { tool } = Astro.props;
+interface Props { tool: ToolMeta; href: string }
+const { tool, href } = Astro.props;
 ---
 <a
-  href={`/${tool.category}/${tool.slug}`}
+  href={href}
   data-tool-card
   data-reveal
   data-name={tool.name.toLowerCase()}

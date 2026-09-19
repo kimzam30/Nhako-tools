@@ -23,7 +23,13 @@ export function searchTools<T extends SearchableTool>(tools: readonly T[], query
       const keywords = tool.keywords.map((k) => k.toLowerCase());
       const haystack = `${name} ${tool.blurb.toLowerCase()} ${keywords.join(' ')} ${tool.category}`;
 
+      // The whole query as a phrase outranks the same words in another order:
+      // "pdf to jpg" and "JPG to PDF" share every word but not the meaning.
       let score = 0;
+      if (name === q) score += 400;
+      else if (name.includes(q)) score += 200;
+      if (keywords.includes(q)) score += 150;
+      else if (keywords.some((k) => k.includes(q))) score += 60;
       for (const term of terms) {
         if (!haystack.includes(term)) return null;
         if (name === term) score += 100;

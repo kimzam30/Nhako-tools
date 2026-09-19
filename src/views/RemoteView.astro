@@ -1,0 +1,37 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import TeleprompterRemote from '../components/react/TeleprompterRemote';
+import { localePath, type Locale } from '../i18n';
+import { PROMPTER_TEXT } from '../components/react/teleprompter-text';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const t = PROMPTER_TEXT[locale].remotePage;
+const back = localePath(locale, '/media/teleprompter');
+const description = locale === 'ms'
+  ? 'Kawal teleprompter Nhako pada tablet anda dari telefon anda.'
+  : 'Control the Nhako teleprompter on your tablet from your phone.';
+---
+<BaseLayout title={t.title} description={description} path="/media/teleprompter/remote" locale={locale} category="media" noindex>
+  {/*
+    The room code arrives in the fragment (#CODE). Take it out of the address
+    bar before anything else on the page runs, so it never lands in history
+    sync, a shared screenshot of the URL, or page-view analytics.
+  */}
+  <script is:inline>
+    (() => {
+      const code = location.hash.slice(1);
+      if (!code) return;
+      window.__nhakoRoom = code;
+      try { sessionStorage.setItem('nhako.remote', code); } catch { /* storage blocked */ }
+      history.replaceState(null, '', location.pathname);
+    })();
+  </script>
+  <div class="mx-auto max-w-md px-4 py-8">
+    <h1 class="mb-1 text-xl font-bold tracking-tight">{t.title}</h1>
+    <p class="mb-5 text-sm text-muted">
+      {description} <a href={back} class="underline decoration-border underline-offset-2 hover:text-accent">{locale === 'ms' ? 'Buka teleprompter' : 'Open the teleprompter'}</a>
+    </p>
+    <TeleprompterRemote client:load locale={locale} />
+  </div>
+</BaseLayout>

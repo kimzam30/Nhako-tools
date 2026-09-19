@@ -1,7 +1,7 @@
 /**
  * Render the social preview images.
  *
- * Five images (four categories plus a default), not twenty-two: a share card
+ * Six images (five categories plus a default), not one per tool: a share card
  * is glanced at, and the category plus the brand is all it needs to carry.
  * Same Playwright-rasterise approach as scripts/icons.mjs, so there is no
  * image dependency and the mark stays defined in one place.
@@ -10,10 +10,11 @@ import { chromium } from '@playwright/test';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 
 const CARDS = [
-  ['default', 'Nhako Tools', '22 tools that run in your browser'],
+  ['default', 'Nhako Tools', 'Tools that run in your browser'],
   ['pdf', 'PDF tools', 'Merge, split, compress, convert. No upload'],
   ['media', 'Media tools', 'Compress video, extract audio, transcribe'],
-  ['image', 'Image tools', 'Compress, convert, resize. No upload'],
+  ['image', 'Image tools', 'Compress, passport photos, resize. No upload'],
+  ['calc', 'Calculators', 'Take-home pay: EPF, SOCSO, EIS and PCB'],
   ['dev', 'Developer tools', 'JSON, JWT, Base64, hashes, and more'],
 ];
 

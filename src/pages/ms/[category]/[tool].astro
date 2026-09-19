@@ -1,0 +1,18 @@
+---
+import ToolView from '../../../views/ToolView.astro';
+import { TOOLS } from '../../../tools/registry';
+import type { ToolMeta } from '../../../tools/types';
+
+export function getStaticPaths() {
+  // Every route on the site comes from the registry. A slug with no entry
+  // simply has no page, which is why /tool/<anything> can no longer render a
+  // working-looking page that does nothing, as the old build did.
+  return TOOLS.map((tool) => ({
+    params: { category: tool.category, tool: tool.slug },
+    props: { tool },
+  }));
+}
+
+interface Props { tool: ToolMeta }
+---
+<ToolView tool={Astro.props.tool} locale="ms" />

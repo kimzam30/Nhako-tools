@@ -1,18 +1,25 @@
 ---
-import { CATEGORIES, CATEGORY_LABEL } from '../../tools/types';
+import { CATEGORIES } from '../../tools/types';
+import { categoryLabel, localePath, ui, type Locale } from '../../i18n';
 import Logo from './Logo.astro';
 import ThemeToggle from './ThemeToggle.astro';
 import CommandPalette from './CommandPalette.astro';
+
+interface Props { locale: Locale; path: string; alternates: boolean }
+const { locale, path, alternates } = Astro.props;
+const t = ui(locale);
+const other: Locale = locale === 'en' ? 'ms' : 'en';
+const home = localePath(locale, '/');
 ---
 
 <header class="vt-nav sticky top-0 z-40 border-b border-border bg-bg/85 backdrop-blur-sm">
-  <nav class="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4 sm:px-6" aria-label="Main">
-    <a href="/" aria-label="Nhako Tools, home" class="vt-logo flex shrink-0 items-center gap-2 text-base font-bold tracking-tight">
+  <nav class="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4 sm:px-6" aria-label={t.mainNav}>
+    <a href={home} aria-label={t.home} class="vt-logo flex shrink-0 items-center gap-2 text-base font-bold tracking-tight">
       <Logo class="size-6 rounded-md" />
       <span><span class="text-accent">Nhako</span>Tools</span>
       <span
         class="runtime-dot ml-1 size-1.5 rounded-full bg-accent"
-        title="Everything runs locally in your browser"
+        title={t.runtimeTitle}
         aria-hidden="true"
       ></span>
     </a>
@@ -21,18 +28,29 @@ import CommandPalette from './CommandPalette.astro';
       {CATEGORIES.map((c) => (
         <li>
           <a
-            href={`/#${c}`}
+            href={`${home}#${c}`}
             class="rounded px-2.5 py-1.5 text-sm text-muted transition-colors duration-[120ms] hover:bg-sunken hover:text-text"
           >
-            {CATEGORY_LABEL[c]}
+            {categoryLabel(c, locale)}
           </a>
         </li>
       ))}
     </ul>
 
     <div class="ml-auto flex items-center gap-2">
-      <CommandPalette />
-      <ThemeToggle />
+      <CommandPalette locale={locale} />
+      {alternates && (
+        <a
+          href={localePath(other, path)}
+          hreflang={other}
+          lang={other}
+          aria-label={`${t.switchLanguageShort}, ${t.switchLanguageLabel}`}
+          class="grid h-8 place-items-center rounded border border-border px-2 font-mono text-[11px] font-semibold text-muted transition-colors duration-[120ms] hover:border-border-strong hover:text-text"
+        >
+          {t.switchLanguageShort}
+        </a>
+      )}
+      <ThemeToggle locale={locale} />
     </div>
   </nav>
 </header>

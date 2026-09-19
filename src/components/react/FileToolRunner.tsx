@@ -4,6 +4,10 @@ import { defaultOptions, ToolError } from '../../tools/types';
 import { runFileTool, type RunHandle } from '../../tools/run-tool';
 import { bytes, duration } from '../../lib/format';
 import OptionsPanel from './OptionsPanel';
+import CopyButton from './CopyButton';
+import { optionsBeforeHydration } from './hydration';
+import { localePath, type Locale } from '../../i18n/paths';
+import { islandText } from '../../i18n/island';
 
 type Phase =
   | { name: 'idle' }
@@ -13,6 +17,9 @@ type Phase =
 
 interface Props {
   tool: Pick<ToolMeta, 'category' | 'slug' | 'name' | 'accept' | 'multiple' | 'heavy'> & { options?: OptionSpec[] };
+  locale?: Locale;
+  /** A preset page's starting values, e.g. { target: '500' }. */
+  initialOptions?: OptionValues;
 }
 
 /**
@@ -22,15 +29,23 @@ interface Props {
  */
 const SETTLE_MS = 400;
 
-export default function FileToolRunner({ tool }: Props) {
+export default function FileToolRunner({ tool, locale = 'en', initialOptions }: Props) {
   const id = `${tool.category}/${tool.slug}`;
+  const t = islandText(locale);
   const specs = tool.options ?? [];
 
   const inputId = `${tool.category}-${tool.slug}-file`;
   // A file picked before the island hydrated fired its change event with no
   // listener attached, so nothing ever ran. Pick it up from the DOM instead.
   const [files, setFiles] = useState<File[]>(() => pickedBeforeHydration(inputId, tool.multiple));
-  const [options, setOptions] = useState<OptionValues>(() => defaultOptions(specs));
+  // Seeded from the page as rendered, so a choice made before hydration counts.
+  const [options, setOptions] = useState<OptionValues>(() => optionsBeforeHydration(specs, { ...defaultOptions(specs), ...initialOptions }));
+  // The latest files and options, readable from event handlers that fire
+  // before the next render. Picking a file and immediately typing a page range
+  // used to read the previous render's "no files", skip the re-run, and leave
+  // the result for the old settings on screen.
+  const filesRef = useRef(files);
+  const optionsRef = useRef(options);
   const [phase, setPhase] = useState<Phase>({ name: 'idle' });
   const [dragging, setDragging] = useState(false);
   // Heavy tools (minutes of ffmpeg or Whisper) never re-run on their own
@@ -64,7 +79,9 @@ export default function FileToolRunner({ tool }: Props) {
       // CPU-bound tools run in a worker so a 200-page split no longer freezes
       // the tab; the rest run inline because they need the DOM. runFileTool
       // decides, and falls back to inline if the worker cannot start.
-      const handle = runFileTool(id, selected, opts, (progress, label) => {
+      // The locale rides along with the options so a tool can word its own
+      // summary and errors in the page's language.
+      const handle = runFileTool(id, selected, { ...opts, locale }, (progress, label) => {
         if (ticket === runId.current) setPhase({ name: 'running', progress, label });
       });
       handleRef.current = handle;
@@ -82,21 +99,23 @@ export default function FileToolRunner({ tool }: Props) {
         name: 'error',
         message: err instanceof ToolError || err instanceof Error
           ? err.message
-          : 'Something went wrong running this tool.',
+          : t.genericError,
       });
     }
-  }, [id]);
+  }, [id, locale, t]);
 
   // Run once for a file that was chosen before hydration (see `files` above).
-  const startedEarly = useRef(false);
+  // Mount only: this used to re-run whenever `files` changed, so a file picked
+  // normally ran a second time here with the previous render's options, and
+  // that run cancelled the pending one for a page range typed straight after.
+  // The refs hold whatever was chosen or typed since, not the first render's.
   useEffect(() => {
-    if (startedEarly.current || files.length === 0) return;
-    startedEarly.current = true;
+    if (filesRef.current.length === 0) return;
     // execute() is async: its state writes happen in its own continuation,
     // exactly as when a file is picked normally.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void execute(files, options);
-  }, [execute, files, options]);
+    void execute(filesRef.current, optionsRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const busy = phase.name === 'running';
 
@@ -108,14 +127,17 @@ export default function FileToolRunner({ tool }: Props) {
     // starting a second one on the same engine would corrupt both.
     if (busy && tool.heavy) return;
     const selected = tool.multiple ? picked : picked.slice(0, 1);
+    filesRef.current = selected;
     setFiles(selected);
-    void execute(selected, options);
-  }, [busy, execute, options, tool.heavy, tool.multiple]);
+    void execute(selected, optionsRef.current);
+  }, [busy, execute, tool.heavy, tool.multiple]);
 
   function changeOption(key: string, value: string | number | boolean) {
-    const next = { ...options, [key]: value };
+    const next = { ...optionsRef.current, [key]: value };
+    optionsRef.current = next;
     setOptions(next);
-    if (files.length === 0) return;
+    const current = filesRef.current;
+    if (current.length === 0) return;
 
     if (tool.heavy) {
       setStale(true);
@@ -126,8 +148,8 @@ export default function FileToolRunner({ tool }: Props) {
     // pause so a half-typed "1-" is never run.
     const kind = specs.find((s) => s.key === key)?.kind;
     clearTimeout(settleTimer.current);
-    if (kind === 'select' || kind === 'toggle') void execute(files, next);
-    else settleTimer.current = setTimeout(() => void execute(files, next), SETTLE_MS);
+    if (kind === 'select' || kind === 'toggle') void execute(current, next);
+    else settleTimer.current = setTimeout(() => void execute(filesRef.current, optionsRef.current), SETTLE_MS);
   }
 
   function reset() {
@@ -135,6 +157,7 @@ export default function FileToolRunner({ tool }: Props) {
     clearTimeout(settleTimer.current);
     handleRef.current?.cancel();
     handleRef.current = null;
+    filesRef.current = [];
     setFiles([]);
     setStale(false);
     setPhase({ name: 'idle' });
@@ -174,38 +197,38 @@ export default function FileToolRunner({ tool }: Props) {
         } aria-disabled:cursor-wait`}
       >
         <span className="text-sm font-medium">
-          {dragging ? 'Drop to start' : files.length > 0 ? `${files.length} file${files.length === 1 ? '' : 's'} selected` : `Drop ${tool.multiple ? 'files' : 'a file'} here, or browse`}
+          {dragging ? t.dropToStart : files.length > 0 ? t.filesSelected(files.length) : t.dropHere(Boolean(tool.multiple))}
         </span>
         <span className="text-2xs text-muted">
           {files.length > 0
             ? files.map((f) => f.name).join(', ').slice(0, 90)
-            : 'Runs the moment the file lands. There is no upload step'}
+            : t.runsOnLand}
         </span>
       </button>
 
       <p className="-mt-2 text-2xs text-muted">
-        Runs entirely in your browser.{' '}
-        <a href="/privacy" className="underline decoration-border underline-offset-2 transition-colors hover:text-accent">
-          Verify it in your network tab
+        {t.runsInBrowser}{' '}
+        <a href={localePath(locale, '/privacy')} className="underline decoration-border underline-offset-2 transition-colors hover:text-accent">
+          {t.verifyNetwork}
         </a>
         .
       </p>
 
       {specs.length > 0 && (
         <div className="rounded-lg border border-border bg-surface p-4">
-          <OptionsPanel specs={specs} values={options} onChange={changeOption} />
+          <OptionsPanel specs={specs} values={options} onChange={changeOption} rangeText={t.numberRange} />
         </div>
       )}
 
       {stale && !busy && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface px-4 py-3">
-          <p className="text-sm text-muted">Settings changed. This tool is slow, so it waits for you.</p>
+          <p className="text-sm text-muted">{t.settingsChanged}</p>
           <button
             type="button"
             onClick={() => void execute(files, options)}
             className="rounded bg-accent px-3 py-1.5 text-sm font-medium text-accent-on transition-colors duration-[120ms] hover:bg-accent-hover"
           >
-            Run again with these settings
+            {t.runAgain}
           </button>
         </div>
       )}
@@ -214,7 +237,7 @@ export default function FileToolRunner({ tool }: Props) {
         {busy && (
           <div className="rounded-lg border border-border bg-surface px-4 py-3">
             <div className="flex items-baseline justify-between gap-4 text-sm">
-              <span>{phase.label ?? 'Working'}…</span>
+              <span>{phase.label ?? t.working}…</span>
               {/* Only heavy tools get a bar; a bar on a 400ms task feels slower. */}
               {tool.heavy && <span data-numeric className="text-xs text-muted">{Math.round(phase.progress * 100)}%</span>}
             </div>
@@ -241,12 +264,24 @@ export default function FileToolRunner({ tool }: Props) {
                 download={phase.result.filename}
                 className="rounded bg-accent px-3 py-1.5 text-sm font-medium text-accent-on transition-colors duration-[120ms] hover:bg-accent-hover"
               >
-                Save
+                {t.save}
               </a>
               <button type="button" onClick={reset} className="rounded border border-border px-3 py-1.5 text-sm text-muted transition-colors hover:border-border-strong hover:text-text">
-                Clear
+                {t.clear}
               </button>
             </div>
+            {phase.result.text !== undefined && (
+              <div className="basis-full">
+                <div className="mb-1.5 flex items-center justify-between">
+                  <label htmlFor={`${inputId}-text`} className="text-2xs font-semibold uppercase tracking-wider text-muted">{t.output}</label>
+                  <CopyButton text={phase.result.text} label={t.copy} copiedLabel={t.copied} announce={t.copiedAnnounce} />
+                </div>
+                <textarea
+                  id={`${inputId}-text`} readOnly value={phase.result.text} rows={10}
+                  className="w-full resize-y rounded border border-border bg-bg p-3 font-mono text-xs leading-relaxed"
+                />
+              </div>
+            )}
           </div>
         )}
 
@@ -255,7 +290,7 @@ export default function FileToolRunner({ tool }: Props) {
             <span className="text-err" aria-hidden="true">!</span>
             <p className="flex-1 text-sm text-err">{phase.message}</p>
             <button type="button" onClick={reset} className="shrink-0 rounded border border-border px-2.5 py-1 text-xs text-muted transition-colors hover:text-text">
-              Clear
+              {t.clear}
             </button>
           </div>
         )}

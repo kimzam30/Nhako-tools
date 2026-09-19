@@ -2,6 +2,7 @@ import { test, expect, type Page } from '@playwright/test';
 import { fileURLToPath } from 'node:url';
 import { readFile } from 'node:fs/promises';
 import { PDFDocument } from 'pdf-lib';
+import { TOOLS } from '../src/tools/registry';
 
 const fixture = (name: string) => fileURLToPath(new URL(`./fixtures/${name}`, import.meta.url));
 
@@ -145,6 +146,16 @@ test.describe('input given before the page is interactive', () => {
     await expect(page.locator('pre')).toContainText('"early": true');
   });
 
+  test('an option chosen before hydration is the one used', async ({ page }) => {
+    const release = await delayIsland(page, 'TextToolPane');
+    await page.goto('/dev/diff', { waitUntil: 'domcontentloaded' });
+    await page.getByLabel('Compare by').selectOption('word');
+    release();
+    await page.getByLabel('Original text').fill('the quick brown fox');
+    await page.getByLabel('Changed text').fill('the slow brown dog');
+    await expect(page.locator('pre ins').first()).toBeVisible();
+  });
+
   test('a file picked before hydration is processed', async ({ page }) => {
     const release = await delayIsland(page, 'FileToolRunner');
     await page.goto('/pdf/merge', { waitUntil: 'domcontentloaded' });
@@ -254,7 +265,7 @@ test.describe('navigation and chrome', () => {
       expect(response.status(), path).toBe(200);
     }
     await page.goto('/pdf/merge');
-    await expect(page).toHaveTitle('Merge PDF');
+    await expect(page).toHaveTitle('Merge PDF online, free, no upload | Nhako Tools');
   });
 
   test('an unknown URL 404s instead of rendering a working-looking page', async ({ request }) => {
@@ -280,7 +291,7 @@ test.describe('navigation and chrome', () => {
     await page.goto('/');
     await page.locator('#tool-search').fill('transcribe');
     await expect(page.getByRole('link', { name: /Audio to text/ })).toBeVisible();
-    await expect(page.getByText(/1 of 22 tools/)).toBeVisible();
+    await expect(page.getByText(`1 of ${TOOLS.length} tools`)).toBeVisible();
   });
 
   test('the command palette opens with the keyboard and navigates', async ({ page }) => {

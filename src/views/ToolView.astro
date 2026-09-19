@@ -1,0 +1,193 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import FileToolRunner from '../components/react/FileToolRunner';
+import TextToolPane from '../components/react/TextToolPane';
+import SalaryCalculator from '../components/react/SalaryCalculator';
+import PhotoMaker from '../components/react/PhotoMaker';
+import OrganizePdf from '../components/react/OrganizePdf';
+import SignPdf from '../components/react/SignPdf';
+import CropImage from '../components/react/CropImage';
+import Teleprompter from '../components/react/Teleprompter';
+import ScanToPdf from '../components/react/ScanToPdf';
+import { TOOLS_BY_ID } from '../tools/registry';
+import { toolId, type ToolMeta, type ToolVariant } from '../tools/types';
+import { SOURCES } from '../tools/calc/payroll-my';
+import { LANG, categoryLabel, localizeTool, localePath, ui, type Locale } from '../i18n';
+
+interface Props {
+  tool: ToolMeta;
+  locale: Locale;
+  /** A preset landing page of this tool, e.g. pdf/compress at 500 KB. */
+  variant?: ToolVariant;
+}
+
+const { locale, variant: rawVariant } = Astro.props;
+const t = ui(locale);
+const tool = localizeTool(Astro.props.tool, locale);
+const id = toolId(tool);
+const variant = rawVariant ? tool.variants?.find((v) => v.slug === rawVariant.slug) : undefined;
+const path = `/${id}${variant ? `/${variant.slug}` : ''}`;
+const href = (p: string) => localePath(locale, p);
+
+const related = (tool.related ?? [])
+  .map((r) => TOOLS_BY_ID.get(r))
+  .filter((r): r is ToolMeta => Boolean(r))
+  .map((r) => localizeTool(r, locale));
+
+// Say exactly where any download comes from; for transcription and the photo
+// maker's background model that includes the one third party on the site.
+const privacyNote =
+  id === 'media/transcribe' ? t.privateTranscribe
+  : id === 'image/passport-photo' ? t.privateModel
+  : id === 'media/teleprompter' ? t.privateTeleprompter
+  : id === 'image/remove-background' ? t.privateBgRemoval
+  : tool.category === 'calc' ? t.privateCalc
+  : tool.heavy ? t.privateHeavy
+  : t.privateStatic;
+
+const name = variant?.name ?? tool.name;
+const description = variant?.description ?? tool.description;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name,
+  applicationCategory: tool.category === 'calc' ? 'FinanceApplication' : 'UtilitiesApplication',
+  operatingSystem: 'Any browser',
+  inLanguage: LANG[locale],
+  description,
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'MYR' },
+  featureList: tool.keywords,
+};
+
+const title = variant ? t.toolTitle(variant.name) : tool.seoTitle ?? t.toolTitle(tool.name);
+const presets = tool.variants ?? [];
+const runnerTool = {
+  category: tool.category, slug: tool.slug, name: tool.name, accept: tool.accept,
+  multiple: tool.multiple, heavy: tool.heavy, options: tool.options,
+};
+---
+
+<BaseLayout
+  title={name}
+  documentTitle={title}
+  description={description}
+  path={path}
+  locale={locale}
+  keywords={tool.keywords}
+  jsonLd={jsonLd}
+  category={tool.category}
+>
+  <div class="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+    <nav aria-label={t.breadcrumb} class="mb-6 text-2xs text-muted">
+      <a href={href('/')} class="transition-colors hover:text-accent">{t.breadcrumbTools}</a>
+      <span aria-hidden="true"> / </span>
+      <a href={`${href('/')}#${tool.category}`} class="transition-colors hover:text-accent">{categoryLabel(tool.category, locale)}</a>
+      {variant && (
+        <>
+          <span aria-hidden="true"> / </span>
+          <a href={href(`/${id}`)} class="transition-colors hover:text-accent">{tool.name}</a>
+        </>
+      )}
+    </nav>
+
+    <header class="mb-7">
+      <h1 class="text-2xl font-bold tracking-tight">{name}</h1>
+      <p class="mt-1.5 text-sm text-muted">{variant?.blurb ?? tool.blurb}</p>
+    </header>
+
+    {/* The tool sits above the fold. The prose is below it. Most tool sites
+        invert this and make you scroll past marketing to reach the thing. */}
+    {tool.kind === 'file' && (
+      <FileToolRunner client:load tool={runnerTool} locale={locale} initialOptions={variant?.defaults} />
+    )}
+    {(tool.kind === 'text' || tool.kind === 'text2') && (
+      <TextToolPane client:load tool={{ ...runnerTool, kind: tool.kind, generator: tool.generator }} locale={locale} />
+    )}
+    {id === 'calc/take-home-pay' && <SalaryCalculator client:load locale={locale} />}
+    {id === 'image/passport-photo' && <PhotoMaker client:load locale={locale} accept={tool.accept ?? 'image/*'} />}
+    {id === 'pdf/organize' && <OrganizePdf client:load locale={locale} accept={tool.accept ?? '.pdf'} />}
+    {id === 'pdf/sign' && <SignPdf client:load locale={locale} accept={tool.accept ?? '.pdf'} />}
+    {id === 'image/crop' && <CropImage client:load locale={locale} accept={tool.accept ?? 'image/*'} />}
+    {id === 'media/teleprompter' && <Teleprompter client:load locale={locale} />}
+    {id === 'pdf/scan' && <ScanToPdf client:load locale={locale} />}
+
+    <div class="mt-10 space-y-8 border-t border-border pt-8">
+      {(variant?.about || tool.about) && (
+        <section data-reveal>
+          <h2 class="mb-2 text-sm font-semibold">{t.whatThisDoes}</h2>
+          {variant?.about && <p class="mb-3 text-sm leading-relaxed text-muted">{variant.about}</p>}
+          {tool.about && <p class="text-sm leading-relaxed text-muted">{tool.about}</p>}
+        </section>
+      )}
+
+      {tool.limits && tool.limits.length > 0 && (
+        <section data-reveal>
+          <h2 class="mb-2 text-sm font-semibold">{t.limits}</h2>
+          <ul class="space-y-1.5">
+            {tool.limits.map((limit) => (
+              <li class="relative pl-4 text-sm leading-relaxed text-muted before:absolute before:left-0 before:top-[0.6em] before:size-1 before:rounded-full before:bg-border-strong">
+                {limit}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {tool.category === 'calc' && (
+        <section data-reveal>
+          <h2 class="mb-2 text-sm font-semibold">{t.sources}</h2>
+          <ul class="space-y-1.5">
+            {Object.values(SOURCES).map((s) => (
+              <li class="text-sm leading-relaxed text-muted">
+                <a class="underline decoration-border underline-offset-2 transition-colors hover:text-accent" href={s.url} rel="noopener noreferrer">{s.title}</a>
+                <span data-numeric class="text-2xs"> · {t.checkedOn(s.checked)}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <section data-reveal>
+        <h2 class="mb-2 text-sm font-semibold">{t.isPrivate}</h2>
+        <p class="text-sm leading-relaxed text-muted">{t.privateBody} {privacyNote}</p>
+      </section>
+
+      {presets.length > 0 && (
+        <section data-reveal>
+          <h2 class="mb-3 text-sm font-semibold">{t.presets}</h2>
+          <ul class="flex flex-wrap gap-2">
+            {variant && (
+              <li>
+                <a href={href(`/${id}`)} class="inline-block rounded border border-border px-2.5 py-1 text-xs text-muted transition-colors hover:border-accent hover:text-accent">
+                  {tool.name}
+                </a>
+              </li>
+            )}
+            {presets.filter((p) => p.slug !== variant?.slug).map((p) => (
+              <li>
+                <a href={href(`/${id}/${p.slug}`)} class="inline-block rounded border border-border px-2.5 py-1 text-xs text-muted transition-colors hover:border-accent hover:text-accent">
+                  {p.name}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {related.length > 0 && (
+        <section data-reveal>
+          <h2 class="mb-3 text-sm font-semibold">{t.relatedTools}</h2>
+          <div class="grid gap-2.5 sm:grid-cols-3">
+            {related.map((r) => (
+              <a href={href(`/${toolId(r)}`)} class="group rounded-lg border border-border bg-surface p-3 transition-colors duration-[120ms] hover:border-accent hover:bg-sunken">
+                <span class="block text-sm font-medium transition-colors group-hover:text-accent">{r.name}</span>
+                <span class="mt-0.5 block text-2xs leading-snug text-muted">{r.blurb}</span>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+  </div>
+</BaseLayout>

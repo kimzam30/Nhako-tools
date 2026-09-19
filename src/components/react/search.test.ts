@@ -20,6 +20,11 @@ describe('tool search', () => {
   it('finds tools by common phrasings people actually search', () => {
     const cases: [string, string][] = [
       ['pdf to jpg', 'pdf/to-image'],
+      ['jpg to pdf', 'pdf/jpg-to-pdf'],
+      ['heic', 'image/heic-to-jpg'],
+      ['exif', 'image/remove-metadata'],
+      ['password', 'pdf/protect'],
+      ['signature', 'pdf/sign'],
       ['combine', 'pdf/merge'],
       ['shrink video', 'media/compress-video'],
       ['jwt', 'dev/jwt'],

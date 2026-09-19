@@ -1,5 +1,9 @@
 ---
 import { TOOLS } from '../../tools/registry';
+import { ui, type Locale } from '../../i18n';
+
+interface Props { locale: Locale }
+const readout = ui(Astro.props.locale).readout;
 
 /**
  * The hero set piece: a terminal-style readout of what is true about this page
@@ -15,13 +19,9 @@ import { TOOLS } from '../../tools/registry';
  * reader gets with JavaScript disabled. The script re-hides and re-types it
  * rather than building it from nothing.
  */
-const ROWS: [string, string][] = [
-  ['runtime', 'local'],
-  ['uploaded', '0 bytes'],
-  ['tools', `${TOOLS.length} ready`],
-  ['queue', 'none'],
-  ['account', 'not required'],
-];
+const ROWS: [string, string][] = readout.map(([key, value]) =>
+  // The tool count is live, never a translated constant.
+  [key, key === 'tools' || key === 'alat' ? `${TOOLS.length} ${value}` : value]);
 ---
 
 <div
@@ -32,7 +32,7 @@ const ROWS: [string, string][] = [
   {ROWS.map(([key, value]) => (
     <div data-row class="flex gap-3 whitespace-nowrap">
       <span class="text-accent">&gt;</span>
-      <span class="w-[9ch] shrink-0 text-muted">{key}</span>
+      <span class="w-[11ch] shrink-0 text-muted">{key}</span>
       <span class="text-text">{value}</span>
     </div>
   ))}

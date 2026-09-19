@@ -1,5 +1,10 @@
 ---
 import Logo from './Logo.astro';
+import { localePath, ui, type Locale } from '../../i18n';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const t = ui(locale);
 
 // Deliberately thin. The old footer carried nine links to pages that did not
 // exist (Blog, Best practices, Pro experience, Contact, Legal…) plus three
@@ -12,14 +17,14 @@ const year = new Date().getFullYear();
     <p class="flex items-center gap-2">
       <Logo class="size-4 rounded-sm" />
       <span class="font-semibold text-text"><span class="text-accent">Nhako</span>Tools</span>
-      <span>Every tool runs in your browser. Nothing is uploaded.</span>
+      <span>{t.footerLine}</span>
     </p>
     <ul class="flex items-center gap-5">
-      <li><a class="transition-colors hover:text-accent" href="/about">About</a></li>
-      <li><a class="transition-colors hover:text-accent" href="/privacy">Privacy</a></li>
+      <li><a class="transition-colors hover:text-accent" href={localePath(locale, '/about')}>{t.about}</a></li>
+      <li><a class="transition-colors hover:text-accent" href={localePath(locale, '/privacy')}>{t.privacy}</a></li>
       <li>
         <a class="transition-colors hover:text-accent" href="https://github.com/kimzam30/Nhako-tools" rel="noopener noreferrer">
-          Source
+          {t.source}
         </a>
       </li>
       <li aria-hidden="true">·</li>

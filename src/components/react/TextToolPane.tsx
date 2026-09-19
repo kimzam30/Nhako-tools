@@ -3,14 +3,19 @@ import type { OptionSpec, OptionValues, TextToolResult, ToolMeta } from '../../t
 import { defaultOptions, ToolError } from '../../tools/types';
 import { loadTool } from '../../tools/loaders';
 import OptionsPanel from './OptionsPanel';
+import { optionsBeforeHydration } from './hydration';
 import CopyButton from './CopyButton';
 import HighlightedOutput from './HighlightedOutput';
+import type { Locale } from '../../i18n/paths';
+import { islandText } from '../../i18n/island';
 
 interface Props {
   tool: Pick<ToolMeta, 'category' | 'slug' | 'name' | 'kind' | 'generator'> & { options?: OptionSpec[] };
+  locale?: Locale;
 }
 
-export default function TextToolPane({ tool }: Props) {
+export default function TextToolPane({ tool, locale = 'en' }: Props) {
+  const t = islandText(locale);
   const id = `${tool.category}/${tool.slug}`;
   const specs = tool.options ?? [];
   const twoInputs = tool.kind === 'text2';
@@ -22,7 +27,8 @@ export default function TextToolPane({ tool }: Props) {
   // processed (reproduced in WebKit), because state started empty.
   const [input, setInput] = useState(() => typedBeforeHydration(inputId));
   const [inputB, setInputB] = useState(() => typedBeforeHydration(inputBId));
-  const [options, setOptions] = useState<OptionValues>(() => defaultOptions(specs));
+  // Seeded from the page as rendered, so a choice made before hydration counts.
+  const [options, setOptions] = useState<OptionValues>(() => optionsBeforeHydration(specs, defaultOptions(specs)));
   const [result, setResult] = useState<TextToolResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const runId = useRef(0);
@@ -38,9 +44,9 @@ export default function TextToolPane({ tool }: Props) {
     } catch (err) {
       if (ticket !== runId.current) return;
       setResult(null);
-      setError(err instanceof ToolError || err instanceof Error ? err.message : 'Could not process that input.');
+      setError(err instanceof ToolError || err instanceof Error ? err.message : t.inputError);
     }
-  }, [id]);
+  }, [id, t]);
 
   // Whether there is anything to run is derived, never stored: writing it to
   // state would mean a synchronous setState on mount for every text tool.
@@ -65,15 +71,15 @@ export default function TextToolPane({ tool }: Props) {
   // entire formatted document aloud. Now one short summary is announced once
   // typing pauses.
   const summary = idle ? '' : shownError
-    ? `Error: ${shownError}`
-    : result ? `Output updated. ${(result.stats ?? []).map((s) => `${s.label} ${s.value}`).join(', ')}` : '';
+    ? `${t.errorPrefix} ${shownError}`
+    : result ? `${t.outputUpdated} ${(result.stats ?? []).map((s) => `${s.label} ${s.value}`).join(', ')}` : '';
   const announced = useSettled(summary, 700);
 
   return (
     <section className="flex flex-col gap-4">
       {specs.length > 0 && (
         <div className="rounded-lg border border-border bg-surface p-4">
-          <OptionsPanel specs={specs} values={options} onChange={(k, v) => setOptions((o) => ({ ...o, [k]: v }))} />
+          <OptionsPanel specs={specs} values={options} onChange={(k, v) => setOptions((o) => ({ ...o, [k]: v }))} rangeText={t.numberRange} />
         </div>
       )}
 
@@ -82,26 +88,26 @@ export default function TextToolPane({ tool }: Props) {
       <div className={`grid gap-4 ${tool.generator ? '' : 'lg:grid-cols-2'}`}>
         {!tool.generator && (
           <div className="flex flex-col gap-4">
-            <Pane title={twoInputs ? 'Original' : 'Input'}>
+            <Pane title={twoInputs ? t.original : t.input}>
               <textarea
                 id={inputId}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 spellCheck={false}
-                aria-label={twoInputs ? 'Original text' : 'Input'}
-                placeholder={placeholderFor(id)}
+                aria-label={twoInputs ? t.originalText : t.input}
+                placeholder={t.placeholders[id] ?? t.placeholderDefault}
                 className="h-full min-h-56 w-full resize-y bg-transparent p-3 font-mono text-xs leading-relaxed outline-none placeholder:text-muted"
               />
             </Pane>
             {twoInputs && (
-              <Pane title="Changed">
+              <Pane title={t.changed}>
                 <textarea
                   id={inputBId}
                   value={inputB}
                   onChange={(e) => setInputB(e.target.value)}
                   spellCheck={false}
-                  aria-label="Changed text"
-                  placeholder="Paste the version to compare against…"
+                  aria-label={t.changedText}
+                  placeholder={t.comparePlaceholder}
                   className="h-full min-h-56 w-full resize-y bg-transparent p-3 font-mono text-xs leading-relaxed outline-none placeholder:text-muted"
                 />
               </Pane>
@@ -110,17 +116,17 @@ export default function TextToolPane({ tool }: Props) {
         )}
 
         <Pane
-          title="Output"
-          action={output && result?.language !== 'image' ? <CopyButton text={output} /> : null}
+          title={t.output}
+          action={output && result?.language !== 'image' ? <CopyButton text={output} label={t.copy} copiedLabel={t.copied} announce={t.copiedAnnounce} /> : null}
         >
           <div className="min-h-56 overflow-auto">
             {shownError ? (
               <p className="p-3 font-mono text-xs leading-relaxed text-err">{shownError}</p>
             ) : result?.language === 'image' && output ? (
               <div className="flex flex-col items-center gap-3 p-4">
-                <img src={output} alt="Generated QR code" className="max-w-full rounded bg-white p-2" width={256} height={256} />
+                <img src={output} alt={t.qrAlt} className="max-w-full rounded bg-white p-2" width={256} height={256} />
                 <a href={output} download="qr-code.png" className="rounded bg-accent px-3 py-1.5 text-sm font-medium text-accent-on transition-colors hover:bg-accent-hover">
-                  Save PNG
+                  {t.savePng}
                 </a>
               </div>
             ) : output ? (
@@ -133,7 +139,7 @@ export default function TextToolPane({ tool }: Props) {
                 <HighlightedOutput text={output} language={result?.language ?? 'text'} segments={result?.segments} />
               </>
             ) : (
-              <p className="p-3 font-mono text-xs text-muted">Output appears here as you type.</p>
+              <p className="p-3 font-mono text-xs text-muted">{t.outputHere}</p>
             )}
           </div>
         </Pane>
@@ -180,17 +186,4 @@ function typedBeforeHydration(id: string): string {
   if (typeof document === 'undefined') return '';
   const el = document.getElementById(id);
   return el instanceof HTMLTextAreaElement ? el.value : '';
-}
-
-function placeholderFor(id: string): string {
-  const map: Record<string, string> = {
-    'dev/json': '{ "paste": "your JSON here" }',
-    'dev/jwt': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9…',
-    'dev/base64': 'Paste text to encode, or Base64 to decode…',
-    'dev/word-count': 'Start typing. Counts update live.',
-    'dev/hash': 'Text to hash…',
-    'dev/qr': 'https://example.com',
-    'dev/diff': 'Paste the original text…',
-  };
-  return map[id] ?? 'Paste your input here…';
 }

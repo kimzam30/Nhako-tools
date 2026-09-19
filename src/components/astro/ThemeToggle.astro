@@ -3,12 +3,18 @@
 // otherwise pull the whole React runtime onto every page on the site,
 // including the static ones, which is exactly what a site selling itself on
 // speed must not do.
+import { ui, type Locale } from '../../i18n';
+
+interface Props { locale: Locale }
+const t = ui(Astro.props.locale);
 ---
 <button
   type="button"
   id="theme-toggle"
   class="grid size-8 place-items-center rounded border border-border text-muted transition-colors duration-[120ms] hover:border-border-strong hover:text-text"
-  aria-label="Switch theme"
+  aria-label={t.switchTheme}
+  data-to-light={t.switchToLight}
+  data-to-dark={t.switchToDark}
 >
   {/* `hidden` is not a valid SVG attribute, so each icon sits in a span that carries it. */}
   <span data-icon="light" class="grid place-items-center">
@@ -32,7 +38,8 @@
     const dark = root.dataset.theme === 'dark';
     button?.querySelector('[data-icon="light"]')?.toggleAttribute('hidden', dark);
     button?.querySelector('[data-icon="dark"]')?.toggleAttribute('hidden', !dark);
-    button?.setAttribute('aria-label', `Switch to ${dark ? 'light' : 'dark'} theme`);
+    const label = dark ? button?.dataset.toLight : button?.dataset.toDark;
+    if (label) button?.setAttribute('aria-label', label);
   }
 
   button?.addEventListener('click', () => {

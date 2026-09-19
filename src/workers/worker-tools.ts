@@ -16,4 +16,7 @@ export const WORKER_TOOLS: Record<string, () => Promise<ToolModule>> = {
   'pdf/rotate': () => import('../tools/pdf/rotate'),
   'pdf/watermark': () => import('../tools/pdf/watermark'),
   'pdf/to-text': () => import('../tools/pdf/to-text'),
+  'pdf/page-numbers': () => import('../tools/pdf/page-numbers'),
+  'pdf/crop': () => import('../tools/pdf/crop'),
+  'image/remove-metadata': () => import('../tools/image/remove-metadata'),
 };

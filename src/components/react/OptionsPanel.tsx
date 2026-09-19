@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import type { OptionSpec, OptionValues } from '../../tools/types';
+import { isVisible, type OptionSpec, type OptionValues } from '../../tools/types';
+import { valueBeforeHydration } from './hydration';
 
 /**
  * One generic renderer for every tool's options, driven by the declarative
@@ -7,19 +8,22 @@ import type { OptionSpec, OptionValues } from '../../tools/types';
  * component change.
  */
 export default function OptionsPanel({
-  specs, values, onChange, disabled,
+  specs, values, onChange, disabled, rangeText = (min, max) => `${min} to ${max}`,
 }: {
   specs: OptionSpec[];
   values: OptionValues;
   onChange: (key: string, value: string | number | boolean) => void;
   disabled?: boolean;
+  /** "1 to 100", worded for the page's language. */
+  rangeText?: (min: number, max: number) => string;
 }) {
+  const shown = specs.filter((s) => isVisible(s, values));
   // Toggles always span the full width, so only the others decide the layout.
-  const columned = specs.filter((s) => s.kind !== 'toggle').length > 1;
+  const columned = shown.filter((s) => s.kind !== 'toggle').length > 1;
 
   return (
     <div className={`grid gap-x-6 gap-y-4 ${columned ? 'sm:grid-cols-2' : 'max-w-sm'}`}>
-      {specs.map((spec) => {
+      {shown.map((spec) => {
         const id = `opt-${spec.key}`;
         const value = values[spec.key];
         return (
@@ -66,14 +70,20 @@ export default function OptionsPanel({
 
                 {spec.kind === 'number' && (
                   <div className="flex items-center gap-2">
-                    <NumberField spec={spec} id={id} value={Number(value)} disabled={disabled} onCommit={(n) => onChange(spec.key, n)} />
+                    <NumberField spec={spec} id={id} value={Number(value)} disabled={disabled} rangeText={rangeText} onCommit={(n) => onChange(spec.key, n)} />
                     {spec.suffix && <span className="text-xs text-muted">{spec.suffix}</span>}
                   </div>
                 )}
 
                 {spec.kind === 'text' && (
                   <input
-                    id={id} type="text" disabled={disabled}
+                    id={id} disabled={disabled}
+                    // A password field is masked, never autofilled from a
+                    // saved login, and never spell-checked (which can send
+                    // text to a cloud service in some browsers).
+                    type={spec.secret ? 'password' : 'text'}
+                    autoComplete={spec.secret ? 'off' : undefined}
+                    spellCheck={spec.secret ? false : undefined}
                     value={String(value)} placeholder={spec.placeholder}
                     onChange={(e) => onChange(spec.key, e.target.value)}
                     className="w-full rounded border border-border bg-surface px-2.5 py-1.5 text-sm transition-colors hover:border-border-strong"
@@ -100,10 +110,12 @@ type NumberSpec = Extract<OptionSpec, { kind: 'number' }>;
  * ("1" on the way to "15") was sent to the tool. Only a complete, in-range
  * number is committed; anything else is shown as invalid and left alone.
  */
-function NumberField({ spec, id, value, disabled, onCommit }: {
-  spec: NumberSpec; id: string; value: number; disabled?: boolean; onCommit: (n: number) => void;
+function NumberField({ spec, id, value, disabled, rangeText, onCommit }: {
+  spec: NumberSpec; id: string; value: number; disabled?: boolean;
+  rangeText: (min: number, max: number) => string; onCommit: (n: number) => void;
 }) {
-  const [draft, setDraft] = useState(String(value));
+  // Whatever the field shows, even if it was edited before hydration.
+  const [draft, setDraft] = useState(() => valueBeforeHydration(id, String(value)));
   const [committed, setCommitted] = useState(value);
 
   // The value changed from outside (not from typing here): follow it.
@@ -139,7 +151,7 @@ function NumberField({ spec, id, value, disabled, onCommit }: {
       />
       {!valid && (
         <span id={errorId} className="text-2xs text-err">
-          {spec.min} to {spec.max}
+          {rangeText(spec.min, spec.max)}
         </span>
       )}
     </>

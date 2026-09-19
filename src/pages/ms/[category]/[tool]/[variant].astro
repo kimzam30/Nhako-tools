@@ -1,0 +1,16 @@
+---
+import ToolView from '../../../../views/ToolView.astro';
+import { TOOLS } from '../../../../tools/registry';
+import type { ToolMeta, ToolVariant } from '../../../../tools/types';
+
+export function getStaticPaths() {
+  // One page per preset, e.g. /pdf/compress/500kb, straight from the registry.
+  return TOOLS.flatMap((tool) => (tool.variants ?? []).map((variant) => ({
+    params: { category: tool.category, tool: tool.slug, variant: variant.slug },
+    props: { tool, variant },
+  })));
+}
+
+interface Props { tool: ToolMeta; variant: ToolVariant }
+---
+<ToolView tool={Astro.props.tool} variant={Astro.props.variant} locale="ms" />

@@ -2,26 +2,39 @@
 import '../styles/tokens.css';
 import Nav from '../components/astro/Nav.astro';
 import Footer from '../components/astro/Footer.astro';
+import { LANG, LOCALES, localePath, ui, type Locale } from '../i18n';
 
 interface Props {
   title: string;
   description: string;
-  /** Canonical path, e.g. "/pdf/merge". Defaults to the current URL. */
-  path?: string;
+  locale?: Locale;
+  /**
+   * The page's path WITHOUT a locale prefix, e.g. "/pdf/merge". The canonical
+   * URL, the hreflang alternates and the language switch are all built from
+   * it, so the English and Malay versions always point at each other.
+   */
+  path: string;
+  /** False for pages with no translated twin (the 404). */
+  alternates?: boolean;
   keywords?: string[];
   jsonLd?: Record<string, unknown>;
   /** Category slug, used to pick the social preview image. */
   category?: string;
+  /** Full <title> override. Defaults to "<title> | Nhako Tools". */
+  documentTitle?: string;
+  /** Keep a page out of search results (and out of the sitemap, see astro.config.mjs). */
+  noindex?: boolean;
 }
 
-const { title, description, path, keywords, jsonLd, category } = Astro.props;
+const { title, description, path, keywords, jsonLd, category, documentTitle, noindex = false, locale = 'en', alternates = true } = Astro.props;
+const t = ui(locale);
 const site = Astro.site ?? new URL('https://tools.nhako.com');
-const canonical = new URL(path ?? Astro.url.pathname, site);
+const canonical = new URL(localePath(locale, path), site);
 
-// The tab shows the page name alone. A browser tab is narrow and the brand is
-// already the favicon sitting next to it, so repeating it just pushes the part
-// people are actually scanning for out of view.
-const tabTitle = title;
+// The <title> is also the search result headline, and "Merge PDF" alone is
+// word for word what every competitor ranks with. The page name still leads,
+// so a narrow tab shows the part people scan for; the brand trails.
+const tabTitle = documentTitle ?? (title === 'Nhako Tools' ? title : `${title} | Nhako Tools`);
 
 // Social cards have no such context, so they keep the brand.
 const socialTitle = title === 'Nhako Tools' ? title : `${title} · Nhako Tools`;
@@ -29,14 +42,19 @@ const ogImage = new URL(`/og/${category ?? 'default'}.png`, site);
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang={LANG[locale]}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{tabTitle}</title>
     <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex" />}
     {keywords && keywords.length > 0 && <meta name="keywords" content={keywords.join(', ')} />}
     <link rel="canonical" href={canonical.href} />
+    {alternates && LOCALES.map((l) => (
+      <link rel="alternate" hreflang={LANG[l]} href={new URL(localePath(l, path), site).href} />
+    ))}
+    {alternates && <link rel="alternate" hreflang="x-default" href={new URL(path, site).href} />}
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
@@ -47,6 +65,7 @@ const ogImage = new URL(`/og/${category ?? 'default'}.png`, site);
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical.href} />
     <meta property="og:site_name" content="Nhako Tools" />
+    <meta property="og:locale" content={locale === 'ms' ? 'ms_MY' : 'en_MY'} />
     <meta property="og:image" content={ogImage.href} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -59,6 +78,19 @@ const ogImage = new URL(`/og/${category ?? 'default'}.png`, site);
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
 
     {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
+
+    {/*
+      Vercel Web Analytics: cookieless, no personal data, and served from this
+      same origin (/_vercel/insights), so it needs no CORS or COEP exception.
+      Production builds only; the path does not exist in dev or local preview.
+      It records page views, never files or tool input. See /privacy.
+    */}
+    {import.meta.env.PROD && (
+      <>
+        <script is:inline>window.va = window.va || function (...args) { (window.vaq = window.vaq || []).push(args); };</script>
+        <script is:inline defer src="/_vercel/insights/script.js"></script>
+      </>
+    )}
 
     {/*
       Blocking, inline, before first paint. The old build resolved the theme in
@@ -81,13 +113,13 @@ const ogImage = new URL(`/og/${category ?? 'default'}.png`, site);
 
   <body class="min-h-screen flex flex-col">
     <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-3 focus:rounded focus:bg-accent focus:px-4 focus:py-2 focus:text-accent-on">
-      Skip to content
+      {t.skip}
     </a>
-    <Nav />
+    <Nav locale={locale} path={path} alternates={alternates} />
     <main id="main" class="flex-1 w-full">
       <slot />
     </main>
-    <Footer />
+    <Footer locale={locale} />
 
     <script is:inline>
       // Offline support. Registered after load so it never competes with the

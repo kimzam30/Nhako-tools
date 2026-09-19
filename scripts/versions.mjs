@@ -18,7 +18,18 @@ const version = (pkg) => JSON.parse(readFileSync(join(root, 'node_modules', pkg,
 
 export const FFMPEG_CORE_VERSION = version('@ffmpeg/core');
 export const TRANSFORMERS_VERSION = version('@xenova/transformers');
+export const QPDF_VERSION = version('@neslinesli93/qpdf-wasm');
+export const LIBHEIF_VERSION = version('libheif-js');
+export const TESSERACT_VERSION = version('tesseract.js');
+// eng and msa are versioned together; their package version names the path.
+export const TESSDATA_VERSION = version('@tesseract.js-data/eng');
+export const LIBREOFFICE_VERSION = version('@matbee/libreoffice-converter');
 
 /** Served base paths, each ending in a slash. */
 export const FFMPEG_BASE = `/vendor/ffmpeg/${FFMPEG_CORE_VERSION}/`;
 export const ORT_BASE = `/vendor/ort/${TRANSFORMERS_VERSION}/`;
+export const QPDF_BASE = `/vendor/qpdf/${QPDF_VERSION}/`;
+export const LIBHEIF_BASE = `/vendor/libheif/${LIBHEIF_VERSION}/`;
+export const TESSERACT_BASE = `/vendor/tesseract/${TESSERACT_VERSION}/`;
+export const TESSDATA_BASE = `/vendor/tessdata/${TESSDATA_VERSION}/`;
+export const LIBREOFFICE_BASE = `/vendor/libreoffice/${LIBREOFFICE_VERSION}/`;

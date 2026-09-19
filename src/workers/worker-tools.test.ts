@@ -13,7 +13,10 @@ describe('worker tool map', () => {
     // Anything needing a canvas, ffmpeg or an AudioContext must stay on the
     // main thread; putting it here would fail at runtime inside the worker.
     const domBound = ['pdf/to-image', 'pdf/compress', 'image/', 'media/'];
+    // Image tools that only rewrite bytes and never touch a canvas.
+    const byteOnly = new Set(['image/remove-metadata']);
     for (const id of Object.keys(WORKER_TOOLS)) {
+      if (byteOnly.has(id)) continue;
       for (const prefix of domBound) {
         expect(id.startsWith(prefix), `${id} needs the DOM`).toBe(false);
       }
