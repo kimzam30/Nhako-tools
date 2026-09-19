@@ -119,7 +119,10 @@ Things this project does **not** do, stated here rather than discovered later:
   large objects. The best-known model (BRIA RMBG) is licensed non-commercially, and the
   strongest open one (BiRefNet) is too big to run in a browser's WebAssembly today.
 - **`Office to PDF` needs a desktop-class browser.** LibreOffice is a 77 MB download and
-  needs about 1 GB of memory; many phones cannot run it.
+  needs about 1 GB of memory; many phones cannot run it. About one conversion in a dozen,
+  this LibreOffice build stalls inside its own document loader (measured: 2 in 24). A
+  watchdog restarts it and tries again, so the file still converts, but that one takes
+  about 50 seconds instead of 4.
 - **`Hash` does not offer MD5.** Web Crypto deliberately omits it.
 - **Video compression runs at roughly real-time or slower**, and single-pass encoding
   lands near the target size rather than exactly on it.
@@ -211,12 +214,13 @@ own dependencies, which is why:
 | Page | Site JS (decoded) |
 |---|---|
 | Homepage, `/about`, `/privacy`, and their `/ms` twins | **0 KB**. The nav, theme toggle and ⌘K palette are vanilla |
-| A file or text tool page | **36 to 41 KB** |
+| A file or text tool page | **36 to 43 KB** (engines and models load only when the tool runs) |
 | Organize PDF, image crop | **30 to 32 KB** |
 | Salary calculator, Sign PDF | **34 to 39 KB** (plus the signature font, only once you type one) |
 | Passport photo maker | **43 KB** |
 | Teleprompter | **67 KB** (the full-screen stage, recording, the remote client, and its strings in both languages) |
 | Teleprompter phone remote | **40 KB** |
+| Scan to PDF | **38 KB** |
 
 Measured 2026-09-19 with Resource Timing in a fresh browser context. Tool pages
 were 32 KB before Bahasa Melayu; the difference is the islands' own strings in

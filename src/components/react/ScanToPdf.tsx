@@ -276,31 +276,29 @@ export default function ScanToPdf({ locale = 'en' }: { locale?: Locale }) {
 /** The photo with the page's four corners, draggable and keyboard-movable. */
 function CornerEditor({ page, t, onApply, onClose }: { page: Page; t: (typeof TEXT)['en']; onApply: (q: Quad) => void; onClose: () => void }) {
   const [quad, setQuad] = useState<Quad>(page.quad);
+  // The latest corners, for handlers that fire faster than renders.
+  const latest = useRef<Quad>(page.quad);
+  const applyTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const stage = useRef<HTMLDivElement>(null);
   const W = page.source.width;
   const H = page.source.height;
+  useEffect(() => () => clearTimeout(applyTimer.current), []);
 
   const clamp = (p: Point): Point => ({ x: Math.min(W, Math.max(0, p.x)), y: Math.min(H, Math.max(0, p.y)) });
-  const set = (i: number, p: Point, commit: boolean) => {
-    const next = quad.map((q, j) => (j === i ? clamp(p) : q)) as Quad;
-    setQuad(next);
-    if (commit) onApply(next);
-  };
+  const show = (next: Quad) => { latest.current = next; setQuad(next); };
 
   function drag(e: React.PointerEvent, i: number) {
     e.preventDefault();
     const rect = stage.current!.getBoundingClientRect();
     const k = W / rect.width;
-    let latest = quad;
     const onMove = (ev: PointerEvent) => {
       const p = clamp({ x: (ev.clientX - rect.left) * k, y: (ev.clientY - rect.top) * k });
-      latest = latest.map((q, j) => (j === i ? p : q)) as Quad;
-      setQuad(latest);
+      show(latest.current.map((q, j) => (j === i ? p : q)) as Quad);
     };
     const onUp = () => {
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
-      onApply(latest);
+      onApply(latest.current);
     };
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
@@ -311,7 +309,13 @@ function CornerEditor({ page, t, onApply, onClose }: { page: Page; t: (typeof TE
     const d = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
     if (!d) return;
     e.preventDefault();
-    set(i, { x: quad[i]!.x + d[0]!, y: quad[i]!.y + d[1]! }, true);
+    // From the latest corners, not this render's: held-down keys repeat
+    // faster than the page re-renders, and each press must count.
+    const from = latest.current[i]!;
+    show(latest.current.map((q, j) => (j === i ? clamp({ x: from.x + d[0]!, y: from.y + d[1]! }) : q)) as Quad);
+    // Straightening the page is heavy: do it once the keys stop.
+    clearTimeout(applyTimer.current);
+    applyTimer.current = setTimeout(() => onApply(latest.current), 350);
   }
 
   const pct = (p: Point) => ({ left: `${(p.x / W) * 100}%`, top: `${(p.y / H) * 100}%` });
@@ -335,7 +339,7 @@ function CornerEditor({ page, t, onApply, onClose }: { page: Page; t: (typeof TE
         ))}
       </div>
       <div className="mt-3 flex gap-2">
-        <button type="button" onClick={() => { setQuad(whole); onApply(whole); }} className="rounded border border-border px-3 py-1.5 text-sm text-muted hover:text-text">{t.reset}</button>
+        <button type="button" onClick={() => { show(whole); onApply(whole); }} className="rounded border border-border px-3 py-1.5 text-sm text-muted hover:text-text">{t.reset}</button>
         <button type="button" onClick={onClose} className="ml-auto rounded bg-accent px-3 py-1.5 text-sm font-medium text-accent-on hover:bg-accent-hover">{t.done}</button>
       </div>
     </div>

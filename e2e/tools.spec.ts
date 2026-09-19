@@ -118,6 +118,8 @@ test.describe('options while a file is loaded', () => {
 
   test('a drop on the zone during a run never falls through to the browser', async ({ page }) => {
     await page.goto('/pdf/merge');
+    // The handler is the island's: wait for it, or a busy machine dispatches first.
+    await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
     const zone = page.locator('button:has-text("Drop files here")');
     const prevented = await zone.evaluate((zone) => {
       const event = new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: new DataTransfer() });
