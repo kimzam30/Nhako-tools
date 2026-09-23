@@ -1,0 +1,122 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ToolRow, { type Preset } from '../components/astro/ToolRow.astro';
+import { TOOLS, toolsIn } from '../tools/registry';
+import { groupsIn, hasGroups } from '../tools/groups';
+import { toolId, type Category, type ToolMeta } from '../tools/types';
+import { categoryLabel, groupLabel, localizeTool, localizeVariant, localePath, ui, type Locale } from '../i18n';
+
+interface Props { category: Category; locale: Locale }
+const { category, locale } = Astro.props;
+const t = ui(locale);
+const label = categoryLabel(category, locale);
+const own = toolsIn(category);
+
+const path = `/${category}`;
+const href = (p: string) => localePath(locale, p);
+
+/** Preset chips for a tool, or none. Localised here for the same reason the
+ *  tool is: ToolRow renders words, it does not choose them. */
+const presetsFor = (tool: ToolMeta): Preset[] =>
+  (tool.variants ?? []).map((v) => {
+    const localized = localizeVariant(tool, v, locale);
+    return { href: href(`/${toolId(tool)}/${v.slug}`), short: v.short, name: localized.name };
+  });
+
+/**
+ * Rows for one group: the category's own tools, then anything cross-listed in.
+ * A cross-listed tool renders identically, because the data model is not the
+ * reader's problem.
+ */
+const rowsIn = (groupId: string): ToolMeta[] => [
+  ...own.filter((x) => x.group === groupId),
+  ...TOOLS.filter((x) => (x.alsoIn ?? []).some((r) => r.category === category && r.group === groupId)),
+];
+
+// Flat below the threshold: a heading over two rows costs a glance and returns
+// nothing. groupsIn() is empty for those categories, which is the signal.
+const grouped = hasGroups(category);
+const groups = groupsIn(category);
+
+// The count labels the category, not the page. Image owns 11 tools and shows
+// 14 rows, because three are cross-listed in from PDF and Developer. Counting
+// rows would print 14 here while the homepage printed 11, and the five
+// category pages would sum to 46 against a real catalogue of 43.
+const count = own.length;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: `${label} tools`,
+  url: new URL(href(path), 'https://tools.nhako.com').href,
+  description: t.categoryIntro[category],
+  isPartOf: { '@type': 'WebSite', name: 'Nhako Tools', url: 'https://tools.nhako.com' },
+  breadcrumb: {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: t.breadcrumbTools, item: new URL(href('/'), 'https://tools.nhako.com').href },
+      { '@type': 'ListItem', position: 2, name: label },
+    ],
+  },
+};
+---
+
+<BaseLayout
+  title={`${label} tools`}
+  documentTitle={t.categoryTitle(label)}
+  description={t.categoryDescription(label, own.length)}
+  path={path}
+  locale={locale}
+  category={category}
+  jsonLd={jsonLd}
+>
+  <div class="mx-auto max-w-4xl px-4 sm:px-6">
+    <nav aria-label={t.breadcrumb} class="pt-8 text-2xs text-muted">
+      <a href={href('/')} class="transition-colors hover:text-accent">{t.breadcrumbTools}</a>
+      <span aria-hidden="true"> / </span>
+      <span class="text-text">{label}</span>
+    </nav>
+
+    <header class="mb-8 mt-4">
+      <div class="flex items-baseline gap-3">
+        <h1 class="text-2xl font-bold tracking-tight">{label}</h1>
+        <span data-reveal-rule class="h-px flex-1 bg-border" aria-hidden="true"></span>
+        <span data-numeric class="font-mono text-2xs text-muted">{count}</span>
+      </div>
+      <p class="mt-3 max-w-2xl text-sm leading-relaxed text-muted">{t.categoryIntro[category]}</p>
+    </header>
+
+    {grouped
+      ? groups.map((group) => (
+          <section class="mb-9">
+            <h2 class="mb-2 text-2xs font-semibold uppercase tracking-[0.14em] text-muted">
+              {groupLabel(category, group.id, locale)}
+            </h2>
+            <div class="border-t border-border">
+              {rowsIn(group.id).map((tool) => (
+                <ToolRow
+                  tool={localizeTool(tool, locale)}
+                  href={href(`/${toolId(tool)}`)}
+                  presets={presetsFor(tool)}
+                />
+              ))}
+            </div>
+          </section>
+        ))
+      : (
+        <div class="mb-9 border-t border-border">
+          {own.map((tool) => (
+            <ToolRow
+              tool={localizeTool(tool, locale)}
+              href={href(`/${toolId(tool)}`)}
+              presets={presetsFor(tool)}
+            />
+          ))}
+        </div>
+      )}
+
+    <p class="mb-16 text-2xs text-muted">
+      <a href={href('/')} class="transition-colors hover:text-accent">{t.allTools(TOOLS.length)}</a>
+    </p>
+  </div>
+</BaseLayout>

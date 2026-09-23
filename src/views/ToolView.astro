@@ -82,7 +82,7 @@ const runnerTool = {
     <nav aria-label={t.breadcrumb} class="mb-6 text-2xs text-muted">
       <a href={href('/')} class="transition-colors hover:text-accent">{t.breadcrumbTools}</a>
       <span aria-hidden="true"> / </span>
-      <a href={`${href('/')}#${tool.category}`} class="transition-colors hover:text-accent">{categoryLabel(tool.category, locale)}</a>
+      <a href={href(`/${tool.category}`)} class="transition-colors hover:text-accent">{categoryLabel(tool.category, locale)}</a>
       {variant && (
         <>
           <span aria-hidden="true"> / </span>

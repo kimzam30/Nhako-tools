@@ -1,0 +1,13 @@
+---
+import CategoryView from '../../views/CategoryView.astro';
+import { CATEGORIES, type Category } from '../../tools/types';
+
+export function getStaticPaths() {
+  // One page per category, enumerated from the same constant the nav and the
+  // homepage read. A category cannot exist in one place and not the other.
+  return CATEGORIES.map((category) => ({ params: { category }, props: { category } }));
+}
+
+interface Props { category: Category }
+---
+<CategoryView category={Astro.props.category} locale="en" />

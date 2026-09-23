@@ -1,0 +1,76 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ToolRow from '../components/astro/ToolRow.astro';
+import { TOOLS_BY_ID } from '../tools/registry';
+import type { CollectionEntry } from '../tools/collections';
+import { toolId } from '../tools/types';
+import { localizeTool, localizeVariant, localePath, ui, type Locale } from '../i18n';
+
+interface Props {
+  entries: readonly CollectionEntry[];
+  locale: Locale;
+  path: string;
+  title: string;
+  intro: string;
+  sources: string;
+}
+const { entries, locale, path, title, intro, sources } = Astro.props;
+const t = ui(locale);
+const href = (p: string) => localePath(locale, p);
+
+// Resolved here rather than in the template so a broken entry is a build
+// error, not a row rendering the word "undefined".
+const rows = entries.map((entry) => {
+  const raw = TOOLS_BY_ID.get(entry.tool);
+  if (!raw) throw new Error(`Collection entry points at a tool that does not exist: ${entry.tool}`);
+  const variant = entry.variant ? raw.variants?.find((v) => v.slug === entry.variant) : undefined;
+  if (entry.variant && !variant) {
+    throw new Error(`Collection entry points at a preset that does not exist: ${entry.tool}/${entry.variant}`);
+  }
+  const tool = localizeTool(raw, locale);
+  const name = variant ? localizeVariant(raw, variant, locale).name : tool.name;
+  return {
+    tool: { ...tool, name },
+    href: href(`/${toolId(raw)}${variant ? `/${variant.slug}` : ''}`),
+    context: locale === 'ms' ? entry.contextMs : entry.context,
+  };
+});
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: title,
+  url: new URL(href(path), 'https://tools.nhako.com').href,
+  description: intro,
+  isPartOf: { '@type': 'WebSite', name: 'Nhako Tools', url: 'https://tools.nhako.com' },
+};
+---
+
+<BaseLayout title={title} description={intro} path={path} locale={locale} jsonLd={jsonLd}>
+  <div class="mx-auto max-w-4xl px-4 sm:px-6">
+    <nav aria-label={t.breadcrumb} class="pt-8 text-2xs text-muted">
+      <a href={href('/')} class="transition-colors hover:text-accent">{t.breadcrumbTools}</a>
+      <span aria-hidden="true"> / </span>
+      <span class="text-text">{title}</span>
+    </nav>
+
+    <header class="mb-8 mt-4">
+      <div class="flex items-baseline gap-3">
+        <h1 class="text-2xl font-bold tracking-tight">{title}</h1>
+        <span data-reveal-rule class="h-px flex-1 bg-border" aria-hidden="true"></span>
+        <span data-numeric class="font-mono text-2xs text-muted">{rows.length}</span>
+      </div>
+      <p class="mt-3 max-w-2xl text-sm leading-relaxed text-muted">{intro}</p>
+    </header>
+
+    <div class="border-t border-border">
+      {rows.map((row) => <ToolRow tool={row.tool} href={row.href} context={row.context} />)}
+    </div>
+
+    <p class="mt-6 max-w-2xl text-2xs leading-relaxed text-muted">{sources}</p>
+
+    <p class="mb-16 mt-6 text-2xs text-muted">
+      <a href={href('/')} class="transition-colors hover:text-accent">{t.browseAll}</a>
+    </p>
+  </div>
+</BaseLayout>

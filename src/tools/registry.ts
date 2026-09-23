@@ -13,7 +13,7 @@ import type { ToolMeta } from './types';
 export const TOOLS: readonly ToolMeta[] = [
   // ─── PDF ──────────────────────────────────────────────────────────────────
   {
-    slug: 'merge', category: 'pdf', name: 'Merge PDF', kind: 'file',
+    slug: 'merge', category: 'pdf', name: 'Merge PDF', kind: 'file', group: 'organise',
     blurb: 'Combine several PDFs into one file.',
     description: 'Merge PDF files in your browser. No upload, no file size limit, no account. Drop the files and the merged PDF is ready instantly.',
     keywords: ['merge', 'combine', 'join', 'concatenate', 'append', 'pdf'],
@@ -23,7 +23,7 @@ export const TOOLS: readonly ToolMeta[] = [
     related: ['pdf/split', 'pdf/compress', 'pdf/rotate'],
   },
   {
-    slug: 'split', category: 'pdf', name: 'Split PDF', kind: 'file',
+    slug: 'split', category: 'pdf', name: 'Split PDF', kind: 'file', group: 'organise',
     blurb: 'Extract every page into a separate PDF.',
     description: 'Split a PDF into single pages in your browser. Returns a ZIP, with no upload and no page limit.',
     keywords: ['split', 'separate', 'extract pages', 'divide', 'burst', 'pdf'],
@@ -34,7 +34,7 @@ export const TOOLS: readonly ToolMeta[] = [
     related: ['pdf/merge', 'pdf/rotate', 'pdf/to-image'],
   },
   {
-    slug: 'compress', category: 'pdf', name: 'Compress PDF', kind: 'file',
+    slug: 'compress', category: 'pdf', name: 'Compress PDF', kind: 'file', group: 'shrink',
     blurb: 'Shrink a PDF, or get it under an exact size.',
     description: 'Compress a PDF in your browser, or get it under an exact limit like 500 KB for an upload portal. No upload, no account.',
     keywords: ['compress', 'reduce', 'shrink', 'optimise', 'optimize', 'smaller', 'pdf', 'kb', 'under 500kb', 'under 1mb', 'file size limit', 'upload limit'],
@@ -56,20 +56,20 @@ export const TOOLS: readonly ToolMeta[] = [
     limits: ['Reaching a small target usually means rasterising pages, so text stops being selectable and searchable.', 'Pages are never rendered below about 45 dpi. If a document cannot fit and stay readable, the tool says so instead of handing back an unreadable file. Splitting it first usually helps.', 'Lossless mode often saves only a few percent. That is the honest ceiling for structural compression.'],
     related: ['pdf/split', 'image/compress', 'pdf/merge'],
     variants: [
-      { slug: '100kb', name: 'Compress PDF to 100 KB', blurb: 'Get a PDF under 100 KB.', defaults: { target: '100' },
+      { slug: '100kb', short: '100 KB', name: 'Compress PDF to 100 KB', blurb: 'Get a PDF under 100 KB.', defaults: { target: '100' },
         description: 'Compress a PDF to under 100 KB in your browser, for portals with a strict upload limit. No upload, no account, no watermark.' },
-      { slug: '200kb', name: 'Compress PDF to 200 KB', blurb: 'Get a PDF under 200 KB.', defaults: { target: '200' },
+      { slug: '200kb', short: '200 KB', name: 'Compress PDF to 200 KB', blurb: 'Get a PDF under 200 KB.', defaults: { target: '200' },
         description: 'Compress a PDF to under 200 KB in your browser, for forms and portals with an upload limit. No upload, no account, no watermark.' },
-      { slug: '500kb', name: 'Compress PDF to 500 KB', blurb: 'Get a PDF under 500 KB.', defaults: { target: '500' },
+      { slug: '500kb', short: '500 KB', name: 'Compress PDF to 500 KB', blurb: 'Get a PDF under 500 KB.', defaults: { target: '500' },
         description: 'Compress a PDF to under 500 KB in your browser, the limit many application portals use. No upload, no account, no watermark.' },
-      { slug: '1mb', name: 'Compress PDF to 1 MB', blurb: 'Get a PDF under 1 MB.', defaults: { target: '1000' },
+      { slug: '1mb', short: '1 MB', name: 'Compress PDF to 1 MB', blurb: 'Get a PDF under 1 MB.', defaults: { target: '1000' },
         description: 'Compress a PDF to under 1 MB in your browser, usually with text still selectable. No upload, no account, no watermark.' },
-      { slug: '2mb', name: 'Compress PDF to 2 MB', blurb: 'Get a PDF under 2 MB.', defaults: { target: '2000' },
+      { slug: '2mb', short: '2 MB', name: 'Compress PDF to 2 MB', blurb: 'Get a PDF under 2 MB.', defaults: { target: '2000' },
         description: 'Compress a PDF to under 2 MB in your browser for email and upload portals. No upload, no account, no watermark.' },
     ],
   },
   {
-    slug: 'to-image', category: 'pdf', name: 'PDF to JPG', kind: 'file',
+    slug: 'to-image', category: 'pdf', name: 'PDF to JPG', kind: 'file', group: 'extract', alsoIn: [{ category: 'image', group: 'convert' }],
     blurb: 'Turn every page into a high-resolution image.',
     description: 'Convert PDF pages to JPG or PNG in your browser. High resolution, no upload, no watermark.',
     keywords: ['pdf to jpg', 'pdf to png', 'pdf to image', 'convert', 'render', 'export', 'screenshot'],
@@ -85,7 +85,7 @@ export const TOOLS: readonly ToolMeta[] = [
     related: ['pdf/to-text', 'image/convert', 'pdf/compress'],
   },
   {
-    slug: 'to-text', category: 'pdf', name: 'PDF to text', kind: 'file',
+    slug: 'to-text', category: 'pdf', name: 'PDF to text', kind: 'file', group: 'extract',
     blurb: 'Extract the raw text from a PDF.',
     description: 'Extract text from a PDF in your browser. No upload, no account, no character limit.',
     keywords: ['pdf to text', 'extract text', 'copy text', 'txt', 'scrape', 'read'],
@@ -95,7 +95,7 @@ export const TOOLS: readonly ToolMeta[] = [
     related: ['pdf/to-image', 'media/transcribe', 'dev/word-count'],
   },
   {
-    slug: 'rotate', category: 'pdf', name: 'Rotate PDF', kind: 'file',
+    slug: 'rotate', category: 'pdf', name: 'Rotate PDF', kind: 'file', group: 'organise',
     blurb: 'Rotate pages and fix orientation.',
     description: 'Rotate PDF pages in your browser. Fix sideways or upside-down scans without uploading the file.',
     keywords: ['rotate', 'turn', 'orientation', 'sideways', 'upside down', 'landscape', 'portrait', 'edit'],
@@ -111,7 +111,7 @@ export const TOOLS: readonly ToolMeta[] = [
     related: ['pdf/split', 'pdf/merge', 'pdf/watermark'],
   },
   {
-    slug: 'watermark', category: 'pdf', name: 'Watermark PDF', kind: 'file',
+    slug: 'watermark', category: 'pdf', name: 'Watermark PDF', kind: 'file', group: 'mark-up',
     blurb: 'Stamp text across every page.',
     description: 'Add a text watermark to a PDF in your browser. Set the text, size, angle and opacity. Nothing is uploaded.',
     keywords: ['watermark', 'stamp', 'draft', 'confidential', 'overlay', 'brand'],
@@ -128,7 +128,7 @@ export const TOOLS: readonly ToolMeta[] = [
   },
 
   {
-    slug: 'jpg-to-pdf', category: 'pdf', name: 'JPG to PDF', kind: 'file',
+    slug: 'jpg-to-pdf', category: 'pdf', name: 'JPG to PDF', kind: 'file', group: 'create', alsoIn: [{ category: 'image', group: 'convert' }],
     blurb: 'Turn photos and scans into one PDF.',
     description: 'Convert JPG, PNG and other images to a PDF in your browser, one page each. JPG and PNG go in without recompression. No upload.',
     keywords: ['jpg to pdf', 'image to pdf', 'png to pdf', 'photo to pdf', 'convert', 'scan', 'pictures'],
@@ -149,7 +149,7 @@ export const TOOLS: readonly ToolMeta[] = [
     related: ['pdf/organize', 'pdf/compress', 'image/heic-to-jpg'],
   },
   {
-    slug: 'organize', category: 'pdf', name: 'Organize PDF', kind: 'app',
+    slug: 'organize', category: 'pdf', name: 'Organize PDF', kind: 'app', group: 'organise',
     blurb: 'Reorder, rotate and delete pages.',
     description: 'Reorder, rotate and delete PDF pages by dragging thumbnails in your browser. Combine several PDFs while you are at it. No upload.',
     keywords: ['organize', 'organise', 'reorder', 'rearrange', 'delete pages', 'remove pages', 'move pages', 'sort', 'arrange'],
@@ -159,7 +159,7 @@ export const TOOLS: readonly ToolMeta[] = [
     related: ['pdf/merge', 'pdf/split', 'pdf/rotate'],
   },
   {
-    slug: 'sign', category: 'pdf', name: 'Sign PDF', kind: 'app',
+    slug: 'sign', category: 'pdf', name: 'Sign PDF', kind: 'app', group: 'mark-up',
     blurb: 'Draw or type a signature and place it.',
     description: 'Sign a PDF in your browser: draw, type or upload a signature, place it on any page, and save. Your signature never leaves your device.',
     keywords: ['sign', 'signature', 'e-sign', 'esign', 'autograph', 'initial', 'fill', 'tandatangan'],
@@ -169,7 +169,7 @@ export const TOOLS: readonly ToolMeta[] = [
     related: ['pdf/protect', 'pdf/organize', 'pdf/page-numbers'],
   },
   {
-    slug: 'page-numbers', category: 'pdf', name: 'Add page numbers', kind: 'file',
+    slug: 'page-numbers', category: 'pdf', name: 'Add page numbers', kind: 'file', group: 'mark-up',
     blurb: 'Number every page, in the style you need.',
     description: 'Add page numbers to a PDF in your browser. Choose the position, style and starting number, and skip the cover page. No upload.',
     keywords: ['page numbers', 'number pages', 'paginate', 'pagination', 'footer', 'bates'],
@@ -192,7 +192,7 @@ export const TOOLS: readonly ToolMeta[] = [
     related: ['pdf/organize', 'pdf/watermark', 'pdf/merge'],
   },
   {
-    slug: 'crop', category: 'pdf', name: 'Crop PDF', kind: 'file',
+    slug: 'crop', category: 'pdf', name: 'Crop PDF', kind: 'file', group: 'organise',
     blurb: 'Trim margins off every page.',
     description: 'Crop PDF pages in your browser by trimming margins from any side. Lossless, nothing is re-rendered, and nothing is uploaded.',
     keywords: ['crop', 'trim', 'margins', 'cut', 'resize page', 'whitespace'],
@@ -209,7 +209,7 @@ export const TOOLS: readonly ToolMeta[] = [
     related: ['pdf/organize', 'pdf/compress', 'image/crop'],
   },
   {
-    slug: 'protect', category: 'pdf', name: 'Protect PDF', kind: 'file', heavy: true,
+    slug: 'protect', category: 'pdf', name: 'Protect PDF', kind: 'file', group: 'secure', heavy: true,
     blurb: 'Lock a PDF with a password.',
     description: 'Password-protect a PDF with AES-256 encryption in your browser, and optionally block printing or copying. The password never leaves your device.',
     keywords: ['protect', 'password', 'encrypt', 'lock', 'secure', 'aes', 'kata laluan'],
@@ -225,7 +225,7 @@ export const TOOLS: readonly ToolMeta[] = [
     related: ['pdf/unlock', 'pdf/sign', 'pdf/watermark'],
   },
   {
-    slug: 'unlock', category: 'pdf', name: 'Unlock PDF', kind: 'file', heavy: true,
+    slug: 'unlock', category: 'pdf', name: 'Unlock PDF', kind: 'file', group: 'secure', heavy: true,
     blurb: 'Remove a password you know.',
     description: 'Remove the password and restrictions from a PDF in your browser, using the password you already have. Nothing is uploaded.',
     keywords: ['unlock', 'remove password', 'decrypt', 'unprotect', 'open locked pdf', 'restrictions'],
@@ -238,7 +238,7 @@ export const TOOLS: readonly ToolMeta[] = [
     related: ['pdf/protect', 'pdf/compress', 'pdf/merge'],
   },
   {
-    slug: 'to-word', category: 'pdf', name: 'PDF to Word', kind: 'file',
+    slug: 'to-word', category: 'pdf', name: 'PDF to Word', kind: 'file', group: 'extract',
     blurb: 'Turn a PDF into an editable Word document.',
     description: 'Convert PDF to an editable Word document (.docx) in your browser, with paragraphs, headings, bold and italic rebuilt. No upload, no account, no watermark.',
     keywords: ['pdf to word', 'pdf to docx', 'convert pdf to word', 'editable', 'edit pdf text', 'pdf to doc', 'word', 'docx'],
@@ -248,7 +248,7 @@ export const TOOLS: readonly ToolMeta[] = [
     related: ['pdf/office-to-pdf', 'pdf/ocr', 'pdf/to-text'],
   },
   {
-    slug: 'office-to-pdf', category: 'pdf', name: 'Office to PDF', kind: 'file', heavy: true, multiple: true,
+    slug: 'office-to-pdf', category: 'pdf', name: 'Office to PDF', kind: 'file', group: 'create', heavy: true, multiple: true,
     seoTitle: 'Word, Excel, PowerPoint to PDF online, free, no upload | Nhako Tools',
     blurb: 'Word, Excel and PowerPoint to PDF.',
     description: 'Convert Word, Excel and PowerPoint files to PDF in your browser with LibreOffice. The conversion runs on your device, so documents are never uploaded.',
@@ -258,16 +258,16 @@ export const TOOLS: readonly ToolMeta[] = [
     limits: ['The first use downloads LibreOffice once: about 77 MB, and it needs about 1 GB of free memory. A desktop or laptop browser is recommended; many phones cannot run it.', 'Layout is LibreOffice\'s reading of the file. It is usually very close to Office, but fonts Office has and LibreOffice does not are replaced by similar ones, which can move line breaks.', 'Password-protected files must have their password removed first.'],
     related: ['pdf/to-word', 'pdf/merge', 'pdf/compress'],
     variants: [
-      { slug: 'word', name: 'Word to PDF', blurb: 'Convert .docx and .doc files to PDF.', defaults: {},
+      { slug: 'word', short: 'Word', name: 'Word to PDF', blurb: 'Convert .docx and .doc files to PDF.', defaults: {},
         description: 'Convert Word documents (.docx, .doc) to PDF in your browser with LibreOffice. Free, no upload, no watermark, no account.' },
-      { slug: 'excel', name: 'Excel to PDF', blurb: 'Convert .xlsx and .xls spreadsheets to PDF.', defaults: {},
+      { slug: 'excel', short: 'Excel', name: 'Excel to PDF', blurb: 'Convert .xlsx and .xls spreadsheets to PDF.', defaults: {},
         description: 'Convert Excel spreadsheets (.xlsx, .xls, .csv) to PDF in your browser with LibreOffice. Free, no upload, no watermark, no account.' },
-      { slug: 'powerpoint', name: 'PowerPoint to PDF', blurb: 'Convert .pptx and .ppt slides to PDF.', defaults: {},
+      { slug: 'powerpoint', short: 'PowerPoint', name: 'PowerPoint to PDF', blurb: 'Convert .pptx and .ppt slides to PDF.', defaults: {},
         description: 'Convert PowerPoint presentations (.pptx, .ppt) to PDF in your browser with LibreOffice. Free, no upload, no watermark, no account.' },
     ],
   },
   {
-    slug: 'scan', category: 'pdf', name: 'Scan to PDF', kind: 'app',
+    slug: 'scan', category: 'pdf', name: 'Scan to PDF', kind: 'app', group: 'create',
     seoTitle: 'Scan to PDF with your phone camera, free, no upload | Nhako Tools',
     blurb: 'Photograph pages and get a clean PDF.',
     description: 'Turn phone photos of documents into a clean PDF: the page is found, straightened and whitened on your device. Several pages, A4 or Letter. No upload, no app.',
@@ -278,7 +278,7 @@ export const TOOLS: readonly ToolMeta[] = [
     related: ['pdf/ocr', 'pdf/jpg-to-pdf', 'pdf/compress'],
   },
   {
-    slug: 'ocr', category: 'pdf', name: 'OCR PDF', kind: 'file', heavy: true,
+    slug: 'ocr', category: 'pdf', name: 'OCR PDF', kind: 'file', group: 'extract', heavy: true,
     seoTitle: 'OCR PDF online: make a scanned PDF searchable, free | Nhako Tools',
     blurb: 'Make a scanned PDF searchable and copyable.',
     description: 'Make a scanned PDF searchable in your browser: the text is recognised on your device, in English or Malay, and laid invisibly over each page. No upload.',
@@ -362,7 +362,7 @@ export const TOOLS: readonly ToolMeta[] = [
 
   // ─── Image ────────────────────────────────────────────────────────────────
   {
-    slug: 'compress', category: 'image', name: 'Compress image', kind: 'file',
+    slug: 'compress', category: 'image', name: 'Compress image', kind: 'file', group: 'shrink',
     blurb: 'Shrink JPG, PNG and WebP, or hit an exact size.',
     description: 'Compress images in your browser, or get them under an exact limit like 100 KB for a form. Adjust quality and watch the size change. No upload.',
     keywords: ['compress image', 'shrink', 'reduce', 'optimise', 'optimize', 'jpg', 'png', 'webp', 'smaller', 'tinypng', 'kb', 'under 100kb', 'photo size', 'upload limit'],
@@ -384,25 +384,25 @@ export const TOOLS: readonly ToolMeta[] = [
     limits: ['Re-encoding is lossy. Compressing an already-compressed image degrades it further.', 'PNG is lossless, so keeping PNG rarely saves anything. Choose WebP, or a target size, to actually shrink a PNG.', 'Without a target, a re-encode that would be larger returns the original unchanged.', 'Transparency is kept in PNG and WebP. JPG has none, so transparent areas become white.'],
     related: ['image/passport-photo', 'image/resize', 'pdf/compress'],
     variants: [
-      { slug: '20kb', name: 'Compress image to 20 KB', blurb: 'Get a photo under 20 KB.', defaults: { target: '20', format: 'jpeg' },
+      { slug: '20kb', short: '20 KB', name: 'Compress image to 20 KB', blurb: 'Get a photo under 20 KB.', defaults: { target: '20', format: 'jpeg' },
         description: 'Compress a JPG or photo to under 20 KB in your browser, for signature and photo uploads with a tiny limit. No upload, no account.' },
-      { slug: '50kb', name: 'Compress image to 50 KB', blurb: 'Get a photo under 50 KB.', defaults: { target: '50', format: 'jpeg' },
+      { slug: '50kb', short: '50 KB', name: 'Compress image to 50 KB', blurb: 'Get a photo under 50 KB.', defaults: { target: '50', format: 'jpeg' },
         description: 'Compress a JPG or photo to under 50 KB in your browser, for online forms with a strict limit. No upload, no account.' },
-      { slug: '100kb', name: 'Compress image to 100 KB', blurb: 'Get a photo under 100 KB.', defaults: { target: '100', format: 'jpeg' },
+      { slug: '100kb', short: '100 KB', name: 'Compress image to 100 KB', blurb: 'Get a photo under 100 KB.', defaults: { target: '100', format: 'jpeg' },
         description: 'Compress a JPG or photo to under 100 KB in your browser, the limit many application forms use. No upload, no account.' },
-      { slug: '200kb', name: 'Compress image to 200 KB', blurb: 'Get a photo under 200 KB.', defaults: { target: '200', format: 'jpeg' },
+      { slug: '200kb', short: '200 KB', name: 'Compress image to 200 KB', blurb: 'Get a photo under 200 KB.', defaults: { target: '200', format: 'jpeg' },
         description: 'Compress a JPG or photo to under 200 KB in your browser for forms and portals. No upload, no account, no watermark.' },
-      { slug: '500kb', name: 'Compress image to 500 KB', blurb: 'Get a photo under 500 KB.', defaults: { target: '500', format: 'jpeg' },
+      { slug: '500kb', short: '500 KB', name: 'Compress image to 500 KB', blurb: 'Get a photo under 500 KB.', defaults: { target: '500', format: 'jpeg' },
         description: 'Compress a JPG or photo to under 500 KB in your browser, keeping it sharp. No upload, no account, no watermark.' },
-      { slug: '1mb', name: 'Compress image to 1 MB', blurb: 'Get a photo under 1 MB.', defaults: { target: '1000', format: 'jpeg' },
+      { slug: '1mb', short: '1 MB', name: 'Compress image to 1 MB', blurb: 'Get a photo under 1 MB.', defaults: { target: '1000', format: 'jpeg' },
         description: 'Compress a JPG or photo to under 1 MB in your browser without visible loss. No upload, no account, no watermark.' },
-      { slug: 'spa-myresume', name: 'Photo and documents for SPA MyRésumé', blurb: 'JPG under 1 MB, as SPA requires.', defaults: { target: '1000', format: 'jpeg' },
+      { slug: 'spa-myresume', short: 'SPA MyResume', name: 'Photo and documents for SPA MyRésumé', blurb: 'JPG under 1 MB, as SPA requires.', defaults: { target: '1000', format: 'jpeg' },
         description: 'Get photos and scanned documents under the 1 MB SPA MyRésumé limit, in your browser. JPG output, no upload, no account.',
         about: 'SPA\'s MyRésumé guide (PANDUAN_GAMBAR.pdf, checked 18 September 2026) asks for photos and documents in .jpg or .png, each under 1 MB, and a profile photo of 35 mm × 50 mm on a white background. This preset produces JPG under 1 MB. For the profile photo itself, the passport photo maker has an SPA preset.' },
     ],
   },
   {
-    slug: 'convert', category: 'image', name: 'Convert image', kind: 'file',
+    slug: 'convert', category: 'image', name: 'Convert image', kind: 'file', group: 'convert',
     blurb: 'Move between JPG, PNG, WebP and AVIF.',
     description: 'Convert images between JPG, PNG, WebP and AVIF in your browser. Batch conversion with no upload.',
     keywords: ['convert image', 'jpg to png', 'png to jpg', 'webp', 'avif', 'heic', 'format', 'change'],
@@ -418,7 +418,7 @@ export const TOOLS: readonly ToolMeta[] = [
     related: ['image/compress', 'image/resize', 'pdf/to-image'],
   },
   {
-    slug: 'resize', category: 'image', name: 'Resize image', kind: 'file',
+    slug: 'resize', category: 'image', name: 'Resize image', kind: 'file', group: 'transform',
     blurb: 'Scale images to exact dimensions.',
     description: 'Resize images in your browser. Set a width or height, keep the aspect ratio, and batch process without uploading.',
     keywords: ['resize', 'scale', 'dimensions', 'width', 'height', 'thumbnail', 'crop', 'shrink', 'enlarge'],
@@ -434,7 +434,7 @@ export const TOOLS: readonly ToolMeta[] = [
   },
 
   {
-    slug: 'crop', category: 'image', name: 'Crop image', kind: 'app',
+    slug: 'crop', category: 'image', name: 'Crop image', kind: 'app', group: 'transform',
     blurb: 'Cut an image to a shape or ratio.',
     description: 'Crop images in your browser: drag the frame, pick a ratio like 1:1 or 16:9, and save in the original format. No upload, no watermark.',
     keywords: ['crop', 'cut', 'trim', 'square', 'aspect ratio', '1:1', '16:9', 'profile picture', 'thumbnail'],
@@ -444,7 +444,7 @@ export const TOOLS: readonly ToolMeta[] = [
     related: ['image/resize', 'image/rotate', 'image/passport-photo'],
   },
   {
-    slug: 'rotate', category: 'image', name: 'Rotate image', kind: 'file',
+    slug: 'rotate', category: 'image', name: 'Rotate image', kind: 'file', group: 'transform',
     blurb: 'Turn or flip images.',
     description: 'Rotate images 90 or 180 degrees, or flip them, in your browser. Batch several at once. No upload, no account.',
     keywords: ['rotate', 'turn', 'flip', 'mirror', 'sideways', 'upside down', 'orientation'],
@@ -460,7 +460,7 @@ export const TOOLS: readonly ToolMeta[] = [
     related: ['image/crop', 'image/resize', 'pdf/rotate'],
   },
   {
-    slug: 'watermark', category: 'image', name: 'Watermark image', kind: 'file',
+    slug: 'watermark', category: 'image', name: 'Watermark image', kind: 'file', group: 'edit',
     blurb: 'Stamp text across photos.',
     description: 'Add a text watermark to images in your browser: tiled, centred or in a corner, with your own opacity. Batch several at once. No upload.',
     keywords: ['watermark', 'stamp', 'copyright', 'protect photo', 'text on image', 'tera air'],
@@ -483,7 +483,7 @@ export const TOOLS: readonly ToolMeta[] = [
     related: ['pdf/watermark', 'image/compress', 'image/remove-metadata'],
   },
   {
-    slug: 'heic-to-jpg', category: 'image', name: 'HEIC to JPG', kind: 'file', heavy: true,
+    slug: 'heic-to-jpg', category: 'image', name: 'HEIC to JPG', kind: 'file', group: 'convert', heavy: true,
     blurb: 'Convert iPhone photos to JPG.',
     description: 'Convert iPhone HEIC photos to JPG or PNG in your browser, in batches. For forms and portals that reject HEIC. No upload, no account.',
     keywords: ['heic', 'heif', 'heic to jpg', 'iphone photo', 'convert heic', 'apple photo', 'heic to png'],
@@ -499,7 +499,7 @@ export const TOOLS: readonly ToolMeta[] = [
     related: ['image/compress', 'pdf/jpg-to-pdf', 'image/remove-metadata'],
   },
   {
-    slug: 'remove-metadata', category: 'image', name: 'Remove photo metadata', kind: 'file',
+    slug: 'remove-metadata', category: 'image', name: 'Remove photo metadata', kind: 'file', group: 'clean',
     blurb: 'Strip GPS location and camera details.',
     description: 'Remove EXIF data from photos in your browser: GPS location, camera, date and more, without touching the image itself. No upload.',
     keywords: ['exif', 'metadata', 'remove exif', 'gps', 'location', 'strip', 'privacy', 'geotag', 'clean'],
@@ -509,7 +509,7 @@ export const TOOLS: readonly ToolMeta[] = [
     related: ['image/heic-to-jpg', 'image/compress', 'image/watermark'],
   },
   {
-    slug: 'ocr', category: 'image', name: 'Image to text (OCR)', kind: 'file', heavy: true, multiple: true,
+    slug: 'ocr', category: 'image', name: 'Image to text (OCR)', kind: 'file', group: 'clean', heavy: true, multiple: true,
     seoTitle: 'Image to text (OCR) online, English and Malay, free | Nhako Tools',
     blurb: 'Pull the text out of photos and screenshots.',
     description: 'Copy text from photos, screenshots and scans in your browser with OCR, in English or Malay. Get plain text or a searchable PDF. No upload.',
@@ -528,7 +528,7 @@ export const TOOLS: readonly ToolMeta[] = [
     related: ['pdf/ocr', 'image/compress', 'dev/word-count'],
   },
   {
-    slug: 'remove-background', category: 'image', name: 'Remove background', kind: 'file', heavy: true, multiple: true,
+    slug: 'remove-background', category: 'image', name: 'Remove background', kind: 'file', group: 'edit', heavy: true, multiple: true,
     seoTitle: 'Remove background from image online, free, no upload | Nhako Tools',
     blurb: 'Cut out the subject, on your device.',
     description: 'Remove the background from a photo in your browser: get a transparent PNG, or the subject on white. The AI model runs on your device, so nothing is uploaded.',
@@ -547,7 +547,7 @@ export const TOOLS: readonly ToolMeta[] = [
     related: ['image/passport-photo', 'image/crop', 'image/compress'],
   },
   {
-    slug: 'passport-photo', category: 'image', name: 'Passport photo maker', kind: 'app',
+    slug: 'passport-photo', category: 'image', name: 'Passport photo maker', kind: 'app', group: 'create',
     seoTitle: 'Passport photo maker 35×50 mm, white background | Nhako Tools',
     blurb: 'Crop a 35×50 mm photo, white background, print sheet.',
     description: 'Make a 35×50 mm passport or application photo in your browser: crop, white background, a digital file and a 4R print sheet. No upload.',
@@ -572,7 +572,7 @@ export const TOOLS: readonly ToolMeta[] = [
 
   // ─── Developer ────────────────────────────────────────────────────────────
   {
-    slug: 'json', category: 'dev', name: 'JSON formatter', kind: 'text',
+    slug: 'json', category: 'dev', name: 'JSON formatter', kind: 'text', group: 'text',
     blurb: 'Format, validate and minify JSON.',
     description: 'Format and validate JSON in your browser with syntax highlighting. Pinpoints the exact line of a syntax error.',
     keywords: ['json', 'format', 'pretty print', 'beautify', 'validate', 'minify', 'lint', 'parse', 'prettify'],
@@ -587,7 +587,7 @@ export const TOOLS: readonly ToolMeta[] = [
     related: ['dev/jwt', 'dev/base64', 'dev/diff'],
   },
   {
-    slug: 'jwt', category: 'dev', name: 'JWT decoder', kind: 'text',
+    slug: 'jwt', category: 'dev', name: 'JWT decoder', kind: 'text', group: 'encode',
     blurb: 'Decode a token’s header and payload.',
     description: 'Decode JSON Web Tokens in your browser. The token is never sent anywhere, which matters, because tokens are credentials.',
     keywords: ['jwt', 'json web token', 'decode', 'token', 'bearer', 'auth', 'claims', 'jwt.io'],
@@ -596,7 +596,7 @@ export const TOOLS: readonly ToolMeta[] = [
     related: ['dev/base64', 'dev/json', 'dev/hash'],
   },
   {
-    slug: 'base64', category: 'dev', name: 'Base64 converter', kind: 'text',
+    slug: 'base64', category: 'dev', name: 'Base64 converter', kind: 'text', group: 'encode',
     blurb: 'Encode and decode Base64.',
     description: 'Encode and decode Base64 in your browser, with full Unicode support and URL-safe output.',
     keywords: ['base64', 'encode', 'decode', 'btoa', 'atob', 'b64', 'data uri', 'url safe'],
@@ -609,7 +609,7 @@ export const TOOLS: readonly ToolMeta[] = [
     related: ['dev/jwt', 'dev/hash', 'dev/json'],
   },
   {
-    slug: 'word-count', category: 'dev', name: 'Word counter', kind: 'text',
+    slug: 'word-count', category: 'dev', name: 'Word counter', kind: 'text', group: 'text',
     blurb: 'Live word, character and reading-time counts.',
     description: 'Count words, characters, sentences and reading time as you type. Nothing is sent anywhere.',
     keywords: ['word count', 'character count', 'letter count', 'reading time', 'essay', 'twitter', 'limit', 'counter'],
@@ -618,7 +618,7 @@ export const TOOLS: readonly ToolMeta[] = [
     related: ['dev/diff', 'pdf/to-text', 'media/transcribe'],
   },
   {
-    slug: 'hash', category: 'dev', name: 'Hash generator', kind: 'text',
+    slug: 'hash', category: 'dev', name: 'Hash generator', kind: 'text', group: 'encode',
     blurb: 'SHA-1, SHA-256, SHA-384 and SHA-512.',
     description: 'Generate SHA hashes in your browser using the native Web Crypto API. Nothing is uploaded.',
     keywords: ['hash', 'sha', 'sha256', 'sha1', 'sha512', 'checksum', 'digest', 'fingerprint', 'md5'],
@@ -630,7 +630,7 @@ export const TOOLS: readonly ToolMeta[] = [
     related: ['dev/uuid', 'dev/base64', 'dev/jwt'],
   },
   {
-    slug: 'uuid', category: 'dev', name: 'UUID generator', kind: 'text', generator: true,
+    slug: 'uuid', category: 'dev', name: 'UUID generator', kind: 'text', group: 'generate', generator: true,
     blurb: 'Cryptographically random UUIDs.',
     description: 'Generate v4 UUIDs in your browser using the native crypto API. Bulk generation, no upload.',
     keywords: ['uuid', 'guid', 'v4', 'random', 'identifier', 'id', 'generate', 'unique'],
@@ -644,7 +644,7 @@ export const TOOLS: readonly ToolMeta[] = [
     related: ['dev/hash', 'dev/qr'],
   },
   {
-    slug: 'qr', category: 'dev', name: 'QR code generator', kind: 'text',
+    slug: 'qr', category: 'dev', name: 'QR code generator', kind: 'text', group: 'generate', alsoIn: [{ category: 'image', group: 'create' }],
     blurb: 'Turn text or a URL into a QR code.',
     description: 'Generate a QR code in your browser and download it as PNG. No upload, no tracking redirect, no expiry.',
     keywords: ['qr', 'qr code', 'barcode', 'url', 'link', 'generate', 'scan', 'wifi'],
@@ -660,7 +660,7 @@ export const TOOLS: readonly ToolMeta[] = [
     related: ['dev/uuid', 'image/convert'],
   },
   {
-    slug: 'diff', category: 'dev', name: 'Text diff', kind: 'text2',
+    slug: 'diff', category: 'dev', name: 'Text diff', kind: 'text2', group: 'text',
     blurb: 'Compare two blocks of text.',
     description: 'Compare two texts and see exactly what changed, line by line or word by word. Runs entirely in your browser.',
     keywords: ['diff', 'compare', 'difference', 'changes', 'merge', 'text', 'file compare', 'delta'],
@@ -675,7 +675,7 @@ export const TOOLS: readonly ToolMeta[] = [
     related: ['dev/json', 'dev/word-count'],
   },
   {
-    slug: 'css-shadow', category: 'dev', name: 'CSS shadow generator', kind: 'text', generator: true,
+    slug: 'css-shadow', category: 'dev', name: 'CSS shadow generator', kind: 'text', group: 'generate', generator: true,
     blurb: 'Build box-shadows with a live preview.',
     description: 'Generate CSS box-shadow code with sliders and a live preview. Copy the result straight into your stylesheet.',
     keywords: ['css', 'box shadow', 'shadow', 'generator', 'drop shadow', 'elevation', 'design', 'style'],

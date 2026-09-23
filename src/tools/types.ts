@@ -38,6 +38,9 @@ export const isVisible = (spec: OptionSpec, values: OptionValues): boolean =>
 
 export type OptionValues = Record<string, string | number | boolean>;
 
+/** A job group inside a category. Never a tool id: see ToolMeta.alsoIn. */
+export interface GroupRef { category: Category; group: string }
+
 export interface ToolMeta {
   /** Path segment within the category, e.g. 'merge' -> /pdf/merge */
   slug: string;
@@ -71,6 +74,30 @@ export interface ToolMeta {
   about?: string;
   /** Fully-qualified ids, e.g. 'pdf/split'. */
   related?: string[];
+  /**
+   * Job group id within this tool's own category, e.g. 'organise' for
+   * /pdf/merge. Drives every browse surface. Optional in the type because a
+   * category under GROUP_THRESHOLD renders flat and declares no groups, but
+   * registry.test.ts requires one on every tool whose category is grouped, and
+   * forbids one on every tool whose category is not. A category that grows past
+   * the threshold therefore fails the suite until its groups are defined,
+   * rather than quietly reverting to an undifferentiated wall of tools.
+   */
+  group?: string;
+  /**
+   * Extra browse locations for a tool someone would plausibly look for
+   * somewhere other than its canonical home: nobody hunting for a QR code
+   * thinks "developer tool". Affects browse surfaces only. The canonical URL,
+   * the breadcrumb, `related`, the sitemap and the command palette all
+   * continue to know exactly one home per tool.
+   *
+   * Deliberately an object rather than an 'image/convert' string. That string
+   * form is ambiguous: 'image/convert' is also the id of a real tool, and
+   * pdf/to-image already lists that tool in `related`. registry.test.ts caught
+   * the collision, so the two namespaces are kept structurally apart instead
+   * of being told apart by context.
+   */
+  alsoIn?: GroupRef[];
   /** Produces output from options alone; the input pane is hidden (uuid). */
   generator?: boolean;
   /** Needs a large runtime (ffmpeg / Whisper). Only heavy tools get a real
@@ -87,6 +114,15 @@ export interface ToolMeta {
 export interface ToolVariant {
   slug: string;
   name: string;
+  /**
+   * Short label for the preset chip on a category page, where `name` ("Compress
+   * PDF to 100 KB") is far too long to sit in a row of five. Deliberately not
+   * translated: every value is a file size or a product name, which read the
+   * same in both locales. The chip's accessible name is `name`, so a screen
+   * reader still hears the full thing. registry.test.ts keeps it short and
+   * present on every variant.
+   */
+  short: string;
   blurb: string;
   description: string;
   /** Option values this page starts with. */

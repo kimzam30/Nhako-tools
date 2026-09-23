@@ -4,6 +4,15 @@ export interface SearchableTool {
   category: string;
   blurb: string;
   keywords: string[];
+  /**
+   * Set on a preset (a tool variant with its own page), naming the tool it
+   * belongs to. Presets were absent from the index entirely, so typing the
+   * thing people actually search for, "500kb", returned nothing while
+   * /pdf/compress/500kb sat there unlinked. Presence of this field also breaks
+   * ties towards the parent tool, so "compress pdf" lists the tool first and
+   * its five sizes under it rather than burying it among them.
+   */
+  parent?: string;
 }
 
 /**
@@ -21,7 +30,8 @@ export function searchTools<T extends SearchableTool>(tools: readonly T[], query
     .map((tool) => {
       const name = tool.name.toLowerCase();
       const keywords = tool.keywords.map((k) => k.toLowerCase());
-      const haystack = `${name} ${tool.blurb.toLowerCase()} ${keywords.join(' ')} ${tool.category}`;
+      const parent = tool.parent?.toLowerCase() ?? '';
+      const haystack = `${name} ${tool.blurb.toLowerCase()} ${keywords.join(' ')} ${tool.category} ${parent}`;
 
       // The whole query as a phrase outranks the same words in another order:
       // "pdf to jpg" and "JPG to PDF" share every word but not the meaning.
@@ -38,6 +48,8 @@ export function searchTools<T extends SearchableTool>(tools: readonly T[], query
         if (keywords.some((k) => k === term)) score += 40;
         else if (keywords.some((k) => k.startsWith(term))) score += 15;
       }
+      // A preset never outranks the tool it belongs to on an equal match.
+      if (tool.parent) score -= 10;
       return { tool, score };
     })
     .filter((x): x is { tool: T; score: number } => x !== null);

@@ -1,0 +1,14 @@
+---
+import CollectionView from '../views/CollectionView.astro';
+import { MALAYSIA } from '../tools/collections';
+import { ui } from '../i18n';
+const t = ui('en');
+---
+<CollectionView
+  entries={MALAYSIA}
+  locale="en"
+  path="/malaysia"
+  title={t.malaysia}
+  intro={t.malaysiaIntro}
+  sources={t.malaysiaSources}
+/>

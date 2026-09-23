@@ -1,0 +1,98 @@
+---
+import type { ToolMeta } from '../../tools/types';
+
+/** Precomputed by the view: localising a variant is the caller's job, exactly
+ *  as localising the tool is. */
+export interface Preset {
+  href: string;
+  /** Chip text. Short by design: '500 KB', not 'Compress PDF to 500 KB'. */
+  short: string;
+  /** Full name, used as the chip's accessible name. */
+  name: string;
+}
+
+interface Props {
+  tool: ToolMeta;
+  href: string;
+  presets?: Preset[];
+  /** Why this tool appears here. Used by the Malaysia collection, where the
+   *  portal context is the reason the entry earns its place. */
+  context?: string;
+  /**
+   * Stack the name over the blurb and drop the fixed name column, for use in
+   * a multi-column grid. The wide form puts them side by side in a tabular
+   * name column, which needs the full width of a single-column list.
+   */
+  compact?: boolean;
+}
+
+const { tool, href, presets = [], context, compact = false } = Astro.props;
+---
+{/*
+  The directory primitive. Dense by design: at 43 tools a padded card shows six
+  per screen and a row shows about fourteen, and this is an instrument panel,
+  not a shop window.
+
+  `data-tool-card` is kept from ToolCard so the homepage filter contract does
+  not change. The chips sit outside the anchor because a link inside a link is
+  invalid HTML, which is also why this is a <div> wrapping an <a> rather than
+  one big <a>.
+*/}
+<div
+  data-tool-card
+  data-reveal
+  data-name={tool.name.toLowerCase()}
+  data-keywords={tool.keywords.join(' ')}
+  data-category={tool.category}
+  {/*
+    The wide form is a bordered list, so every row carries a rule. The compact
+    form sits in a two or three column grid, where a per-row rule leaves a
+    half-length line hanging under the final partial row. There the group's own
+    top rule and the row padding do the separating instead.
+  */}
+  class:list={[!compact && 'border-b border-border last:border-b-0']}
+>
+  <a
+    href={href}
+    class:list={[
+      'group flex flex-col gap-0.5 rounded-md px-2 transition-colors duration-[120ms] hover:bg-sunken',
+      // Compact rows sit in a grid with a heading above every few of them, so
+      // they carry less padding: the heading already does the separating work.
+      // 49px tall still clears the 44px touch minimum.
+      compact ? 'py-1.5' : 'py-2 sm:flex-row sm:items-baseline sm:gap-3',
+    ]}
+  >
+    <span
+      class:list={[
+        'text-sm font-medium transition-colors group-hover:text-accent',
+        !compact && 'sm:w-52 sm:shrink-0',
+      ]}
+    >
+      {tool.name}
+    </span>
+    <span class="text-2xs leading-snug text-muted">{context ?? tool.blurb}</span>
+  </a>
+
+  {presets.length > 0 && (
+    <ul class:list={['flex flex-wrap gap-1.5 px-2 pb-2.5', !compact && 'sm:pl-[calc(13rem+0.75rem)]']}>
+      {presets.map((p) => (
+        <li>
+          {/*
+            Visible text is the short form; the accessible name is the full one,
+            so a screen reader hears "Compress PDF to 500 KB" rather than an
+            orphaned "500 KB". Sizes are numbers, so they take the mono face.
+            The touch target grows to 44px on a coarse pointer only, which keeps
+            the row dense on a mouse and thumb-sized on a phone.
+          */}
+          <a
+            href={p.href}
+            aria-label={p.name}
+            class="inline-flex items-center rounded border border-border px-2 py-1 font-mono text-[11px] text-muted transition-colors duration-[120ms] hover:border-accent hover:text-accent pointer-coarse:min-h-11 pointer-coarse:px-3"
+          >
+            {p.short}
+          </a>
+        </li>
+      ))}
+    </ul>
+  )}
+</div>

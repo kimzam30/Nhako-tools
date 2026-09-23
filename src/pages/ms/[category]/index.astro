@@ -1,0 +1,11 @@
+---
+import CategoryView from '../../../views/CategoryView.astro';
+import { CATEGORIES, type Category } from '../../../tools/types';
+
+export function getStaticPaths() {
+  return CATEGORIES.map((category) => ({ params: { category }, props: { category } }));
+}
+
+interface Props { category: Category }
+---
+<CategoryView category={Astro.props.category} locale="ms" />

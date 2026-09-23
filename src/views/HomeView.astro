@@ -1,10 +1,11 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import ToolCard from '../components/astro/ToolCard.astro';
+import ToolRow from '../components/astro/ToolRow.astro';
 import HeroReadout from '../components/astro/HeroReadout.astro';
 import { TOOLS, toolsIn } from '../tools/registry';
 import { CATEGORIES, toolId } from '../tools/types';
-import { LANG, categoryLabel, localizeTool, localePath, ui, type Locale } from '../i18n';
+import { groupsIn, hasGroups } from '../tools/groups';
+import { LANG, categoryLabel, groupLabel, localizeTool, localePath, ui, type Locale } from '../i18n';
 
 interface Props { locale: Locale }
 const { locale } = Astro.props;
@@ -59,22 +60,58 @@ const jsonLd = {
       <HeroReadout locale={locale} />
     </section>
 
+    {/*
+      Every tool is here exactly once. Cross-listings (a tool shown in a second
+      category) are a category-page affordance only: on the catalogue itself a
+      row appearing twice would make the count disagree with the heading and
+      read as a bug.
+    */}
     {CATEGORIES.map((category) => (
       <section id={category} class="scroll-mt-20 border-t border-border py-8" data-category-section={category}>
         <div class="mb-4 flex items-baseline gap-3">
-          <h2 class="text-2xs font-semibold uppercase tracking-[0.14em] text-muted">{categoryLabel(category, locale)}</h2>
+          <h2 class="text-2xs font-semibold uppercase tracking-[0.14em] text-muted">
+            <a href={localePath(locale, `/${category}`)} class="transition-colors hover:text-accent">
+              {categoryLabel(category, locale)}
+            </a>
+          </h2>
           <span data-reveal-rule class="h-px flex-1 bg-border" aria-hidden="true"></span>
-          <span data-numeric class="text-2xs text-muted">{toolsIn(category).length}</span>
+          <span data-numeric class="font-mono text-2xs text-muted">{toolsIn(category).length}</span>
         </div>
-        <div class="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-          {toolsIn(category).map((tool) => (
-            <ToolCard tool={localizeTool(tool, locale)} href={localePath(locale, `/${toolId(tool)}`)} />
-          ))}
-        </div>
+
+        {hasGroups(category)
+          ? groupsIn(category).map((group) => (
+              /* Space above a heading must beat space below it, or the label
+                 reads as belonging to the group it follows. Measured at 768px
+                 before this fix: 14px above, 5px below, the wrong way round.
+                 The rule under the heading binds it downwards as well. */
+              <section data-group class="mt-6 first:mt-0">
+                <h3 class="mb-1.5 text-[11px] font-medium tracking-wide text-muted">{groupLabel(category, group.id, locale)}</h3>
+                <div class="grid border-t border-border sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-3">
+                  {toolsIn(category).filter((tool) => tool.group === group.id).map((tool) => (
+                    <ToolRow compact tool={localizeTool(tool, locale)} href={localePath(locale, `/${toolId(tool)}`)} />
+                  ))}
+                </div>
+              </section>
+            ))
+          : (
+            <div class="grid border-t border-border sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-3">
+              {toolsIn(category).map((tool) => (
+                <ToolRow compact tool={localizeTool(tool, locale)} href={localePath(locale, `/${toolId(tool)}`)} />
+              ))}
+            </div>
+          )}
       </section>
     ))}
 
-    <p data-empty hidden class="py-16 text-center text-sm text-muted">{t.searchEmpty}</p>
+    {/*
+      `data-search-empty`, not `data-empty`: the command palette's list already
+      carries `data-empty` as the attribute holding its own message, and it
+      sits in the nav, ahead of this element in the document. A bare
+      `[data-empty]` selector therefore matched the palette and this message
+      never once appeared, while the filter quietly toggled `hidden` on the
+      palette's list instead.
+    */}
+    <p data-search-empty hidden class="py-16 text-center text-sm text-muted">{t.searchEmpty}</p>
   </div>
 </BaseLayout>
 
@@ -83,9 +120,12 @@ const jsonLd = {
   // This only filters what is already there.
   const input = document.querySelector<HTMLInputElement>('#tool-search');
   const status = document.querySelector<HTMLElement>('#search-status');
-  const empty = document.querySelector<HTMLElement>('[data-empty]');
+  const empty = document.querySelector<HTMLElement>('[data-search-empty]');
   const cards = [...document.querySelectorAll<HTMLElement>('[data-tool-card]')];
+  const groups = [...document.querySelectorAll<HTMLElement>('[data-group]')];
   const sections = [...document.querySelectorAll<HTMLElement>('[data-category-section]')];
+  const anyVisible = (el: HTMLElement) =>
+    [...el.querySelectorAll<HTMLElement>('[data-tool-card]')].some((c) => !c.hidden);
 
   function filter(raw: string) {
     const query = raw.trim().toLowerCase();
@@ -98,10 +138,11 @@ const jsonLd = {
       if (match) visible++;
     }
 
-    for (const section of sections) {
-      const any = [...section.querySelectorAll<HTMLElement>('[data-tool-card]')].some((c) => !c.hidden);
-      section.hidden = !any;
-    }
+    // Groups before sections: a category is empty only once every group in it
+    // is. A job heading left standing over nothing is a dead end for whoever
+    // reads it.
+    for (const group of groups) group.hidden = !anyVisible(group);
+    for (const section of sections) section.hidden = !anyVisible(section);
 
     if (empty) empty.hidden = visible > 0;
     // The sentence comes from the server in the page's language, with

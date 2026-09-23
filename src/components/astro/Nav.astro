@@ -1,5 +1,5 @@
 ---
-import { CATEGORIES } from '../../tools/types';
+import { NAV_CATEGORIES } from '../../tools/groups';
 import { categoryLabel, localePath, ui, type Locale } from '../../i18n';
 import Logo from './Logo.astro';
 import ThemeToggle from './ThemeToggle.astro';
@@ -10,13 +10,20 @@ const { locale, path, alternates } = Astro.props;
 const t = ui(locale);
 const other: Locale = locale === 'en' ? 'ms' : 'en';
 const home = localePath(locale, '/');
+
+// The active item, so the row says where you are. A tool page marks its own
+// category: /pdf/merge is still somewhere inside PDF.
+const active = (segment: string) => path === `/${segment}` || path.startsWith(`/${segment}/`);
 ---
 
 <header class="vt-nav sticky top-0 z-40 border-b border-border bg-bg/85 backdrop-blur-sm">
   <nav class="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4 sm:px-6" aria-label={t.mainNav}>
     <a href={home} aria-label={t.home} class="vt-logo flex shrink-0 items-center gap-2 text-base font-bold tracking-tight">
       <Logo class="size-6 rounded-md" />
-      <span><span class="text-accent">Nhako</span>Tools</span>
+      {/* The wordmark yields to the category row on a phone. The mark still
+          links home, and losing two words is a better trade than a nav that
+          shows one category and looks like it has only one. */}
+      <span class="hidden sm:inline"><span class="text-accent">Nhako</span>Tools</span>
       <span
         class="runtime-dot ml-1 size-1.5 rounded-full bg-accent"
         title={t.runtimeTitle}
@@ -24,20 +31,44 @@ const home = localePath(locale, '/');
       ></span>
     </a>
 
-    <ul class="hidden items-center gap-1 md:flex">
-      {CATEGORIES.map((c) => (
-        <li>
+    {/*
+      A scroll container, not a menu: no open state, no focus trap, no
+      JavaScript. Below 768px this row used to be `hidden md:flex`, which left
+      a phone with no category navigation at all, only the search button.
+      Scrolling is the whole adaptation.
+    */}
+    <ul class="-mx-1 flex min-w-0 flex-1 items-center gap-1 overflow-x-auto px-1 [scrollbar-width:none] pointer-coarse:gap-2 md:flex-none [&::-webkit-scrollbar]:hidden">
+      {NAV_CATEGORIES.map((c) => (
+        <li class="shrink-0">
           <a
-            href={`${home}#${c}`}
-            class="rounded px-2.5 py-1.5 text-sm text-muted transition-colors duration-[120ms] hover:bg-sunken hover:text-text"
+            href={localePath(locale, `/${c}`)}
+            aria-current={active(c) ? 'page' : undefined}
+            class:list={[
+              'block scroll-mx-4 rounded px-2.5 py-1.5 text-sm transition-colors duration-[120ms] hover:bg-sunken hover:text-text',
+              'pointer-coarse:flex pointer-coarse:min-h-11 pointer-coarse:items-center pointer-coarse:px-3',
+              active(c) ? 'text-text' : 'text-muted',
+            ]}
           >
             {categoryLabel(c, locale)}
           </a>
         </li>
       ))}
+      <li class="shrink-0">
+        <a
+          href={localePath(locale, '/malaysia')}
+          aria-current={path === '/malaysia' ? 'page' : undefined}
+          class:list={[
+            'block scroll-mx-4 rounded px-2.5 py-1.5 text-sm transition-colors duration-[120ms] hover:bg-sunken hover:text-text',
+            'pointer-coarse:flex pointer-coarse:min-h-11 pointer-coarse:items-center pointer-coarse:px-3',
+            path === '/malaysia' ? 'text-text' : 'text-muted',
+          ]}
+        >
+          {t.malaysia}
+        </a>
+      </li>
     </ul>
 
-    <div class="ml-auto flex items-center gap-2">
+    <div class="ml-auto flex shrink-0 items-center gap-2">
       <CommandPalette locale={locale} />
       {alternates && (
         <a

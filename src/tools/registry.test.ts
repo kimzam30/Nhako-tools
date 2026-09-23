@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { TOOLS, TOOLS_BY_ID } from './registry';
 import { toolId, CATEGORIES } from './types';
+import { GROUPS, GROUP_THRESHOLD, groupsIn, hasGroups } from './groups';
 
 describe('registry integrity', () => {
   it('has no duplicate ids', () => {
@@ -145,5 +146,137 @@ describe('vercel.json redirects', () => {
 
   it('uses permanent redirects so search equity transfers', () => {
     for (const r of config.redirects) expect(r.permanent).toBe(true);
+  });
+});
+
+describe('browse taxonomy', () => {
+  const ids = (category: string) => groupsIn(category as never).map((g) => g.id);
+
+  it('groups every tool in a grouped category', () => {
+    // The failure this prevents: a tool added to PDF with no group quietly
+    // disappearing from the browse layer, or reinstating the flat wall of 18
+    // that this taxonomy exists to break up.
+    for (const t of TOOLS) {
+      if (!hasGroups(t.category)) continue;
+      expect(t.group, `${toolId(t)} has no group`).toBeTruthy();
+      expect(ids(t.category), `${toolId(t)} -> ${t.group}`).toContain(t.group);
+    }
+  });
+
+  it('leaves tools in a flat category ungrouped', () => {
+    for (const t of TOOLS) {
+      if (hasGroups(t.category)) continue;
+      expect(t.group, `${toolId(t)} is in a flat category but has a group`).toBeUndefined();
+    }
+  });
+
+  it('defines groups for every category over the threshold', () => {
+    // A category that grows past the threshold fails here until its groups are
+    // written, rather than silently reverting to one undifferentiated list.
+    for (const c of CATEGORIES) {
+      const count = TOOLS.filter((t) => t.category === c).length;
+      if (count <= GROUP_THRESHOLD) continue;
+      expect(groupsIn(c).length, `${c} has ${count} tools and needs groups`).toBeGreaterThan(0);
+    }
+  });
+
+  it('declares no groups for a category under the threshold', () => {
+    for (const c of CATEGORIES) {
+      const count = TOOLS.filter((t) => t.category === c).length;
+      if (count > GROUP_THRESHOLD) continue;
+      expect(groupsIn(c).length, `${c} has only ${count} tools; a heading over them is noise`).toBe(0);
+    }
+  });
+
+  it('keeps every category within six groups', () => {
+    // Six headings is about the limit of what is scannable at a glance. A
+    // seventh means the taxonomy needs re-cutting, which is a decision to make
+    // deliberately rather than by adding one more line.
+    for (const c of CATEGORIES) {
+      expect(groupsIn(c).length, `${c} has too many groups`).toBeLessThanOrEqual(6);
+    }
+  });
+
+  it('gives every group a unique id and a real label within its category', () => {
+    for (const c of CATEGORIES) {
+      const list = groupsIn(c);
+      expect(list.map((g) => g.id)).toHaveLength(new Set(list.map((g) => g.id)).size);
+      for (const g of list) {
+        expect(g.id, `${c}/${g.id}`).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
+        expect(g.label.trim().length, `${c}/${g.id} has no label`).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('leaves no group empty', () => {
+    // An empty heading on a category page is a dead end for whoever reads it.
+    for (const c of CATEGORIES) {
+      for (const g of groupsIn(c)) {
+        const members = TOOLS.filter((t) => t.category === c && t.group === g.id);
+        const crossed = TOOLS.filter((t) =>
+          (t.alsoIn ?? []).some((r) => r.category === c && r.group === g.id));
+        expect(members.length + crossed.length, `${c}/${g.id} is empty`).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('resolves every cross-listing to a real group in another category', () => {
+    for (const t of TOOLS) {
+      for (const ref of t.alsoIn ?? []) {
+        const where = `${toolId(t)} -> ${ref.category}/${ref.group}`;
+        expect(CATEGORIES, where).toContain(ref.category);
+        expect(ids(ref.category), where).toContain(ref.group);
+      }
+    }
+  });
+
+  it('never cross-lists a tool into its own category', () => {
+    // That would render the same tool twice on one page.
+    for (const t of TOOLS) {
+      for (const ref of t.alsoIn ?? []) {
+        expect(ref.category, `${toolId(t)} -> ${ref.category}/${ref.group}`).not.toBe(t.category);
+      }
+    }
+  });
+
+  it('never lists the same cross-listing twice', () => {
+    for (const t of TOOLS) {
+      const refs = (t.alsoIn ?? []).map((r) => `${r.category}/${r.group}`);
+      expect(refs, toolId(t)).toHaveLength(new Set(refs).size);
+    }
+  });
+
+  it('keeps cross-listing out of the canonical model', () => {
+    // alsoIn is a browse-surface hint and nothing else. The URL, the
+    // breadcrumb, the sitemap and the palette each know exactly one home per
+    // tool, and that stays true however many places a tool is shown. A group
+    // ref is an object precisely so it can never be mistaken for a tool id:
+    // 'image/convert' is both a real tool and a real group, and pdf/to-image
+    // legitimately carries the tool in `related` while cross-listing into the
+    // group.
+    for (const t of TOOLS) {
+      if (!t.alsoIn?.length) continue;
+      expect(TOOLS_BY_ID.get(toolId(t)), toolId(t)).toBe(t);
+      const homes = TOOLS.filter((x) => toolId(x) === toolId(t));
+      expect(homes, `${toolId(t)} must have exactly one home`).toHaveLength(1);
+    }
+  });
+
+  it('gives every preset a short chip label', () => {
+    // The chip shows `short`; the accessible name stays the full `name`. A
+    // missing or long short label is the difference between a tidy row of
+    // five chips and a wrapped paragraph of them.
+    for (const t of TOOLS) {
+      for (const v of t.variants ?? []) {
+        const where = `${toolId(t)}/${v.slug}`;
+        expect(v.short?.trim(), `${where} has no short label`).toBeTruthy();
+        expect(v.short.length, `${where} short label is too long`).toBeLessThanOrEqual(14);
+        expect(v.name.length, `${where} name should be the long form`).toBeGreaterThan(v.short.length);
+      }
+    }
+  });
+
+  it('declares groups only for categories that exist', () => {
+    for (const c of Object.keys(GROUPS)) expect(CATEGORIES).toContain(c);
   });
 });

@@ -1,7 +1,7 @@
 ---
 import { TOOLS } from '../../tools/registry';
-import { toolId } from '../../tools/types';
-import { categoryLabel, localizeTool, localePath, ui, type Locale } from '../../i18n';
+import { buildSearchIndex } from '../../tools/search-index';
+import { ui, type Locale } from '../../i18n';
 
 interface Props { locale: Locale }
 const { locale } = Astro.props;
@@ -10,10 +10,7 @@ const t = ui(locale);
 // The index is serialised into the page rather than imported by the client
 // script, so the full registry never ships to the browser as executable code.
 // Keywords carry both languages, so "gabung" and "merge" both work anywhere.
-const index = TOOLS.map((tool) => localizeTool(tool, locale)).map((tool) => ({
-  id: toolId(tool), name: tool.name, category: categoryLabel(tool.category, locale), blurb: tool.blurb,
-  keywords: tool.keywords, href: localePath(locale, `/${toolId(tool)}`),
-}));
+const index = buildSearchIndex(locale);
 ---
 
 <button
@@ -92,7 +89,14 @@ const index = TOOLS.map((tool) => localizeTool(tool, locale)).map((tool) => ({
           </li>`).join('');
 
     for (const el of list.querySelectorAll<HTMLElement>('li[data-index]')) {
-      el.addEventListener('mouseenter', () => { active = Number(el.dataset.index); render(); });
+      // Only re-render when the highlight actually moves. render() replaces the
+      // whole list through innerHTML, so re-running it for a mouseenter on the
+      // already-active option destroyed the node under the cursor and the
+      // click that followed landed on nothing.
+      el.addEventListener('mouseenter', () => {
+        const i = Number(el.dataset.index);
+        if (i !== active) { active = i; render(); }
+      });
       el.addEventListener('click', () => { location.href = el.dataset.href ?? '/'; });
     }
 

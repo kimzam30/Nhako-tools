@@ -1,6 +1,7 @@
 import type { Locale } from './paths';
 import type { Category, OptionSpec, ToolMeta, ToolVariant } from '../tools/types';
 import { CATEGORY_LABEL, toolId } from '../tools/types';
+import { groupLabel as groupLabelEn, GROUPS } from '../tools/groups';
 
 /**
  * Bahasa Melayu text for the registry.
@@ -43,7 +44,35 @@ const CATEGORY_MS: Record<Category, string> = {
 export const categoryLabel = (category: Category, locale: Locale): string =>
   locale === 'ms' ? CATEGORY_MS[category] : CATEGORY_LABEL[category];
 
+/** Malay job-group labels, keyed '<category>/<group>'. English lives in
+ *  src/tools/groups.ts, beside CATEGORY_LABEL. i18n.test.ts fails on a group
+ *  defined there and missing here, and on a key here that names no real
+ *  group, so the two files cannot drift apart. */
+const GROUP_MS: Record<string, string> = {
+  'pdf/organise': 'Susun halaman',
+  'pdf/create': 'Buat PDF',
+  'pdf/extract': 'Tukar dan ekstrak',
+  'pdf/mark-up': 'Sunting dan tandatangan',
+  'pdf/shrink': 'Kecilkan saiz fail',
+  'pdf/secure': 'Kata laluan dan kebenaran',
+  'image/shrink': 'Kecilkan saiz fail',
+  'image/convert': 'Tukar format',
+  'image/transform': 'Ubah saiz, potong dan putar',
+  'image/edit': 'Sunting foto',
+  'image/clean': 'Ekstrak dan bersihkan',
+  'image/create': 'Hasilkan',
+  'dev/text': 'Teks dan kod',
+  'dev/encode': 'Enkod dan hash',
+  'dev/generate': 'Jana',
+};
+
+export const groupLabel = (category: Category, id: string, locale: Locale): string =>
+  (locale === 'ms' ? GROUP_MS[`${category}/${id}`] : undefined) ?? groupLabelEn(category, id);
+
 const noUpload = 'Tiada muat naik, tiada akaun, tiada tera air.';
+
+export const MS_GROUPS = GROUP_MS;
+export const ALL_GROUPS = GROUPS;
 
 export const MS: Record<string, ToolText> = {
   // ─── PDF ──────────────────────────────────────────────────────────────────

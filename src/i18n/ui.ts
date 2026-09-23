@@ -64,6 +64,24 @@ const en = {
   notFoundTitle: "That page doesn't exist.",
   notFoundBody: (n: number) => `It may have moved during the rebuild. All ${n} tools are listed on the home page, and Ctrl+K (⌘K on a Mac) searches them from anywhere.`,
   browseAll: 'Browse all tools',
+
+  // Category pages. Intros carry no tool counts: a number written into prose
+  // goes stale the moment a tool is added, and the count is already rendered
+  // from the registry beside the heading.
+  categoryTitle: (label: string) => `Free ${label} tools online, no upload | Nhako Tools`,
+  categoryDescription: (label: string, n: number) => `${n} ${label} tools that run entirely in your browser. No upload, no size limit, no account.`,
+  categoryIntro: {
+    pdf: 'Merge, split, convert, sign, compress and protect PDFs. Every tool runs on your device, so there is no upload step, no queue, no file size cap and no account.',
+    image: 'Compress, convert, resize, crop and clean up photos. Every tool runs on your device, so your pictures are never uploaded and there is no daily limit.',
+    media: 'Compress video, pull the audio out of it, transcribe speech and read a script off a tablet. The heavy work is done by WebAssembly in this browser tab, not on a server.',
+    calc: 'Take-home pay and other Malaysian calculations. Every rate comes from an official source, stored with the date it was checked. Nothing you type is sent anywhere.',
+    dev: 'Format, encode, hash, compare and generate. Small tools that open instantly and keep working offline once the page has loaded.',
+  },
+  allTools: (n: number) => `All ${n} tools`,
+  malaysia: 'Malaysia',
+  malaysiaIntro: 'The tools built around Malaysian forms, portals and payroll. Every rate and every size limit here comes from an official source, stored with the date it was checked, and tested against the worked examples those sources publish.',
+  malaysiaSources: 'Rates come from LHDN, KWSP and PERKESO, and photo sizes from the issuing authority. Each is stored in a dated file with its source URL, so a figure can be traced rather than trusted. Nothing you enter or upload here leaves your device.',
+  toolsInGroup: (n: number) => `${n} tools`,
 };
 
 export type UiStrings = typeof en;
@@ -126,6 +144,21 @@ const ms: UiStrings = {
   notFoundTitle: 'Halaman itu tidak wujud.',
   notFoundBody: (n) => `Ia mungkin telah dipindahkan. Kesemua ${n} alat disenaraikan di laman utama, dan Ctrl+K (⌘K pada Mac) mencarinya dari mana-mana halaman.`,
   browseAll: 'Lihat semua alat',
+
+  categoryTitle: (label) => `Alat ${label} percuma dalam talian, tiada muat naik | Nhako Tools`,
+  categoryDescription: (label, n) => `${n} alat ${label} yang berjalan sepenuhnya dalam pelayar anda. Tiada muat naik, tiada had saiz, tiada akaun.`,
+  categoryIntro: {
+    pdf: 'Gabung, pisah, tukar, tandatangan, mampat dan lindungi PDF. Setiap alat berjalan pada peranti anda, jadi tiada muat naik, tiada giliran, tiada had saiz fail dan tiada akaun.',
+    image: 'Mampat, tukar, ubah saiz, potong dan bersihkan foto. Setiap alat berjalan pada peranti anda, jadi gambar anda tidak pernah dimuat naik dan tiada had harian.',
+    media: 'Mampat video, keluarkan audio daripadanya, transkripsi pertuturan dan baca skrip pada tablet. Kerja berat dilakukan oleh WebAssembly dalam tab pelayar ini, bukan pada pelayan.',
+    calc: 'Gaji bersih dan pengiraan Malaysia yang lain. Setiap kadar datang daripada sumber rasmi, disimpan dengan tarikh ia disemak. Apa yang anda taip tidak dihantar ke mana-mana.',
+    dev: 'Format, enkod, hash, banding dan jana. Alat kecil yang dibuka serta-merta dan terus berfungsi luar talian setelah halaman dimuatkan.',
+  },
+  allTools: (n) => `Semua ${n} alat`,
+  malaysia: 'Malaysia',
+  malaysiaIntro: 'Alat yang dibina untuk borang, portal dan gaji di Malaysia. Setiap kadar dan setiap had saiz di sini datang daripada sumber rasmi, disimpan dengan tarikh ia disemak, dan diuji dengan contoh kiraan yang diterbitkan oleh sumber tersebut.',
+  malaysiaSources: 'Kadar datang daripada LHDN, KWSP dan PERKESO, dan saiz foto daripada pihak berkuasa yang mengeluarkannya. Setiap satu disimpan dalam fail bertarikh bersama URL sumbernya, jadi sesuatu angka boleh dijejaki dan bukan sekadar dipercayai. Apa-apa yang anda masukkan di sini tidak meninggalkan peranti anda.',
+  toolsInGroup: (n) => `${n} alat`,
 };
 
 const STRINGS: Record<Locale, UiStrings> = { en, ms };

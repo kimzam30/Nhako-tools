@@ -1,8 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { TOOLS } from '../tools/registry';
-import { toolId } from '../tools/types';
-import { MS, localizeTool } from './tools';
+import { toolId, CATEGORIES } from '../tools/types';
+import { groupsIn } from '../tools/groups';
+import { MS, MS_GROUPS, localizeTool, groupLabel } from './tools';
 import { localePath, localeFromPath } from './index';
+import { LOCALES } from './paths';
+import { ui } from './ui';
 
 describe('Malay translations are complete', () => {
   it('covers every tool, and nothing that is not a tool', () => {
@@ -54,5 +57,35 @@ describe('locale paths', () => {
     expect(localeFromPath('/ms')).toBe('ms');
     expect(localeFromPath('/msword')).toBe('en');
     expect(localeFromPath('/pdf/merge')).toBe('en');
+  });
+});
+
+describe('Malay job-group labels are complete', () => {
+  const defined = CATEGORIES.flatMap((c) => groupsIn(c).map((g) => `${c}/${g.id}`));
+
+  it('translates every group that exists', () => {
+    for (const key of defined) {
+      expect(MS_GROUPS[key], `${key} has no Malay label`).toBeTruthy();
+    }
+  });
+
+  it('translates nothing that is not a group', () => {
+    // A stale key here is a label nobody sees and nobody notices is wrong.
+    for (const key of Object.keys(MS_GROUPS)) {
+      expect(defined, `${key} is not a real group`).toContain(key);
+    }
+  });
+
+  it('returns the Malay label for ms and the English one for en', () => {
+    expect(groupLabel('pdf', 'organise', 'ms')).toBe('Susun halaman');
+    expect(groupLabel('pdf', 'organise', 'en')).toBe('Organise pages');
+  });
+
+  it('gives every category an intro in both locales', () => {
+    for (const c of CATEGORIES) {
+      for (const locale of LOCALES) {
+        expect(ui(locale).categoryIntro[c]?.trim().length, `${c} ${locale}`).toBeGreaterThan(40);
+      }
+    }
   });
 });

@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { searchTools } from './search';
 import { TOOLS } from '../../tools/registry';
 import { toolId } from '../../tools/types';
+import { buildSearchIndex } from '../../tools/search-index';
 
 const index = TOOLS.map((t) => ({
   id: toolId(t), name: t.name, category: t.category, blurb: t.blurb, keywords: [...t.keywords],
@@ -52,5 +53,53 @@ describe('tool search', () => {
 
   it('matches by category name', () => {
     expect(searchTools(index, 'image').length).toBeGreaterThanOrEqual(3);
+  });
+});
+
+describe('presets are findable', () => {
+  const index = buildSearchIndex('en');
+  const find = (q: string) => searchTools(index, q);
+
+  it('resolves a size that used to match nothing', () => {
+    // The whole point of this change: /pdf/compress/500kb existed as a page
+    // and the palette could not reach it.
+    const hrefs = find('500kb').map((r) => r.href);
+    expect(hrefs).toContain('/pdf/compress/500kb');
+    expect(hrefs).toContain('/image/compress/500kb');
+  });
+
+  it('resolves the same size written with a space, or as a bare number', () => {
+    expect(find('500 kb').map((r) => r.href)).toContain('/pdf/compress/500kb');
+    expect(find('200').map((r) => r.href)).toContain('/pdf/compress/200kb');
+  });
+
+  it('finds the Office presets by application name', () => {
+    expect(find('word to pdf')[0]?.href).toBe('/pdf/office-to-pdf/word');
+    expect(find('powerpoint').map((r) => r.href)).toContain('/pdf/office-to-pdf/powerpoint');
+  });
+
+  it('lists a tool above its own presets', () => {
+    const results = find('compress pdf');
+    const tool = results.findIndex((r) => r.href === '/pdf/compress');
+    const preset = results.findIndex((r) => r.href === '/pdf/compress/500kb');
+    expect(tool).toBeGreaterThanOrEqual(0);
+    expect(preset).toBeGreaterThan(tool);
+  });
+
+  it('indexes every tool and every preset exactly once', () => {
+    const expected = TOOLS.length + TOOLS.reduce((n, t) => n + (t.variants?.length ?? 0), 0);
+    expect(index).toHaveLength(expected);
+    expect(new Set(index.map((r) => r.id)).size).toBe(expected);
+  });
+
+  it('still finds Audio to Text from "transcribe"', () => {
+    // The behaviour presets must not regress.
+    expect(find('transcribe')[0]?.href).toBe('/media/transcribe');
+  });
+
+  it('builds Malay hrefs under /ms', () => {
+    const ms = buildSearchIndex('ms');
+    expect(ms.every((r) => r.href.startsWith('/ms/'))).toBe(true);
+    expect(searchTools(ms, '500kb').map((r) => r.href)).toContain('/ms/pdf/compress/500kb');
   });
 });

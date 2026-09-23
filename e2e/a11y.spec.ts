@@ -30,6 +30,12 @@ const PAGES = [
   ['/ms/image/remove-background', 'Malay remove background'],
   ['/ms/media/teleprompter/remote', 'Malay phone remote'],
   ['/404', 'not found'],
+  ['/pdf', 'category page, grouped'],
+  ['/media', 'category page, flat'],
+  ['/calc', 'category page, one tool'],
+  ['/malaysia', 'collection page'],
+  ['/ms/image', 'Malay category page'],
+  ['/ms/malaysia', 'Malay collection page'],
 ] as const;
 
 for (const [path, label] of PAGES) {
