@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import ToolRow, { type Preset } from '../components/astro/ToolRow.astro';
+import ToolTile, { type Preset } from '../components/astro/ToolTile.astro';
 import { TOOLS, toolsIn } from '../tools/registry';
 import { groupsIn, hasGroups } from '../tools/groups';
 import { toolId, type Category, type ToolMeta } from '../tools/types';
@@ -16,7 +16,7 @@ const path = `/${category}`;
 const href = (p: string) => localePath(locale, p);
 
 /** Preset chips for a tool, or none. Localised here for the same reason the
- *  tool is: ToolRow renders words, it does not choose them. */
+ *  tool is: ToolTile renders words, it does not choose them. */
 const presetsFor = (tool: ToolMeta): Preset[] =>
   (tool.variants ?? []).map((v) => {
     const localized = localizeVariant(tool, v, locale);
@@ -80,6 +80,7 @@ const jsonLd = {
     <header class="mb-8 mt-4">
       <div class="flex items-baseline gap-3">
         <h1 class="text-2xl font-bold tracking-tight">{label}</h1>
+        <span class="h-px w-6 shrink-0" style={`background:var(--cat-${category})`} aria-hidden="true"></span>
         <span data-reveal-rule class="h-px flex-1 bg-border" aria-hidden="true"></span>
         <span data-numeric class="font-mono text-2xs text-muted">{count}</span>
       </div>
@@ -92,9 +93,9 @@ const jsonLd = {
             <h2 class="mb-2 text-2xs font-semibold uppercase tracking-[0.14em] text-muted">
               {groupLabel(category, group.id, locale)}
             </h2>
-            <div class="border-t border-border">
+            <div class="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
               {rowsIn(group.id).map((tool) => (
-                <ToolRow
+                <ToolTile
                   tool={localizeTool(tool, locale)}
                   href={href(`/${toolId(tool)}`)}
                   presets={presetsFor(tool)}
@@ -104,9 +105,9 @@ const jsonLd = {
           </section>
         ))
       : (
-        <div class="mb-9 border-t border-border">
+        <div class="mb-9 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
           {own.map((tool) => (
-            <ToolRow
+            <ToolTile
               tool={localizeTool(tool, locale)}
               href={href(`/${toolId(tool)}`)}
               presets={presetsFor(tool)}
@@ -115,7 +116,7 @@ const jsonLd = {
         </div>
       )}
 
-    <p class="mb-16 text-2xs text-muted">
+    <p class="mb-16 text-xs text-muted">
       <a href={href('/')} class="transition-colors hover:text-accent">{t.allTools(TOOLS.length)}</a>
     </p>
   </div>

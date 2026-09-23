@@ -229,7 +229,7 @@ export default function Teleprompter({ locale = 'en' }: { locale?: Locale }) {
         <span data-numeric className="font-mono text-xs tabular-nums">{show(settings[k])}</span>
       </span>
       <input type="range" min={min} max={max} step={step} value={settings[k]} onChange={(e) => set(k, Number(e.target.value))} className="accent-[var(--accent)]" data-setting={k} />
-      {help && <span className="text-2xs leading-snug text-muted">{help}</span>}
+      {help && <span className="text-xs leading-snug text-muted">{help}</span>}
     </label>
   );
 
@@ -318,7 +318,7 @@ export default function Teleprompter({ locale = 'en' }: { locale?: Locale }) {
             <label className="flex items-center gap-2 text-sm font-medium">
               <input type="checkbox" checked={settings.voice} disabled={!speechOk} onChange={(e) => set('voice', e.target.checked)} data-testid="voice" /> {t.voice}
             </label>
-            <p className="mt-1.5 text-2xs leading-snug text-muted">{speechOk ? t.voiceHelp : t.voiceNone}</p>
+            <p className="mt-1.5 text-xs leading-snug text-muted">{speechOk ? t.voiceHelp : t.voiceNone}</p>
             {settings.voice && (
               <label className="mt-2 flex items-center gap-2 text-sm">
                 <span className="text-muted">{t.voiceLang}</span>
@@ -347,7 +347,7 @@ export default function Teleprompter({ locale = 'en' }: { locale?: Locale }) {
         <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs">
           {t.keys.map(([k, v]) => (<Fragment key={k}><dt className="font-mono">{k}</dt><dd className="text-muted">{v}</dd></Fragment>))}
         </dl>
-        <p className="mt-2 text-2xs text-muted">{t.keysNote}</p>
+        <p className="mt-2 text-xs text-muted">{t.keysNote}</p>
       </details>
 
       {/* Takes */}
@@ -366,7 +366,7 @@ export default function Teleprompter({ locale = 'en' }: { locale?: Locale }) {
                   {tk.url && <a href={tk.url} download={tk.name} className={small}>{t.download}</a>}
                   <button type="button" onClick={() => void removeTake(tk.name)} className={small}>{t.deleteTake}</button>
                 </div>
-                <p className={`mt-1 text-2xs ${tk.saved ? 'text-muted' : 'text-warn'}`}>{tk.saved ? t.onDevice : t.inMemory}</p>
+                <p className={`mt-1 text-xs ${tk.saved ? 'text-muted' : 'text-warn'}`}>{tk.saved ? t.onDevice : t.inMemory}</p>
                 {playingTake === tk.name && tk.url && <video src={tk.url} controls playsInline className="mt-2 w-full rounded bg-black" />}
               </li>
             ))}

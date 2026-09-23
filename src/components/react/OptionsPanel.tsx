@@ -37,7 +37,7 @@ export default function OptionsPanel({
                   className="size-4 accent-[var(--accent)]"
                 />
                 <span className="text-sm">{spec.label}</span>
-                {spec.help && <span className="text-2xs text-muted">{spec.help}</span>}
+                {spec.help && <span className="text-xs text-muted">{spec.help}</span>}
               </label>
             ) : (
               <>
@@ -90,7 +90,7 @@ export default function OptionsPanel({
                   />
                 )}
 
-                {spec.help && <p className="mt-1 text-2xs leading-snug text-muted">{spec.help}</p>}
+                {spec.help && <p className="mt-1 text-xs leading-snug text-muted">{spec.help}</p>}
               </>
             )}
           </div>
@@ -150,7 +150,7 @@ function NumberField({ spec, id, value, disabled, rangeText, onCommit }: {
         className="w-28 rounded border border-border bg-surface px-2.5 py-1.5 font-mono text-sm tabular-nums transition-colors hover:border-border-strong aria-invalid:border-err"
       />
       {!valid && (
-        <span id={errorId} className="text-2xs text-err">
+        <span id={errorId} className="text-xs text-err">
           {rangeText(spec.min, spec.max)}
         </span>
       )}

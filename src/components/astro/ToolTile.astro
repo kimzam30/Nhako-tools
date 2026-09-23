@@ -1,0 +1,94 @@
+---
+import type { ToolMeta } from '../../tools/types';
+import ToolIcon from './ToolIcon.astro';
+
+/** Precomputed by the view: localising a variant is the caller's job, exactly
+ *  as localising the tool is. */
+export interface Preset {
+  href: string;
+  /** Chip text. Short by design: '500 KB', not 'Compress PDF to 500 KB'. */
+  short: string;
+  /** Full name, used as the chip's accessible name. */
+  name: string;
+}
+
+interface Props {
+  tool: ToolMeta;
+  href: string;
+  presets?: Preset[];
+  /** Why this tool appears here. Used by the Malaysia collection, where the
+   *  portal context is the reason the entry earns its place. */
+  context?: string;
+}
+
+const { tool, href, presets = [], context } = Astro.props;
+---
+{/*
+  The directory primitive, as a card.
+
+  This replaces the bordered row the browse layer shipped in September. That row
+  argued, correctly at the time, that at 43 tools a padded card shows six per
+  screen where a row shows about fourteen, and that this is an instrument panel
+  rather than a shop window. What changed is the 43 marks: a card carrying a
+  mark is a different proposition from a card carrying two lines of text,
+  because the mark does the scanning work that the tight row used to do with
+  alignment. The cost is real and measured in .design/redesign/TASKS.md.
+
+  `data-tool-card`, `data-name`, `data-keywords` and `data-category` are the
+  homepage filter's contract and must not change. The mark lives inside the
+  filtered element so it hides and shows with its card.
+
+  The chips sit outside the anchor because a link inside a link is invalid HTML,
+  which is why this is a <div> wrapping an <a> rather than one big <a>. The
+  hover state is on the wrapper, so the whole card responds as one object even
+  though only part of it is the link.
+
+  No shadow. Depth is a border, a surface and an inset hairline: machined, not
+  floating. See DESIGN_BRIEF.md amendment 2.
+*/}
+<div
+  data-tool-card
+  data-reveal
+  data-name={tool.name.toLowerCase()}
+  data-keywords={tool.keywords.join(' ')}
+  data-category={tool.category}
+  class="group/card flex flex-col rounded-lg border border-border bg-surface shadow-[inset_0_1px_0_var(--edge)] transition-colors duration-[120ms] hover:border-accent focus-within:border-accent"
+>
+  <a href={href} class="flex flex-1 gap-2.5 rounded-lg p-3">
+    {/* Nudged so the mark's optical centre sits on the name's first baseline. */}
+    <ToolIcon tool={tool} class="mt-0.5 group-hover/card:text-accent" />
+
+    <span class="flex min-w-0 flex-col gap-0.5">
+      <span class="text-sm font-medium transition-colors group-hover/card:text-accent">
+        {tool.name}
+      </span>
+      <span class="text-xs leading-snug text-muted">{context ?? tool.blurb}</span>
+    </span>
+  </a>
+
+  {presets.length > 0 && (
+    /* Indented to the blurb, so the chips read as belonging to the name above
+       them rather than to the card edge. The card that owns presets is taller
+       than its neighbours, which is honest: it leads somewhere they do not. */
+    <ul class="flex flex-wrap gap-1.5 pb-3 pr-3 pl-[calc(0.75rem+var(--mark-gutter)-0.5rem)]">
+      {presets.map((p) => (
+        <li>
+          {/*
+            Visible text is the short form; the accessible name is the full one,
+            so a screen reader hears "Compress PDF to 500 KB" rather than an
+            orphaned "500 KB". Sizes are numbers, so they take the mono face.
+            The touch target grows to 44px on a coarse pointer only, which keeps
+            the card dense on a mouse and thumb-sized on a phone.
+          */}
+          <a
+            href={p.href}
+            aria-label={p.name}
+            class="inline-flex items-center rounded border border-border px-2 py-1 font-mono text-2xs text-muted transition-colors duration-[120ms] hover:border-accent hover:text-accent pointer-coarse:min-h-11 pointer-coarse:px-3"
+          >
+            {p.short}
+          </a>
+        </li>
+      ))}
+    </ul>
+  )}
+</div>

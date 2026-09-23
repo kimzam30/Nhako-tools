@@ -16,7 +16,7 @@ const index = buildSearchIndex(locale);
 <button
   type="button"
   id="palette-open"
-  class="flex h-8 items-center gap-2 rounded border border-border px-2.5 text-xs text-muted transition-colors duration-[120ms] hover:border-border-strong hover:text-text"
+  class="flex h-8 items-center gap-2 rounded border border-border px-2.5 text-xs text-muted transition-colors duration-[120ms] hover:border-border-strong hover:text-text pointer-coarse:h-11 pointer-coarse:px-3"
   aria-label={t.searchTools}
   aria-keyshortcuts="Control+K Meta+K"
   aria-haspopup="dialog"
@@ -28,11 +28,11 @@ const index = buildSearchIndex(locale);
   {/* The name starts with the visible word "Search" (WCAG 2.5.3), and the
       shortcut hint is hidden from screen readers, which read "⌘" as "place
       of interest sign". aria-keyshortcuts states it properly instead. */}
-  <kbd id="palette-shortcut" aria-hidden="true" class="hidden rounded border border-border px-1 font-mono text-[10px] sm:inline">Ctrl K</kbd>
+  <kbd id="palette-shortcut" aria-hidden="true" class="hidden rounded border border-border px-1 font-mono text-2xs sm:inline">Ctrl K</kbd>
 </button>
 
 <div id="palette" hidden class="fixed inset-0 z-50 flex items-start justify-center bg-black/40 p-4 pt-[12vh]">
-  <div role="dialog" aria-modal="true" aria-label={t.paletteLabel} class="w-full max-w-lg overflow-hidden rounded-lg border border-border bg-bg shadow-2xl">
+  <div role="dialog" aria-modal="true" aria-label={t.paletteLabel} class="w-full max-w-lg overflow-hidden rounded-lg border border-border bg-bg shadow-[var(--shadow-overlay)]">
     <label class="sr-only" for="palette-input">{t.searchTools}</label>
     <input
       id="palette-input" type="text" autocomplete="off" placeholder={t.searchPlaceholder(TOOLS.length)}
@@ -84,8 +84,8 @@ const index = buildSearchIndex(locale);
             class="flex cursor-pointer items-baseline gap-3 rounded px-3 py-2 ${i === active ? 'bg-sunken' : ''}"
           >
             <span class="text-sm font-medium">${escape(t.name)}</span>
-            <span class="min-w-0 flex-1 truncate text-2xs text-muted">${escape(t.blurb)}</span>
-            <span class="text-[10px] uppercase tracking-wider text-muted">${escape(t.category)}</span>
+            <span class="min-w-0 flex-1 truncate text-xs text-muted">${escape(t.blurb)}</span>
+            <span class="text-2xs uppercase tracking-wider text-muted">${escape(t.category)}</span>
           </li>`).join('');
 
     for (const el of list.querySelectorAll<HTMLElement>('li[data-index]')) {

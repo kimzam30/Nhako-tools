@@ -85,7 +85,7 @@ export default function TeleprompterRemote({ locale = 'en' }: { locale?: Locale 
             inputMode="text" maxLength={14} aria-describedby="code-help"
             className="rounded border border-border bg-bg px-3 py-3 text-center font-mono text-2xl tracking-[0.2em]" data-testid="code"
           />
-          <span id="code-help" className="text-2xs text-muted">{t.codeHelp}</span>
+          <span id="code-help" className="text-xs text-muted">{t.codeHelp}</span>
         </label>
         {bad && <p role="alert" className="text-sm text-err">{t.badCode}</p>}
         <button type="submit" className="min-h-12 rounded-lg bg-accent px-4 py-3 font-semibold text-accent-on hover:bg-accent-hover">{t.join}</button>

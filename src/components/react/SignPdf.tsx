@@ -337,7 +337,7 @@ export default function SignPdf({ locale = 'en', accept }: { locale?: Locale; ac
           className={`flex min-h-44 w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-6 py-10 text-center transition-colors duration-[120ms] ${dropZone ? 'border-accent bg-accent-subtle' : 'border-border bg-surface hover:border-border-strong'}`}
         >
           <span className="text-sm font-medium">{t.drop}</span>
-          <span className="text-2xs text-muted">{t.dropSub}</span>
+          <span className="text-xs text-muted">{t.dropSub}</span>
         </button>
         {error && <p className="mt-4 rounded-lg border border-err bg-err-subtle px-4 py-3 text-sm text-err">{error}</p>}
       </section>
@@ -351,7 +351,7 @@ export default function SignPdf({ locale = 'en', accept }: { locale?: Locale; ac
       <div className="sticky top-16 z-10 flex flex-col gap-3 rounded-lg border border-border bg-surface p-4 shadow-sm">
         <div className="flex flex-wrap items-center gap-2">
           <div role="tablist" className="flex gap-1">{tab('draw', t.draw)}{tab('type', t.type)}{tab('upload', t.upload)}</div>
-          <label className="ml-auto flex items-center gap-2 text-2xs text-muted">
+          <label className="ml-auto flex items-center gap-2 text-xs text-muted">
             {t.color}
             <select value={ink} onChange={(e) => setInk(e.target.value as Ink)} className="rounded border border-border bg-surface px-2 py-1 text-xs">
               <option value="black">{t.black}</option>
@@ -392,8 +392,8 @@ export default function SignPdf({ locale = 'en', accept }: { locale?: Locale; ac
 
         <div className="flex flex-wrap items-center gap-3 border-t border-border pt-3">
           {signature
-            ? <span className="flex items-center gap-2 text-2xs text-muted"><img src={signature.url} alt="" className="h-8 w-auto rounded bg-white px-1" />{t.place}</span>
-            : <span className="text-2xs text-muted">{t.nothing}</span>}
+            ? <span className="flex items-center gap-2 text-xs text-muted"><img src={signature.url} alt="" className="h-8 w-auto rounded bg-white px-1" />{t.place}</span>
+            : <span className="text-xs text-muted">{t.nothing}</span>}
           <button type="button" onClick={() => void addDate()} className="rounded border border-border px-2.5 py-1 text-xs text-muted hover:text-text">{t.addDate}</button>
           <span data-numeric className="text-2xs text-muted">{t.placed(placed.length)}</span>
           <button type="button" disabled={busy || placed.length === 0} onClick={() => void save()} className="ml-auto rounded bg-accent px-3 py-1.5 text-sm font-medium text-accent-on hover:bg-accent-hover disabled:opacity-50">{busy ? t.saving : t.save}</button>
@@ -442,7 +442,7 @@ export default function SignPdf({ locale = 'en', accept }: { locale?: Locale; ac
                     type="button" tabIndex={-1} aria-hidden="true"
                     onPointerDown={(e) => e.stopPropagation()}
                     onClick={(e) => { e.stopPropagation(); setPlaced((prev) => prev.filter((x) => x.id !== p.id)); }}
-                    className="absolute -top-2.5 -right-2.5 grid size-5 place-items-center rounded-full bg-accent text-[10px] text-accent-on opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100"
+                    className="absolute -top-2.5 -right-2.5 grid size-5 place-items-center rounded-full bg-accent text-2xs text-accent-on opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100"
                   >✕</button>
                 </div>
               ))}

@@ -39,6 +39,18 @@ const tabTitle = documentTitle ?? (title === 'Nhako Tools' ? title : `${title} |
 // Social cards have no such context, so they keep the brand.
 const socialTitle = title === 'Nhako Tools' ? title : `${title} · Nhako Tools`;
 const ogImage = new URL(`/og/${category ?? 'default'}.png`, site);
+
+/* The two latin subsets the site actually paints with, preloaded so the
+   fallback-to-webfont swap closes before first paint.
+
+   Why: @fontsource ships `font-display: swap`. With the old 11px/13px ramp the
+   swap moved text too little to register; raising the ramp on 2026-09-23 pushed
+   it over Lighthouse's reporting floor and CLS went from 0 to 0.002 on /pdf.
+   Blocking the font files takes it back to exactly 0, which is what identified
+   the cause. The other subsets (latin-ext, cyrillic, greek, vietnamese) are not
+   preloaded: nothing on this site renders in them by default. */
+import instrumentSansLatin from '@fontsource-variable/instrument-sans/files/instrument-sans-latin-wght-normal.woff2?url';
+import jetBrainsMonoLatin from '@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2?url';
 ---
 
 <!doctype html>
@@ -55,6 +67,8 @@ const ogImage = new URL(`/og/${category ?? 'default'}.png`, site);
       <link rel="alternate" hreflang={LANG[l]} href={new URL(localePath(l, path), site).href} />
     ))}
     {alternates && <link rel="alternate" hreflang="x-default" href={new URL(path, site).href} />}
+    <link rel="preload" as="font" type="font/woff2" href={instrumentSansLatin} crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href={jetBrainsMonoLatin} crossorigin />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />

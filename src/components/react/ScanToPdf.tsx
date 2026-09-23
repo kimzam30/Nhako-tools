@@ -215,8 +215,8 @@ export default function ScanToPdf({ locale = 'en' }: { locale?: Locale }) {
           <button type="button" onClick={() => cameraRef.current?.click()} className="min-h-11 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-on hover:bg-accent-hover">{t.camera}</button>
           <button type="button" onClick={() => chooseRef.current?.click()} className="min-h-11 rounded-lg border border-border bg-bg px-4 py-2 text-sm font-semibold hover:border-accent">{t.choose}</button>
         </div>
-        <p className="text-2xs text-muted">{t.drop}</p>
-        <p className="max-w-md text-2xs leading-snug text-muted">{t.help}</p>
+        <p className="text-xs text-muted">{t.drop}</p>
+        <p className="max-w-md text-xs leading-snug text-muted">{t.help}</p>
       </div>
 
       {error && <p role="alert" className="rounded-lg border border-err bg-err-subtle px-4 py-3 text-sm text-err">{error}</p>}

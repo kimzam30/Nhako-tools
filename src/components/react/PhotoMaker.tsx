@@ -336,7 +336,7 @@ export default function PhotoMaker({ locale = 'en', accept }: { locale?: Locale;
             {PRESETS.map((p) => <option key={p.id} value={p.id}>{(t.presets as Record<string, string>)[p.id]}</option>)}
           </select>
           {preset.source && (
-            <p className="mt-1 text-2xs text-muted">
+            <p className="mt-1 text-xs text-muted">
               {t.source}:{' '}
               <a className="underline decoration-border underline-offset-2 hover:text-accent" href={preset.source.url} rel="noopener noreferrer">{preset.source.title}</a>
               {' · '}{preset.source.checked}
@@ -390,7 +390,7 @@ export default function PhotoMaker({ locale = 'en', accept }: { locale?: Locale;
           }`}
         >
           <span className="text-sm font-medium">{t.drop}</span>
-          <span className="text-2xs text-muted">{t.dropSub}</span>
+          <span className="text-xs text-muted">{t.dropSub}</span>
         </button>
       ) : (
         <div className="grid gap-5 sm:grid-cols-[auto_minmax(0,1fr)]">
@@ -414,7 +414,7 @@ export default function PhotoMaker({ locale = 'en', accept }: { locale?: Locale;
               <input id="photo-zoom" type="range" min={1} max={4} step={0.01} value={Math.min(4, view.zoom)} onChange={(e) => zoomTo(Number(e.target.value))} className="flex-1 accent-[var(--accent)]" />
               <button type="button" onClick={() => source && setView(clampView({ zoom: 1, cx: source.width / 2, cy: source.height / 2 }, source.width, source.height, PREVIEW_W, previewH))} className="rounded border border-border px-2 py-0.5 text-2xs text-muted hover:text-text">{t.reset}</button>
             </div>
-            <p id="photo-guide" className="text-2xs leading-snug text-muted" style={{ maxWidth: PREVIEW_W }}>{t.guide}</p>
+            <p id="photo-guide" className="text-xs leading-snug text-muted" style={{ maxWidth: PREVIEW_W }}>{t.guide}</p>
           </div>
 
           <div className="flex flex-col gap-4" aria-live="polite">
@@ -453,7 +453,7 @@ export default function PhotoMaker({ locale = 'en', accept }: { locale?: Locale;
                 <a href={outputs.sheet.url} download="photo-4r-sheet.jpg" data-testid="save-sheet" className="flex items-center justify-between gap-3 rounded border border-border px-3 py-2 text-sm font-medium transition-colors hover:border-accent hover:text-accent">
                   <span>{t.saveSheet}</span><span data-numeric className="text-2xs text-muted">1800×1200 · {bytes(outputs.sheet.size)}</span>
                 </a>
-                <p className="text-2xs leading-snug text-muted">{t.sheetNote(outputs.sheet.copies)}</p>
+                <p className="text-xs leading-snug text-muted">{t.sheetNote(outputs.sheet.copies)}</p>
               </div>
             ) : (
               <p className="text-sm text-muted">{t.preparing}</p>

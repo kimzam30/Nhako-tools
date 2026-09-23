@@ -128,7 +128,7 @@ export default function SalaryCalculator({ locale = 'en' }: { locale?: Locale })
               className={`${field} font-mono tabular-nums`}
             />
           </div>
-          <p id="salary-help" className="mt-1 text-2xs leading-snug text-muted">{t.salaryHelp}</p>
+          <p id="salary-help" className="mt-1 text-xs leading-snug text-muted">{t.salaryHelp}</p>
         </div>
 
         <div>
@@ -164,7 +164,7 @@ export default function SalaryCalculator({ locale = 'en' }: { locale?: Locale })
               className={`${field} font-mono tabular-nums`}
             />
           </div>
-          <p id="zakat-help" className="mt-1 text-2xs leading-snug text-muted">{t.zakatHelp}</p>
+          <p id="zakat-help" className="mt-1 text-xs leading-snug text-muted">{t.zakatHelp}</p>
         </div>
       </div>
 
@@ -237,7 +237,7 @@ function Counter({ id, label: text, help, value, onChange, less, more }: {
           <button type="button" className={btn} aria-label={`${more}: ${text}`} disabled={value >= 20} onClick={() => onChange(Math.min(20, value + 1))}>+</button>
         </div>
       </div>
-      {help && <p className="mt-1 text-2xs leading-snug text-muted">{help}</p>}
+      {help && <p className="mt-1 text-xs leading-snug text-muted">{help}</p>}
     </div>
   );
 }

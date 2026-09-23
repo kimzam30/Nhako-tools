@@ -145,16 +145,32 @@ export default function TextToolPane({ tool, locale = 'en' }: Props) {
         </Pane>
       </div>
 
-      {result?.stats && result.stats.length > 0 && !shownError && !idle && (
-        <dl className="flex flex-wrap gap-x-8 gap-y-2 rounded-lg border border-border bg-surface px-4 py-3">
-          {result.stats.map((s) => (
-            <div key={s.label} className="flex items-baseline gap-2">
-              <dt className="text-2xs uppercase tracking-wider text-muted">{s.label}</dt>
-              <dd data-numeric className="text-sm">{s.value}</dd>
-            </div>
-          ))}
-        </dl>
-      )}
+      {/*
+        The readout is present from first paint rather than appearing once there
+        is something to say. Empty it reads as a gauge at rest; filled it is the
+        same shell with real numbers in it. Previously it was mounted only when
+        a result existed, so the panel popped into being mid-typing and the page
+        looked unfinished until you used it.
+      */}
+      {!shownError && (() => {
+        const live = !idle && result?.stats && result.stats.length > 0;
+        const fields = live
+          ? result.stats!
+          : [{ label: t.resultChars, value: '--' }, { label: t.resultTime, value: '--' }];
+        return (
+          <dl
+            aria-hidden={live ? undefined : true}
+            className="flex flex-wrap gap-x-8 gap-y-2 rounded-lg border border-border bg-sunken px-4 py-3 shadow-[inset_0_1px_0_var(--edge)]"
+          >
+            {fields.map((s) => (
+              <div key={s.label} className="flex items-baseline gap-2">
+                <dt className="text-2xs uppercase tracking-wider text-muted">{s.label}</dt>
+                <dd data-numeric className={live ? 'text-sm' : 'text-sm text-muted opacity-60'}>{s.value}</dd>
+              </div>
+            ))}
+          </dl>
+        );
+      })()}
     </section>
   );
 }

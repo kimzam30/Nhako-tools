@@ -1,0 +1,43 @@
+---
+import type { Category, ToolMeta } from '../../tools/types';
+import { MARKS } from '../../tools/marks';
+
+interface Props {
+  tool: ToolMeta;
+  class?: string;
+}
+const { tool, class: className = '' } = Astro.props;
+const mark = MARKS[`${tool.category}/${tool.slug}`];
+
+/* Tailwind only sees literal class names, so this is a map rather than a
+   template string. The hue identifies the category; it never means "this
+   acts", which stays the accent's job alone. */
+const HUE: Record<Category, string> = {
+  pdf: 'text-cat-pdf',
+  image: 'text-cat-image',
+  media: 'text-cat-media',
+  dev: 'text-cat-dev',
+  calc: 'text-cat-calc',
+};
+---
+{/*
+  aria-hidden: the row is one link already named for its tool, and a mark that
+  repeated that name would add noise to a screen reader and no information.
+
+  Sizing comes from --mark-size so the 43 marks cannot drift apart.
+*/}
+{mark && (
+  <svg
+    viewBox="0 0 24 24"
+    aria-hidden="true"
+    focusable="false"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1.5"
+    stroke-linecap="butt"
+    stroke-linejoin="miter"
+    class:list={['shrink-0 transition-colors duration-[120ms]', HUE[tool.category], className]}
+    style="width:var(--mark-size);height:var(--mark-size)"
+    set:html={mark}
+  />
+)}

@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { TOOLS, TOOLS_BY_ID } from './registry';
 import { toolId, CATEGORIES } from './types';
 import { GROUPS, GROUP_THRESHOLD, groupsIn, hasGroups } from './groups';
+import { MARKS } from './marks';
 
 describe('registry integrity', () => {
   it('has no duplicate ids', () => {
@@ -278,5 +279,33 @@ describe('browse taxonomy', () => {
 
   it('declares groups only for categories that exist', () => {
     for (const c of Object.keys(GROUPS)) expect(CATEGORIES).toContain(c);
+  });
+});
+
+describe('tool marks', () => {
+  /**
+   * A tool without a mark would render a blank gutter in every catalogue row,
+   * which is the kind of silent gap the registry exists to make impossible.
+   * Same spirit as the group-threshold assertion: adding a tool should fail the
+   * build until its mark is drawn.
+   */
+  it('every tool in the registry has a mark', () => {
+    expect(TOOLS.filter((t) => !MARKS[toolId(t)]).map(toolId)).toEqual([]);
+  });
+
+  it('has no mark for a tool that does not exist', () => {
+    const ids = new Set(TOOLS.map(toolId));
+    expect(Object.keys(MARKS).filter((id) => !ids.has(id))).toEqual([]);
+  });
+
+  it('no two tools share an identical drawing', () => {
+    const seen = new Map<string, string>();
+    const clashes: string[] = [];
+    for (const [id, d] of Object.entries(MARKS)) {
+      const prev = seen.get(d);
+      if (prev) clashes.push(`${prev} = ${id}`);
+      else seen.set(d, id);
+    }
+    expect(clashes).toEqual([]);
   });
 });

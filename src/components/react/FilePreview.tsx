@@ -136,7 +136,7 @@ export default function FilePreview({ files, nextStep }: { files: File[]; nextSt
         <h2 className="text-2xs font-semibold uppercase tracking-wider text-muted">
           {files.length === 1 ? 'Your file' : `Your files (${files.length})`}
         </h2>
-        {nextStep && <p className="text-2xs text-muted">{nextStep}</p>}
+        {nextStep && <p className="text-xs text-muted">{nextStep}</p>}
       </div>
 
       <ul className="flex flex-wrap gap-2.5">
@@ -159,7 +159,7 @@ export default function FilePreview({ files, nextStep }: { files: File[]; nextSt
                   <video src={meta.thumb} muted playsInline preload="metadata" className="size-full object-cover" />
                 )}
                 {(!meta || meta.kind === 'audio' || meta.kind === 'file') && (
-                  <span data-numeric className="text-[9px] uppercase tracking-wider text-muted">
+                  <span data-numeric className="text-2xs uppercase tracking-wider text-muted">
                     {meta ? KIND_LABEL[meta.kind] : '…'}
                   </span>
                 )}
@@ -176,7 +176,7 @@ export default function FilePreview({ files, nextStep }: { files: File[]; nextSt
         })}
 
         {extra > 0 && (
-          <li className="flex items-center rounded-md border border-dashed border-border px-3 text-2xs text-muted">
+          <li className="flex items-center rounded-md border border-dashed border-border px-3 text-xs text-muted">
             +{extra} more
           </li>
         )}

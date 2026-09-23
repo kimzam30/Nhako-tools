@@ -44,6 +44,8 @@ const themes = [
   ['dark', dark],
 ] as const;
 
+const CATEGORY_HUES = ['--cat-pdf', '--cat-calc', '--cat-image', '--cat-dev', '--cat-media'] as const;
+
 describe('brand pink', () => {
   it('is unchanged: #FF91E7 is fixed', () => {
     expect(resolve(root, '--pink-300').toLowerCase()).toBe('#ff91e7');
@@ -93,5 +95,89 @@ describe.each(themes)('%s theme contrast', (_name, scope) => {
 
   it('focus ring meets non-text contrast against the background', () => {
     expect(contrast(t('--accent-ring'), t('--bg'))).toBeGreaterThanOrEqual(AA_LARGE);
+  });
+});
+
+describe.each(themes)('%s category hues', (_name, scope) => {
+  const t = (k: string) => resolve(scope, k);
+
+  /**
+   * These are drawn as 1.5 unit strokes at 20px, so although WCAG 1.4.11 only
+   * asks 3:1 of a graphical object, the tokens are solved to 4.5:1 and the test
+   * holds them there. A hue that stops clearing it gets reselected, not excused.
+   */
+  it('each hue meets AA against background, surface and sunken', () => {
+    for (const hue of CATEGORY_HUES) {
+      for (const surface of ['--bg', '--surface', '--sunken'] as const) {
+        expect(
+          contrast(t(hue), t(surface)),
+          `${hue} on ${surface}`,
+        ).toBeGreaterThanOrEqual(AA_TEXT);
+      }
+    }
+  });
+
+  it('the five hues are five different values', () => {
+    const values = CATEGORY_HUES.map((h) => t(h).toLowerCase());
+    expect(new Set(values).size).toBe(CATEGORY_HUES.length);
+  });
+
+  /**
+   * Deliberately NOT asserted: that the hues differ in luminance. They are
+   * isoluminant by construction, so their pairwise contrast is 1.00:1 and in
+   * greyscale they are five identical greys. Pulling them apart in lightness
+   * would make PDF, at 18 tools, shout over Calculators at one. The mitigation
+   * is structural instead: colour is redundant encoding and the mark's shape
+   * carries the meaning. See .design/redesign/INFORMATION_ARCHITECTURE.md #3.
+   */
+  it('no category hue is mistakable for the accent', () => {
+    for (const hue of CATEGORY_HUES) {
+      expect(t(hue).toLowerCase(), `${hue} duplicates the accent`).not.toBe(
+        t('--accent').toLowerCase(),
+      );
+    }
+  });
+
+  it('a row rule is weaker than a section rule but still visible', () => {
+    const weak = contrast(t('--border-weak'), t('--bg'));
+    const normal = contrast(t('--border'), t('--bg'));
+    expect(weak).toBeLessThan(normal);
+    expect(weak).toBeGreaterThan(1.05);
+  });
+});
+
+describe('type ramp', () => {
+  const theme = block('@theme inline');
+  const steps = Object.entries(theme)
+    .filter(([k]) => /^--text-(2xs|xs|sm|base|lg|xl|2xl|3xl|4xl)$/.test(k))
+    .map(([k, v]) => [k, parseFloat(v) * 16] as const);
+
+  it('finds every step', () => {
+    expect(steps).toHaveLength(9);
+  });
+
+  /**
+   * The defect this exists to prevent: on 2026-09-23 Lighthouse scored the
+   * homepage at 44.34% legible text, with 47.8% of it at 11px, because one
+   * token carried both a tool blurb and a row count.
+   */
+  it('has no step below 12px', () => {
+    for (const [name, px] of steps) {
+      expect(px, `${name} is ${px}px`).toBeGreaterThanOrEqual(12);
+    }
+  });
+
+  it('increases monotonically', () => {
+    const order = ['--text-2xs', '--text-xs', '--text-sm', '--text-base', '--text-lg', '--text-xl', '--text-2xl', '--text-3xl', '--text-4xl'];
+    const sizes = order.map((k) => steps.find(([n]) => n === k)![1]);
+    for (let i = 1; i < sizes.length; i += 1) {
+      expect(sizes[i], `${order[i]} after ${order[i - 1]}`).toBeGreaterThan(sizes[i - 1]!);
+    }
+  });
+
+  it('the body default is not the floor', () => {
+    const floor = steps.find(([n]) => n === '--text-2xs')![1];
+    const body = steps.find(([n]) => n === '--text-sm')![1];
+    expect(body).toBeGreaterThan(floor);
   });
 });

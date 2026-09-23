@@ -66,6 +66,11 @@ const runnerTool = {
   category: tool.category, slug: tool.slug, name: tool.name, accept: tool.accept,
   multiple: tool.multiple, heavy: tool.heavy, options: tool.options,
 };
+/* The 7 bespoke apps (photo maker, teleprompter, sign, organize, crop, scan,
+   salary) need horizontal room and were laid out for a single column, so they
+   keep it and take their prose underneath. The 36 file and text tools get the
+   tool on the left and the prose beside it. */
+const isApp = tool.kind === 'app';
 ---
 
 <BaseLayout
@@ -78,7 +83,7 @@ const runnerTool = {
   jsonLd={jsonLd}
   category={tool.category}
 >
-  <div class="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+  <div class:list={['mx-auto px-4 py-10 sm:px-6', isApp ? 'max-w-3xl' : 'max-w-6xl']}>
     <nav aria-label={t.breadcrumb} class="mb-6 text-2xs text-muted">
       <a href={href('/')} class="transition-colors hover:text-accent">{t.breadcrumbTools}</a>
       <span aria-hidden="true"> / </span>
@@ -96,8 +101,11 @@ const runnerTool = {
       <p class="mt-1.5 text-sm text-muted">{variant?.blurb ?? tool.blurb}</p>
     </header>
 
-    {/* The tool sits above the fold. The prose is below it. Most tool sites
-        invert this and make you scroll past marketing to reach the thing. */}
+    {/* The tool sits above the fold, and on a wide screen the prose sits beside
+        it rather than below. Most tool sites invert this and make you scroll
+        past marketing to reach the thing. Stacked, the tool still comes first. */}
+    <div class:list={[!isApp && 'lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start lg:gap-12']}>
+    <div>
     {tool.kind === 'file' && (
       <FileToolRunner client:load tool={runnerTool} locale={locale} initialOptions={variant?.defaults} />
     )}
@@ -111,8 +119,16 @@ const runnerTool = {
     {id === 'image/crop' && <CropImage client:load locale={locale} accept={tool.accept ?? 'image/*'} />}
     {id === 'media/teleprompter' && <Teleprompter client:load locale={locale} />}
     {id === 'pdf/scan' && <ScanToPdf client:load locale={locale} />}
+    </div>
 
-    <div class="mt-10 space-y-8 border-t border-border pt-8">
+    <div
+      class:list={[
+        'mt-10 space-y-8 border-t border-border pt-8',
+        // Beside the tool rather than beneath it, the top rule is wrong: it is
+        // separating nothing. Stacked, it is doing real work and stays.
+        !isApp && 'lg:mt-0 lg:border-t-0 lg:pt-0',
+      ]}
+    >
       {(variant?.about || tool.about) && (
         <section data-reveal>
           <h2 class="mb-2 text-sm font-semibold">{t.whatThisDoes}</h2>
@@ -175,19 +191,25 @@ const runnerTool = {
         </section>
       )}
 
-      {related.length > 0 && (
-        <section data-reveal>
-          <h2 class="mb-3 text-sm font-semibold">{t.relatedTools}</h2>
-          <div class="grid gap-2.5 sm:grid-cols-3">
-            {related.map((r) => (
-              <a href={href(`/${toolId(r)}`)} class="group rounded-lg border border-border bg-surface p-3 transition-colors duration-[120ms] hover:border-accent hover:bg-sunken">
-                <span class="block text-sm font-medium transition-colors group-hover:text-accent">{r.name}</span>
-                <span class="mt-0.5 block text-2xs leading-snug text-muted">{r.blurb}</span>
-              </a>
-            ))}
-          </div>
-        </section>
-      )}
     </div>
+    </div>
+
+    {/* Full width under both columns. In the secondary column these were three
+        cards stacked single file, which made that column tall enough to leave a
+        long void beside the tool. They are a page-level element, not prose
+        about the tool, so they belong across the foot of the page. */}
+    {related.length > 0 && (
+      <section data-reveal class="mt-10 border-t border-border pt-8">
+        <h2 class="mb-3 text-sm font-semibold">{t.relatedTools}</h2>
+        <div class="grid gap-2.5 sm:grid-cols-3">
+        {related.map((r) => (
+            <a href={href(`/${toolId(r)}`)} class="group rounded-lg border border-border bg-surface p-3 transition-colors duration-[120ms] hover:border-accent hover:bg-sunken">
+              <span class="block text-sm font-medium transition-colors group-hover:text-accent">{r.name}</span>
+              <span class="mt-0.5 block text-xs leading-snug text-muted">{r.blurb}</span>
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
   </div>
 </BaseLayout>

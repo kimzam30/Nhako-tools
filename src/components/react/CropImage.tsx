@@ -147,7 +147,7 @@ export default function CropImage({ locale = 'en', accept }: { locale?: Locale; 
           className={`flex min-h-44 w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-6 py-10 text-center transition-colors duration-[120ms] ${dropZone ? 'border-accent bg-accent-subtle' : 'border-border bg-surface hover:border-border-strong'}`}
         >
           <span className="text-sm font-medium">{t.drop}</span>
-          <span className="text-2xs text-muted">{t.dropSub}</span>
+          <span className="text-xs text-muted">{t.dropSub}</span>
         </button>
         {error && <p className="mt-4 rounded-lg border border-err bg-err-subtle px-4 py-3 text-sm text-err">{error}</p>}
       </section>

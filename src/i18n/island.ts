@@ -16,6 +16,15 @@ const en = {
   settingsChanged: 'Settings changed. This tool is slow, so it waits for you.',
   runAgain: 'Run again with these settings',
   working: 'Working',
+  /* The result region is present and labelled before anything is dropped. Its
+     fields read as a gauge at zero, not as a disabled form. The row labels are
+     lower case on purpose: they are readout fields, not sentence text. */
+  resultLabel: 'Result',
+  resultOut: 'out',
+  resultSize: 'size',
+  resultTime: 'time',
+  resultChars: 'chars',
+  resultWaiting: 'waiting for a file',
   save: 'Save',
   clear: 'Clear',
   genericError: 'Something went wrong running this tool.',
@@ -60,6 +69,12 @@ const ms: IslandStrings = {
   settingsChanged: 'Tetapan berubah. Alat ini perlahan, jadi ia menunggu anda.',
   runAgain: 'Jalankan semula dengan tetapan ini',
   working: 'Sedang berjalan',
+  resultLabel: 'Keputusan',
+  resultOut: 'keluar',
+  resultSize: 'saiz',
+  resultTime: 'masa',
+  resultChars: 'aksara',
+  resultWaiting: 'menunggu fail',
   save: 'Simpan',
   clear: 'Kosongkan',
   genericError: 'Berlaku ralat semasa menjalankan alat ini.',

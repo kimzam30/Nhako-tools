@@ -193,20 +193,20 @@ export default function FileToolRunner({ tool, locale = 'en', initialOptions }: 
         onDrop={(e) => { e.preventDefault(); setDragging(false); accept(e.dataTransfer?.files ?? null); }}
         aria-disabled={busy && tool.heavy ? true : undefined}
         className={`flex min-h-44 w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-6 py-10 text-center transition-colors duration-[120ms] ${
-          dragging ? 'border-accent bg-accent-subtle' : 'border-border bg-surface hover:border-border-strong'
+          dragging ? 'border-accent bg-accent-subtle' : 'border-border bg-sunken shadow-[inset_0_1px_0_var(--edge)] hover:border-border-strong'
         } aria-disabled:cursor-wait`}
       >
         <span className="text-sm font-medium">
           {dragging ? t.dropToStart : files.length > 0 ? t.filesSelected(files.length) : t.dropHere(Boolean(tool.multiple))}
         </span>
-        <span className="text-2xs text-muted">
+        <span className="text-xs text-muted">
           {files.length > 0
             ? files.map((f) => f.name).join(', ').slice(0, 90)
             : t.runsOnLand}
         </span>
       </button>
 
-      <p className="-mt-2 text-2xs text-muted">
+      <p className="-mt-2 text-xs text-muted">
         {t.runsInBrowser}{' '}
         <a href={localePath(locale, '/privacy')} className="underline decoration-border underline-offset-2 transition-colors hover:text-accent">
           {t.verifyNetwork}
@@ -221,7 +221,7 @@ export default function FileToolRunner({ tool, locale = 'en', initialOptions }: 
       )}
 
       {stale && !busy && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-sunken px-4 py-3 shadow-[inset_0_1px_0_var(--edge)]">
           <p className="text-sm text-muted">{t.settingsChanged}</p>
           <button
             type="button"
@@ -233,9 +233,39 @@ export default function FileToolRunner({ tool, locale = 'en', initialOptions }: 
         </div>
       )}
 
+      {/*
+        THE RESULT REGION IS PRESENT FROM FIRST PAINT.
+
+        It reads as a gauge at rest, not as a disabled form: a greyed-out button
+        says "you cannot use this yet", a readout at zero says "ready, waiting
+        for input", which is the same fact told the way this product wants it
+        told. It is also why the page stops looking unfinished before anyone has
+        dropped anything, and why CLS stays 0: the space was never going to
+        change. --edge gives it a machined inset rather than a drop shadow.
+
+        aria-hidden, because the live region below announces the real result and
+        a screen reader does not need to hear three dashes first.
+      */}
+      {phase.name === 'idle' && (
+        <div
+          aria-hidden="true"
+          className="rounded-lg border border-border bg-sunken px-4 py-3 shadow-[inset_0_1px_0_var(--edge)]"
+        >
+          <p className="mb-2 text-2xs font-semibold uppercase tracking-wider text-muted">{t.resultLabel}</p>
+          <dl className="space-y-1">
+            {[t.resultOut, t.resultSize, t.resultTime].map((field) => (
+              <div key={field} className="flex items-baseline gap-3">
+                <dt data-numeric className="w-12 shrink-0 text-xs text-muted">{field}</dt>
+                <dd data-numeric className="text-xs text-muted opacity-60">--</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      )}
+
       <div aria-live="polite" aria-atomic="true">
         {busy && (
-          <div className="rounded-lg border border-border bg-surface px-4 py-3">
+          <div className="rounded-lg border border-border bg-sunken px-4 py-3 shadow-[inset_0_1px_0_var(--edge)]">
             <div className="flex items-baseline justify-between gap-4 text-sm">
               <span>{phase.label ?? t.working}…</span>
               {/* Only heavy tools get a bar; a bar on a 400ms task feels slower. */}
@@ -250,7 +280,7 @@ export default function FileToolRunner({ tool, locale = 'en', initialOptions }: 
         )}
 
         {phase.name === 'done' && (
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-lg border border-border bg-surface px-4 py-3">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-lg border border-border bg-sunken px-4 py-3 shadow-[inset_0_1px_0_var(--edge)]">
             <span className="text-ok" aria-hidden="true">✓</span>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{phase.result.filename}</p>

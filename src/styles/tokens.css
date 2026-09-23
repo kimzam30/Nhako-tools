@@ -62,6 +62,37 @@
   --warn: #8a5300;
   --err: #b4231e;
   --err-subtle: #fef2f2;
+
+  /* --- Category hues -------------------------------------------------------
+     Five identifying hues, one per category. Each is the most saturated value
+     at its hue that still clears 4.5:1 against --bg, --surface AND --sunken.
+     That is well above the 3:1 WCAG 1.4.11 asks of a graphical object; the
+     headroom is deliberate because these are 1.5 unit strokes drawn at 20px.
+
+     Spacing around the wheel, with the fixed accent at 313deg: 50, 65, 55, 60,
+     58, 72. PDF keeps a true red rather than the crimson that perfectly even
+     spacing would have put next to a pink brand colour.
+
+     THE RULE THESE COME WITH: they are isoluminant by construction, so their
+     pairwise contrast is 1.00:1 and they are five identical greys in greyscale
+     or to severe colour vision deficiency. Colour is redundant encoding only.
+     Shape is primary. Nothing may be carried by hue alone.
+     See .design/redesign/INFORMATION_ARCHITECTURE.md section 3. */
+  --cat-pdf: #e10225;
+  --cat-calc: #986600;
+  --cat-image: #258101;
+  --cat-dev: #087d7e;
+  --cat-media: #016ed6;
+
+  /* Rule weights. One border colour could not separate a row from a section,
+     so a row now sits on a weaker line than a group boundary does. */
+  --border-weak: var(--gray-100);
+  /* Inset hairline along the top of a recessed surface. This is how the
+     "machined, not floating" rule buys depth without a drop shadow. */
+  --edge: rgb(19 19 22 / 0.06);
+  /* The ONE legitimate drop shadow on the site: the command palette genuinely
+     floats above the page. Named for its only permitted use. */
+  --shadow-overlay: 0 16px 48px -12px rgb(0 0 0 / 0.28);
 }
 
 [data-theme='dark'] {
@@ -83,6 +114,16 @@
   --warn: #fbbf24;
   --err: #ff7a75;
   --err-subtle: #2a1210;
+
+  --cat-pdf: #ff2234;
+  --cat-calc: #b27800;
+  --cat-image: #2d9702;
+  --cat-dev: #009292;
+  --cat-media: #0282fa;
+
+  --border-weak: #1f1f27;
+  --edge: rgb(255 255 255 / 0.05);
+  --shadow-overlay: 0 16px 48px -8px rgb(0 0 0 / 0.64);
 }
 
 @theme inline {
@@ -103,16 +144,30 @@
   --color-err: var(--err);
   --color-err-subtle: var(--err-subtle);
   --color-brand: var(--pink-300);
+  --color-border-weak: var(--border-weak);
+  --color-cat-pdf: var(--cat-pdf);
+  --color-cat-calc: var(--cat-calc);
+  --color-cat-image: var(--cat-image);
+  --color-cat-dev: var(--cat-dev);
+  --color-cat-media: var(--cat-media);
 
   --font-sans: 'Instrument Sans Variable', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
 
-  /* Type ramp: tight. Instrument, not brochure. */
-  --text-2xs: 0.6875rem;   /* 11px: labels, counts */
-  --text-xs: 0.75rem;      /* 12px */
-  --text-sm: 0.8125rem;    /* 13px: body default in dense UI */
-  --text-base: 0.9375rem;  /* 15px */
-  --text-lg: 1.0625rem;    /* 17px */
+  /* Type ramp: tight, but with a floor. Instrument, not brochure.
+
+     Raised 2026-09-23. The old ramp bottomed out at 11px and one token carried
+     both a tool blurb and a row count, which are not the same kind of text.
+     Lighthouse scored the homepage at 44.34% legible text, with 47.8% of it at
+     11px, on the surface that carries the whole browsing load.
+
+     THE RULE: no value in this ramp is below 12px, and prose never uses the
+     bottom step. Density is a reward for readability, not a substitute. */
+  --text-2xs: 0.75rem;     /* 12px: counts, calibration, micro labels. THE FLOOR. */
+  --text-xs: 0.8125rem;    /* 13px */
+  --text-sm: 0.875rem;     /* 14px: body default in dense UI */
+  --text-base: 1rem;       /* 16px */
+  --text-lg: 1.125rem;     /* 18px */
   --text-xl: 1.375rem;     /* 22px */
   --text-2xl: 1.75rem;     /* 28px: tool page h1 */
   --text-3xl: 2.25rem;     /* 36px */
@@ -124,6 +179,15 @@
   --radius-md: 8px;
   --radius-lg: 12px;
   --radius-full: 9999px;
+
+  /* Marks: 43 of them, one per tool, built from a base plus an operation.
+     Drawn on a 24 unit grid, 1.5 stroke, butt caps and miter joins. Butt and
+     miter rather than round: precision reads sharp, and a rounded cap at this
+     size reads as a soft consumer icon. The gutter is paid for by tightening
+     the row name column, so a mark costs no width and no height.
+     See .design/redesign/INFORMATION_ARCHITECTURE.md sections 1 and 2. */
+  --mark-size: 20px;
+  --mark-gutter: 28px;
 
   /* Motion: fast and flat. No overshoot: bounce reads slow. */
   --ease-out: cubic-bezier(0.2, 0, 0, 1);
