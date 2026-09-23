@@ -4,12 +4,16 @@ import ToolTile, { type Preset } from '../components/astro/ToolTile.astro';
 import { TOOLS, toolsIn } from '../tools/registry';
 import { groupsIn, hasGroups } from '../tools/groups';
 import { toolId, type Category, type ToolMeta } from '../tools/types';
-import { categoryLabel, groupLabel, localizeTool, localizeVariant, localePath, ui, type Locale } from '../i18n';
+import { categoryLabel, categoryModifier, groupLabel, localizeTool, localizeVariant, localePath, ui, type Locale } from '../i18n';
 
 interface Props { category: Category; locale: Locale }
 const { category, locale } = Astro.props;
 const t = ui(locale);
 const label = categoryLabel(category, locale);
+/* The <h1> and the breadcrumb want the display label ("Calculators"); the
+   <title>, the meta description and the schema name put it in front of the
+   word "tool", where that plural does not work. */
+const modifier = categoryModifier(category, locale);
 const own = toolsIn(category);
 
 const path = `/${category}`;
@@ -47,7 +51,7 @@ const count = own.length;
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'CollectionPage',
-  name: `${label} tools`,
+  name: t.categoryHeading(modifier),
   url: new URL(href(path), 'https://tools.nhako.com').href,
   description: t.categoryIntro[category],
   isPartOf: { '@type': 'WebSite', name: 'Nhako Tools', url: 'https://tools.nhako.com' },
@@ -62,9 +66,9 @@ const jsonLd = {
 ---
 
 <BaseLayout
-  title={`${label} tools`}
-  documentTitle={t.categoryTitle(label)}
-  description={t.categoryDescription(label, own.length)}
+  title={t.categoryHeading(modifier)}
+  documentTitle={t.categoryTitle(modifier)}
+  description={t.categoryDescription(modifier, own.length)}
   path={path}
   locale={locale}
   category={category}

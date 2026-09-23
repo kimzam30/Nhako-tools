@@ -181,8 +181,8 @@ surface. The findings above survive the change except these:
   only their container changed.
 
 Re-verified after the change: filter contract intact, Lighthouse `/` 98/100/96/100
-and `/pdf` 99/100/96/100, legible-text PASS, CLS 0, 304 unit tests, lint and
-typecheck clean. Card screenshots are not in `screenshots/`: that folder is the
+and `/pdf` 99/100/96/100, legible-text PASS, CLS 0, 304 unit tests, 299 e2e pass
+with 0 failures across Chromium and WebKit, lint and typecheck clean. Card screenshots are not in `screenshots/`: that folder is the
 row-layout review and is left intact as the record of what was reviewed.
 
 ## Not verified

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { TOOLS, TOOLS_BY_ID } from './registry';
-import { toolId, CATEGORIES } from './types';
+import { toolId, CATEGORIES, CATEGORY_LABEL, CATEGORY_MODIFIER } from './types';
 import { GROUPS, GROUP_THRESHOLD, groupsIn, hasGroups } from './groups';
 import { MARKS } from './marks';
 
@@ -113,6 +113,21 @@ describe('search metadata', () => {
     // The old homepage searched only name and description, so this failed.
     const hit = TOOLS.find((t) => t.keywords.includes('transcribe'));
     expect(hit?.slug).toBe('transcribe');
+  });
+
+  it('keeps every English category readable in front of the word "tools"', () => {
+    // `Calculators` is the right <h1> and the wrong modifier: /calc shipped
+    // "Free Calculators tools online" as its <title> and "1 Calculators tools"
+    // as its meta description, which is what a searcher saw before the page.
+    // A plural modifier is the only way to produce that sentence, so ban it.
+    for (const c of CATEGORIES) {
+      expect(CATEGORY_MODIFIER[c], `${c} modifier`).not.toMatch(/s$/);
+      expect(CATEGORY_MODIFIER[c].length, `${c} modifier is empty`).toBeGreaterThan(0);
+    }
+    // Only calc needs to differ; a new divergence should be deliberate.
+    for (const c of CATEGORIES) {
+      if (c !== 'calc') expect(CATEGORY_MODIFIER[c], c).toBe(CATEGORY_LABEL[c]);
+    }
   });
 
   it('states honest limits on every tool that has a real one', () => {

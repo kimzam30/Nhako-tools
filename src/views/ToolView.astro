@@ -48,16 +48,48 @@ const privacyNote =
 const name = variant?.name ?? tool.name;
 const description = variant?.description ?? tool.description;
 
+const site = 'https://tools.nhako.com';
+const abs = (p: string) => new URL(href(p), site).href;
+
+/* The breadcrumb above the <h1> was rendered for readers only: every tool and
+   preset page drew the trail on screen and declared nothing, so a search
+   result showed the bare URL where it could have shown Tools > PDF > Merge
+   PDF. Category and collection pages already declare theirs. The last item
+   carries no `item`, which is what Google asks for on the current page. */
+const crumbs = [
+  { name: t.breadcrumbTools, url: abs('/') },
+  { name: categoryLabel(tool.category, locale), url: abs(`/${tool.category}`) },
+  ...(variant
+    ? [{ name: tool.name, url: abs(`/${id}`) }, { name: variant.name }]
+    : [{ name: tool.name }]),
+];
+
+/* Two top-level nodes, so @graph rather than nesting: BreadcrumbList is a
+   property of a WebPage, and SoftwareApplication is not one. */
 const jsonLd = {
   '@context': 'https://schema.org',
-  '@type': 'SoftwareApplication',
-  name,
-  applicationCategory: tool.category === 'calc' ? 'FinanceApplication' : 'UtilitiesApplication',
-  operatingSystem: 'Any browser',
-  inLanguage: LANG[locale],
-  description,
-  offers: { '@type': 'Offer', price: '0', priceCurrency: 'MYR' },
-  featureList: tool.keywords,
+  '@graph': [
+    {
+      '@type': 'SoftwareApplication',
+      name,
+      url: abs(path),
+      applicationCategory: tool.category === 'calc' ? 'FinanceApplication' : 'UtilitiesApplication',
+      operatingSystem: 'Any browser',
+      inLanguage: LANG[locale],
+      description,
+      offers: { '@type': 'Offer', price: '0', priceCurrency: 'MYR' },
+      featureList: tool.keywords,
+    },
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: crumbs.map((c, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        name: c.name,
+        ...(c.url ? { item: c.url } : {}),
+      })),
+    },
+  ],
 };
 
 const title = variant ? t.toolTitle(variant.name) : tool.seoTitle ?? t.toolTitle(tool.name);

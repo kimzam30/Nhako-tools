@@ -68,8 +68,16 @@ const en = {
   // Category pages. Intros carry no tool counts: a number written into prose
   // goes stale the moment a tool is added, and the count is already rendered
   // from the registry beside the heading.
+  // The social-card title and the schema name for a category page. Was built
+  // inline in CategoryView as `${label} tools`, which put an English noun on
+  // the Malay cards: "Kalkulator tools".
+  categoryHeading: (label: string) => `${label} tools`,
   categoryTitle: (label: string) => `Free ${label} tools online, no upload | Nhako Tools`,
-  categoryDescription: (label: string, n: number) => `${n} ${label} tools that run entirely in your browser. No upload, no size limit, no account.`,
+  // `label` here is the modifier form (see categoryModifier), and the noun and
+  // verb agree with the count: /calc holds one tool and was reading "1
+  // Calculators tools that run entirely in your browser" in the SERP snippet.
+  categoryDescription: (label: string, n: number) =>
+    `${n} ${label} ${n === 1 ? 'tool that runs' : 'tools that run'} entirely in your browser. No upload, no size limit, no account.`,
   categoryIntro: {
     pdf: 'Merge, split, convert, sign, compress and protect PDFs. Every tool runs on your device, so there is no upload step, no queue, no file size cap and no account.',
     image: 'Compress, convert, resize, crop and clean up photos. Every tool runs on your device, so your pictures are never uploaded and there is no daily limit.',
@@ -145,6 +153,7 @@ const ms: UiStrings = {
   notFoundBody: (n) => `Ia mungkin telah dipindahkan. Kesemua ${n} alat disenaraikan di laman utama, dan Ctrl+K (⌘K pada Mac) mencarinya dari mana-mana halaman.`,
   browseAll: 'Lihat semua alat',
 
+  categoryHeading: (label) => `Alat ${label}`,
   categoryTitle: (label) => `Alat ${label} percuma dalam talian, tiada muat naik | Nhako Tools`,
   categoryDescription: (label, n) => `${n} alat ${label} yang berjalan sepenuhnya dalam pelayar anda. Tiada muat naik, tiada had saiz, tiada akaun.`,
   categoryIntro: {

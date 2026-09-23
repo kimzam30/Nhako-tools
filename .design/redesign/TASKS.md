@@ -242,7 +242,26 @@ Verified after the change: filter contract intact (43 cards, "rotate" leaves 3
 with 13 groups and 3 sections hidden, "zzzzz" shows the no-match message,
 clearing restores 43, `?q=` deep link works), Lighthouse `/` 98/100/96/100 and
 `/pdf` 99/100/96/100, legible-text PASS, CLS 0, 304 unit tests, lint and
-typecheck clean.
+typecheck clean, and **299 e2e pass with 0 failures across Chromium and
+WebKit** (302 total, 3 skipped).
+
+**How to run e2e here, because getting this wrong cost four bogus runs:**
+
+```
+E2E_PORT=4488 npx playwright test --reporter=json > out.json
+```
+
+`playwright.config.ts` sets `reuseExistingServer: !CI`. If anything is already
+listening on 4321, notably an `astro dev` left running, Playwright attaches to
+it and silently tests the **dev server** instead of a production build. It then
+reports 60+ failures that cannot be reproduced against a real build, such as a
+phantom second `<pre>` on `/dev/json` which is dev-mode island props, and the
+run takes about 11 minutes rather than 3. The config warns about this in its
+first three lines.
+
+Never pipe the command through `tail`: the shell reports tail's exit status, not
+Playwright's, so a failing suite looks like exit 0 and the failure list is
+printed above whatever window you kept.
 
 **Cost:** homepage 2960px to 3363px at 1280 (+13.6%), and ~4400px to 5368px at
 375 (+22%). Against the pre-redesign 2807px baseline the homepage is 19.8%

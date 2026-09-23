@@ -5,4 +5,4 @@
  */
 export * from './paths';
 export { ui, type UiStrings } from './ui';
-export { localizeTool, localizeVariant, categoryLabel, groupLabel } from './tools';
+export { localizeTool, localizeVariant, categoryLabel, categoryModifier, groupLabel } from './tools';

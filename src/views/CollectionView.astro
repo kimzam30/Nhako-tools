@@ -43,6 +43,14 @@ const jsonLd = {
   url: new URL(href(path), 'https://tools.nhako.com').href,
   description: intro,
   isPartOf: { '@type': 'WebSite', name: 'Nhako Tools', url: 'https://tools.nhako.com' },
+  // Same shape as the category page's, and the trail above already renders it.
+  breadcrumb: {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: t.breadcrumbTools, item: new URL(href('/'), 'https://tools.nhako.com').href },
+      { '@type': 'ListItem', position: 2, name: title },
+    ],
+  },
 };
 ---
 

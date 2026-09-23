@@ -20,6 +20,19 @@ export const CATEGORY_LABEL: Record<Category, string> = {
   dev: 'Developer',
 };
 
+/**
+ * The English label as a modifier in front of the word "tool". Identical to
+ * CATEGORY_LABEL except for calc, whose display label is a plural noun:
+ * "Calculators tools" is not English, and it was shipping in the <title> and
+ * the meta description of /calc, which is the one place a reader sees the
+ * sentence before they see the page. Malay needs no equivalent, because its
+ * labels are already singular ("alat Kalkulator").
+ */
+export const CATEGORY_MODIFIER: Record<Category, string> = {
+  ...CATEGORY_LABEL,
+  calc: 'Calculator',
+};
+
 /** Show an option only while another option has a given value. */
 export interface OptionCondition { key: string; equals: string | number | boolean }
 

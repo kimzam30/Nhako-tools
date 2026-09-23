@@ -1,6 +1,6 @@
 import type { Locale } from './paths';
 import type { Category, OptionSpec, ToolMeta, ToolVariant } from '../tools/types';
-import { CATEGORY_LABEL, toolId } from '../tools/types';
+import { CATEGORY_LABEL, CATEGORY_MODIFIER, toolId } from '../tools/types';
 import { groupLabel as groupLabelEn, GROUPS } from '../tools/groups';
 
 /**
@@ -43,6 +43,11 @@ const CATEGORY_MS: Record<Category, string> = {
 
 export const categoryLabel = (category: Category, locale: Locale): string =>
   locale === 'ms' ? CATEGORY_MS[category] : CATEGORY_LABEL[category];
+
+/** The label as it reads in front of the word "tool", for titles and meta
+ *  descriptions. See CATEGORY_MODIFIER: only English calc differs. */
+export const categoryModifier = (category: Category, locale: Locale): string =>
+  locale === 'ms' ? CATEGORY_MS[category] : CATEGORY_MODIFIER[category];
 
 /** Malay job-group labels, keyed '<category>/<group>'. English lives in
  *  src/tools/groups.ts, beside CATEGORY_LABEL. i18n.test.ts fails on a group
