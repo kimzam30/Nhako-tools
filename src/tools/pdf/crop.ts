@@ -28,7 +28,7 @@ export const run: FileRun = async (files, opts, ctx) => {
     throw new ToolError(say('Set at least one margin to crop.', 'Tetapkan sekurang-kurangnya satu jidar untuk dipotong.'));
   }
 
-  const indices = parsePageRange(String(opts.range ?? ''), doc.getPageCount());
+  const indices = parsePageRange(String(opts.range ?? ''), doc.getPageCount(), say);
   for (const [n, index] of indices.entries()) {
     const page = doc.getPage(index);
     const box = page.getCropBox();

@@ -1,20 +1,18 @@
 import { ToolError, type FileRun } from '../types';
 import { parsePageRange } from '../../lib/range';
+import { sayer } from '../say';
+import { openPdf } from './load';
 
 export const run: FileRun = async (files, opts, ctx) => {
+  const say = sayer(opts);
   const file = files[0];
-  if (!file) throw new ToolError('No file selected.');
+  if (!file) throw new ToolError(say('No file selected.', 'Tiada fail dipilih.'));
   const { PDFDocument } = await import('pdf-lib');
   const JSZip = (await import('jszip')).default;
 
-  let source;
-  try {
-    source = await PDFDocument.load(await file.arrayBuffer());
-  } catch {
-    throw new ToolError(`Could not read "${file.name}". If it is password-protected, unlock it first.`);
-  }
+  const source = await openPdf(file, say);
 
-  const indices = parsePageRange(String(opts.range ?? ''), source.getPageCount());
+  const indices = parsePageRange(String(opts.range ?? ''), source.getPageCount(), say);
   const base = file.name.replace(/\.pdf$/i, '');
   const zip = new JSZip();
 
@@ -29,6 +27,6 @@ export const run: FileRun = async (files, opts, ctx) => {
   return {
     blob: await zip.generateAsync({ type: 'blob' }),
     filename: `${base}-split.zip`,
-    summary: `${indices.length} page${indices.length === 1 ? '' : 's'} extracted`,
+    summary: say(`${indices.length} page${indices.length === 1 ? '' : 's'} extracted`, `${indices.length} halaman dikeluarkan`),
   };
 };

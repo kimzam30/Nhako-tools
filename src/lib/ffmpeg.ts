@@ -1,5 +1,9 @@
 import type { FFmpeg } from '@ffmpeg/ffmpeg';
 import { ToolError } from '../tools/types';
+import { sayer, type Say } from '../tools/say';
+
+/** English on its own, for callers with no page locale to hand. */
+const englishOnly: Say = sayer({});
 
 let loading: Promise<FFmpeg> | null = null;
 let progressHandler: ((fraction: number) => void) | null = null;
@@ -145,7 +149,7 @@ function durationFromBrowser(file: File, budgetMs: number): Promise<number> {
  * wasm core, but it understands every container ffmpeg can process, which is
  * the whole point of the fallback.
  */
-async function durationFromFFmpeg(file: File, onProgress?: (label: string) => void): Promise<number> {
+async function durationFromFFmpeg(file: File, onProgress: ((label: string) => void) | undefined, say: Say): Promise<number> {
   const { fetchFile } = await import('@ffmpeg/util');
   const input = 'probe.bin';
 
@@ -176,15 +180,16 @@ async function durationFromFFmpeg(file: File, onProgress?: (label: string) => vo
     // no duration in the header at all, so ffmpeg reports N/A. Decoding to null
     // makes it count the frames and report how far it got. Slower, and the only
     // way to get an answer for these files.
-    onProgress?.('Measuring length');
+    onProgress?.(say('Measuring length', 'Mengukur panjang'));
     const decoded = await run(['-i', input, '-f', 'null', '-']);
     const times = [...decoded.matchAll(/time=\s*(\d+):(\d\d):(\d\d(?:\.\d+)?)/g)];
     const last = times.at(-1);
     if (last) return toSeconds(last[1]!, last[2]!, last[3]!);
 
-    throw new ToolError(
+    throw new ToolError(say(
       `Could not work out how long "${file.name}" is. The file may be corrupt or use an unsupported codec.`,
-    );
+      `Tidak dapat menentukan panjang "${file.name}". Fail mungkin rosak atau menggunakan kodek yang tidak disokong.`,
+    ));
   });
 }
 
@@ -196,10 +201,10 @@ async function durationFromFFmpeg(file: File, onProgress?: (label: string) => vo
  * never fire an event, and files written by MediaRecorder carry no duration in
  * the header. So it gets a short budget, and ffmpeg settles it otherwise.
  */
-export async function probeDuration(file: File, onProgress?: (label: string) => void): Promise<number> {
+export async function probeDuration(file: File, onProgress?: (label: string) => void, say: Say = englishOnly): Promise<number> {
   try {
     return await durationFromBrowser(file, 6_000);
   } catch {
-    return durationFromFFmpeg(file, onProgress);
+    return durationFromFFmpeg(file, onProgress, say);
   }
 }

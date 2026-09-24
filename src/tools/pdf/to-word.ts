@@ -17,7 +17,7 @@ export const run: FileRun = async (files, opts, ctx) => {
   const say = sayer(opts);
   const file = files[0];
   if (!file) throw new ToolError(say('No file selected.', 'Tiada fail dipilih.'));
-  const doc = await loadDocument(file);
+  const doc = await loadDocument(file, say);
   const { Util } = await getPdfJs();
 
   const pages: DocxPage[] = [];

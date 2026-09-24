@@ -1,13 +1,20 @@
 import { ToolError } from '../tools/types';
+import { sayer, type Say } from '../tools/say';
+
+/** English on its own, for callers with no page locale to hand. */
+const englishOnly: Say = sayer({});
 
 export type Encodable = 'image/jpeg' | 'image/png' | 'image/webp' | 'image/avif';
 
 /** Decode a file into a bitmap without blocking on a DOM <img>. */
-export async function decode(file: File): Promise<ImageBitmap> {
+export async function decode(file: File, say: Say = englishOnly): Promise<ImageBitmap> {
   try {
     return await createImageBitmap(file);
   } catch {
-    throw new ToolError(`Could not read "${file.name}". It may be corrupt or in a format this browser cannot decode.`);
+    throw new ToolError(say(
+      `Could not read "${file.name}". It may be corrupt or in a format this browser cannot decode.`,
+      `Tidak dapat membaca "${file.name}". Ia mungkin rosak atau dalam format yang pelayar ini tidak dapat nyahkod.`,
+    ));
   }
 }
 
@@ -27,12 +34,13 @@ export async function toBlob(
   canvas: OffscreenCanvas | HTMLCanvasElement,
   type: Encodable,
   quality?: number,
+  say: Say = englishOnly,
 ): Promise<Blob> {
   const blob = 'convertToBlob' in canvas
     ? await canvas.convertToBlob({ type, quality })
     : await new Promise<Blob>((resolve, reject) => {
       (canvas as HTMLCanvasElement).toBlob(
-        (b) => (b ? resolve(b) : reject(new ToolError('Encoding failed.'))),
+        (b) => (b ? resolve(b) : reject(new ToolError(say('Encoding failed.', 'Pengekodan gagal.')))),
         type,
         quality,
       );
@@ -42,10 +50,12 @@ export async function toBlob(
   // (AVIF in most, WebP in Safari). Without this check the file would be PNG
   // bytes under a .webp or .avif name.
   if (blob.type !== type) {
-    throw new ToolError(
+    throw new ToolError(say(
       `This browser cannot encode ${FORMAT_NAME[type]}. ` +
       (type === 'image/webp' ? 'Try JPG or PNG instead.' : 'Try WebP instead.'),
-    );
+      `Pelayar ini tidak dapat mengekod ${FORMAT_NAME[type]}. ` +
+      (type === 'image/webp' ? 'Cuba JPG atau PNG.' : 'Cuba WebP.'),
+    ));
   }
   return blob;
 }

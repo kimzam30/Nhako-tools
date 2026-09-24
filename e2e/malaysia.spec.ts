@@ -44,6 +44,105 @@ test.describe('Bahasa Melayu', () => {
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Merge PDF');
   });
 
+  /**
+   * A Malay page that answers in English.
+   *
+   * The tools built in phase 1 and after word their own messages through
+   * `say()`; the ones from the original rebuild did not, so /ms/pdf/merge
+   * refused a single file in English, /ms/pdf/split reported an out-of-range
+   * page in English, and every summary line read "2 files · 6 pages". The
+   * Pages field was the worst of it: `parsePageRange` is shared by four tools,
+   * including two that were otherwise translated.
+   */
+  test.describe('a tool answers in the language of its page', () => {
+    async function pdf(pages = 3) {
+      const { PDFDocument } = await import('pdf-lib');
+      const doc = await PDFDocument.create();
+      for (let i = 0; i < pages; i++) doc.addPage([595.28, 841.89]);
+      return { name: 'dokumen.pdf', mimeType: 'application/pdf', buffer: Buffer.from(await doc.save()) };
+    }
+    const error = (page: Page) => page.locator('p[class*="text-err"]').first();
+
+    test('merge refuses one file in Malay, and sums two in Malay', async ({ page }) => {
+      await page.goto('/ms/pdf/merge');
+      await page.locator('input[type=file]').setInputFiles(await pdf());
+      await expect(error(page)).toHaveText('Penggabungan memerlukan sekurang-kurangnya dua PDF. Lepaskan satu lagi.');
+
+      await page.locator('input[type=file]').setInputFiles([await pdf(), await pdf()]);
+      await expect(page.getByText('2 fail · 6 halaman')).toBeVisible({ timeout: 30_000 });
+    });
+
+    test('the shared Pages field complains in Malay', async ({ page }) => {
+      await page.goto('/ms/pdf/split');
+      await page.getByLabel('Halaman').fill('99');
+      await page.locator('input[type=file]').setInputFiles(await pdf());
+      await expect(error(page)).toHaveText('Dokumen ini mempunyai 3 halaman, jadi "99" di luar julat.');
+
+      // 3-1, not 4-2: on a 3 page document the out-of-range check would fire first.
+      await page.getByLabel('Halaman').fill('3-1');
+      await expect(error(page)).toHaveText('"3-1" terbalik. Tulis sebagai 1-3.');
+    });
+
+    test('a scan with no text layer, and an unreadable file, are explained in Malay', async ({ page }) => {
+      await page.goto('/ms/pdf/to-text');
+      await page.locator('input[type=file]').setInputFiles(await pdf(1));
+      await expect(error(page)).toContainText('PDF ini tiada lapisan teks');
+
+      await page.goto('/ms/pdf/rotate');
+      await page.locator('input[type=file]').setInputFiles({ name: 'rosak.pdf', mimeType: 'application/pdf', buffer: Buffer.from('not a pdf') });
+      await expect(error(page)).toHaveText('"rosak.pdf" tidak dapat dibaca sebagai PDF.');
+    });
+
+    test('summaries are in Malay, not just errors', async ({ page }) => {
+      await page.goto('/ms/pdf/rotate');
+      await page.locator('input[type=file]').setInputFiles(await pdf());
+      await expect(page.getByText('3 halaman diputar 90°')).toBeVisible({ timeout: 30_000 });
+
+      await page.goto('/ms/pdf/to-image');
+      await page.locator('input[type=file]').setInputFiles(await pdf());
+      await expect(page.getByText('3 halaman pada 144 dpi')).toBeVisible({ timeout: 30_000 });
+    });
+
+    test('a text tool reports a JSON syntax error in Malay, with its line and column', async ({ page }) => {
+      await page.goto('/ms/dev/json');
+      await page.getByLabel('Input').fill('{\n  "a": 1\n  "b": 2\n}');
+      await expect(error(page)).toHaveText(/^Menjangkakan ',' atau '}' selepas nilai sifat, ditemui .* di baris 3, lajur 3\.$/);
+    });
+
+    test('a text tool refuses bad Base64 in Malay', async ({ page }) => {
+      await page.goto('/ms/dev/base64');
+      await page.getByLabel('Mod').selectOption('decode');
+      await page.getByLabel('Input').fill('bukan base64 !!!');
+      await expect(error(page)).toContainText('Bukan Base64 yang sah');
+    });
+
+    test('the word counter counts in Malay, output and readout both', async ({ page }) => {
+      await page.goto('/ms/dev/word-count');
+      await page.getByLabel('Input').fill('satu dua tiga empat. lima enam!');
+      // The table of counts IS this tool's output, and it was entirely English.
+      await expect(page.locator('pre').first()).toContainText('Perkataan');
+      await expect(page.locator('pre').first()).toContainText('Aksara (tanpa ruang)');
+      await expect(page.locator('pre').first()).toContainText('Masa membaca');
+      await expect(page.locator('pre').first()).not.toContainText(/Characters|Sentences/);
+      // And the readout row beside it, which is also what a screen reader says.
+      await expect(page.getByText('Baca', { exact: true })).toBeVisible();
+    });
+
+    test('a readout row is in Malay on the other text tools too', async ({ page }) => {
+      await page.goto('/ms/dev/json');
+      await page.getByLabel('Input').fill('{"b":1,"a":2}');
+      for (const label of ['Kunci', 'Kedalaman', 'Saiz']) {
+        await expect(page.getByText(label, { exact: true })).toBeVisible();
+      }
+    });
+
+    test('the English pages still read in English', async ({ page }) => {
+      await page.goto('/pdf/merge');
+      await page.locator('input[type=file]').setInputFiles(await pdf());
+      await expect(error(page)).toHaveText('Merging needs at least two PDFs. Drop another one in.');
+    });
+  });
+
   test('searching in Malay finds a tool, and results stay on Malay pages', async ({ page }) => {
     await page.goto('/ms');
     await page.locator('#tool-search').fill('gabung');

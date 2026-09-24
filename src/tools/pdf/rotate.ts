@@ -1,21 +1,19 @@
 import { ToolError, type FileRun } from '../types';
 import { bytesToBlob } from '../../lib/format';
 import { parsePageRange } from '../../lib/range';
+import { sayer } from '../say';
+import { openPdf } from './load';
 
 export const run: FileRun = async (files, opts, ctx) => {
+  const say = sayer(opts);
   const file = files[0];
-  if (!file) throw new ToolError('No file selected.');
-  const { PDFDocument, degrees } = await import('pdf-lib');
+  if (!file) throw new ToolError(say('No file selected.', 'Tiada fail dipilih.'));
+  const { degrees } = await import('pdf-lib');
 
-  let doc;
-  try {
-    doc = await PDFDocument.load(await file.arrayBuffer());
-  } catch {
-    throw new ToolError(`Could not read "${file.name}". If it is password-protected, unlock it first.`);
-  }
+  const doc = await openPdf(file, say);
 
   const angle = Number(opts.angle ?? 90);
-  const indices = parsePageRange(String(opts.range ?? ''), doc.getPageCount());
+  const indices = parsePageRange(String(opts.range ?? ''), doc.getPageCount(), say);
 
   for (const [n, index] of indices.entries()) {
     const page = doc.getPage(index);
@@ -28,6 +26,6 @@ export const run: FileRun = async (files, opts, ctx) => {
   return {
     blob: bytesToBlob(await doc.save(), 'application/pdf'),
     filename: file.name.replace(/\.pdf$/i, '') + '-rotated.pdf',
-    summary: `${indices.length} page${indices.length === 1 ? '' : 's'} rotated ${angle}°`,
+    summary: say(`${indices.length} page${indices.length === 1 ? '' : 's'} rotated ${angle}°`, `${indices.length} halaman diputar ${angle}°`),
   };
 };

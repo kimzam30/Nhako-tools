@@ -1,4 +1,5 @@
 import type { DiffSegment, TextRun } from '../types';
+import { sayer } from '../say';
 
 type Part = { value: string; added?: boolean; removed?: boolean };
 
@@ -16,6 +17,7 @@ function dropWhitespaceChanges(parts: Part[]): Part[] {
 }
 
 export const run: TextRun = async (input, opts, inputB = '') => {
+  const say = sayer(opts);
   const { diffLines, diffWords, diffChars } = await import('diff');
   const granularity = String(opts.granularity ?? 'line');
   const ignoreWhitespace = Boolean(opts.ignoreWhitespace);
@@ -40,12 +42,12 @@ export const run: TextRun = async (input, opts, inputB = '') => {
       for (const l of lines) out.push(`${marker} ${l}`);
     }
     return {
-      output: changed ? out.join('\n') : 'The two inputs are identical.',
+      output: changed ? out.join('\n') : say('The two inputs are identical.', 'Kedua-dua input adalah sama.'),
       language: changed ? 'diff' : 'text',
       stats: [
-        { label: 'Added', value: `+${added} line${added === 1 ? '' : 's'}` },
-        { label: 'Removed', value: `-${removed} line${removed === 1 ? '' : 's'}` },
-        { label: 'Compared by', value: granularity },
+        { label: say('Added', 'Ditambah'), value: say(`+${added} line${added === 1 ? '' : 's'}`, `+${added} baris`) },
+        { label: say('Removed', 'Dibuang'), value: say(`-${removed} line${removed === 1 ? '' : 's'}`, `-${removed} baris`) },
+        { label: say('Compared by', 'Dibanding mengikut'), value: say('line', 'baris') },
       ],
     };
   }
@@ -55,6 +57,7 @@ export const run: TextRun = async (input, opts, inputB = '') => {
   // one-word edit across three lines.
   const count = granularity === 'word' ? words : (s: string) => [...s].length;
   const unit = granularity === 'word' ? 'word' : 'character';
+  const unitMs = granularity === 'word' ? 'perkataan' : 'aksara';
   let added = 0;
   let removed = 0;
   const segments: DiffSegment[] = [];
@@ -70,13 +73,13 @@ export const run: TextRun = async (input, opts, inputB = '') => {
     .join('');
 
   return {
-    output: changed ? output : 'The two inputs are identical.',
+    output: changed ? output : say('The two inputs are identical.', 'Kedua-dua input adalah sama.'),
     language: changed ? 'diff-inline' : 'text',
     segments: changed ? segments : undefined,
     stats: [
-      { label: 'Added', value: `+${added} ${unit}${added === 1 ? '' : 's'}` },
-      { label: 'Removed', value: `-${removed} ${unit}${removed === 1 ? '' : 's'}` },
-      { label: 'Compared by', value: granularity },
+      { label: say('Added', 'Ditambah'), value: say(`+${added} ${unit}${added === 1 ? '' : 's'}`, `+${added} ${unitMs}`) },
+      { label: say('Removed', 'Dibuang'), value: say(`-${removed} ${unit}${removed === 1 ? '' : 's'}`, `-${removed} ${unitMs}`) },
+      { label: say('Compared by', 'Dibanding mengikut'), value: say(granularity, unitMs) },
     ],
   };
 };

@@ -1,4 +1,8 @@
 import { ToolError, type TextRun } from '../types';
+import { sayer, type Say } from '../say';
+
+/** English on its own, for the unit tests, which have no page locale. */
+const englishOnly: Say = sayer({});
 
 /** Turn a character offset into a 1-indexed line/column. */
 function lineCol(text: string, pos: number): { line: number; col: number } {
@@ -48,28 +52,31 @@ class SyntaxAt extends Error {
  * the error itself, so every browser reports the same message. It only runs
  * after JSON.parse has already failed.
  */
-export function locateJsonError(text: string): { message: string; index: number } | null {
+export function locateJsonError(text: string, say: Say = englishOnly): { message: string; index: number } | null {
   let i = 0;
   const ws = () => { while (i < text.length && ' \t\n\r'.includes(text[i]!)) i++; };
   const fail = (message: string): never => {
     throw new SyntaxAt(i >= text.length ? 'EOF' : message, i);
   };
-  const found = () => `found ${JSON.stringify(text[i])}`;
+  const found = () => say(`found ${JSON.stringify(text[i])}`, `ditemui ${JSON.stringify(text[i])}`);
 
   const string = () => {
     i++; // opening quote
     for (;;) {
-      if (i >= text.length) fail('Unterminated string');
+      if (i >= text.length) fail(say('Unterminated string', 'Rentetan tidak ditamatkan'));
       const c = text[i]!;
       if (c === '"') { i++; return; }
-      if (c.charCodeAt(0) < 0x20) fail('Unescaped control character (such as a raw line break) inside a string');
+      if (c.charCodeAt(0) < 0x20) fail(say(
+        'Unescaped control character (such as a raw line break) inside a string',
+        'Aksara kawalan tanpa escape (seperti pemisah baris mentah) di dalam rentetan',
+      ));
       if (c === '\\') {
         const e = text[i + 1];
         if (e === 'u') {
-          if (!/^[0-9a-fA-F]{4}$/.test(text.slice(i + 2, i + 6))) { i++; fail('Invalid \\u escape: it needs four hex digits'); }
+          if (!/^[0-9a-fA-F]{4}$/.test(text.slice(i + 2, i + 6))) { i++; fail(say('Invalid \\u escape: it needs four hex digits', 'Escape \\u tidak sah: ia memerlukan empat digit heks')); }
           i += 6;
         } else if (e !== undefined && '"\\/bfnrt'.includes(e)) i += 2;
-        else { i++; fail(`Invalid escape "\\${e ?? ''}"`); }
+        else { i++; fail(say(`Invalid escape "\\${e ?? ''}"`, `Escape "\\${e ?? ''}" tidak sah`)); }
       } else i++;
     }
   };
@@ -83,14 +90,16 @@ export function locateJsonError(text: string): { message: string; index: number 
     if (c === '"') return string();
     if (c === '-' || (c! >= '0' && c! <= '9')) {
       const m = /^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?/.exec(text.slice(i));
-      if (!m) fail('Invalid number');
+      if (!m) fail(say('Invalid number', 'Nombor tidak sah'));
       i += m![0].length;
       return;
     }
     for (const word of ['true', 'false', 'null']) {
       if (text.startsWith(word, i)) { i += word.length; return; }
     }
-    fail(c === "'" ? 'Strings must use double quotes, not single quotes' : `Expected a value, ${found()}`);
+    fail(c === "'"
+      ? say('Strings must use double quotes, not single quotes', 'Rentetan mesti menggunakan tanda petik berganda, bukan tunggal')
+      : say(`Expected a value, ${found()}`, `Menjangkakan satu nilai, ${found()}`));
   };
 
   const object = () => {
@@ -98,14 +107,16 @@ export function locateJsonError(text: string): { message: string; index: number 
     if (text[i] === '}') { i++; return; }
     for (;;) {
       ws();
-      if (text[i] !== '"') fail(text[i] === "'" ? 'Property names must use double quotes, not single quotes' : `Expected a double-quoted property name, ${found()}`);
+      if (text[i] !== '"') fail(text[i] === "'"
+        ? say('Property names must use double quotes, not single quotes', 'Nama sifat mesti menggunakan tanda petik berganda, bukan tunggal')
+        : say(`Expected a double-quoted property name, ${found()}`, `Menjangkakan nama sifat dalam petik berganda, ${found()}`));
       string(); ws();
-      if (text[i] !== ':') fail(`Expected ':' after the property name, ${found()}`);
+      if (text[i] !== ':') fail(say(`Expected ':' after the property name, ${found()}`, `Menjangkakan ':' selepas nama sifat, ${found()}`));
       i++; value(); ws();
       if (text[i] === '}') { i++; return; }
-      if (text[i] !== ',') fail(`Expected ',' or '}' after the property value, ${found()}`);
+      if (text[i] !== ',') fail(say(`Expected ',' or '}' after the property value, ${found()}`, `Menjangkakan ',' atau '}' selepas nilai sifat, ${found()}`));
       i++; ws();
-      if (text[i] === '}') fail("Trailing comma before '}'. JSON does not allow one");
+      if (text[i] === '}') fail(say("Trailing comma before '}'. JSON does not allow one", "Koma berlebihan sebelum '}'. JSON tidak membenarkannya"));
     }
   };
 
@@ -115,15 +126,15 @@ export function locateJsonError(text: string): { message: string; index: number 
     for (;;) {
       value(); ws();
       if (text[i] === ']') { i++; return; }
-      if (text[i] !== ',') fail(`Expected ',' or ']' after the array element, ${found()}`);
+      if (text[i] !== ',') fail(say(`Expected ',' or ']' after the array element, ${found()}`, `Menjangkakan ',' atau ']' selepas elemen tatasusunan, ${found()}`));
       i++; ws();
-      if (text[i] === ']') fail("Trailing comma before ']'. JSON does not allow one");
+      if (text[i] === ']') fail(say("Trailing comma before ']'. JSON does not allow one", "Koma berlebihan sebelum ']'. JSON tidak membenarkannya"));
     }
   };
 
   try {
     value(); ws();
-    if (i < text.length) fail(`Unexpected content after the JSON value, ${found()}`);
+    if (i < text.length) fail(say(`Unexpected content after the JSON value, ${found()}`, `Kandungan tidak dijangka selepas nilai JSON, ${found()}`));
     return null;
   } catch (err) {
     if (err instanceof SyntaxAt) return { message: err.message, index: err.index };
@@ -132,15 +143,21 @@ export function locateJsonError(text: string): { message: string; index: number 
 }
 
 /** Turn a failed parse into a message with a real line and column. */
-export function explainParseError(err: unknown, input: string): string {
-  const located = locateJsonError(input);
+export function explainParseError(err: unknown, input: string, say: Say = englishOnly): string {
+  const located = locateJsonError(input, say);
   if (located?.message === 'EOF') {
     const { line } = lineCol(input, input.length);
-    return `Unexpected end of input. The document is incomplete, ending at line ${line}.`;
+    return say(
+      `Unexpected end of input. The document is incomplete, ending at line ${line}.`,
+      `Input tamat secara tidak dijangka. Dokumen tidak lengkap, berakhir di baris ${line}.`,
+    );
   }
   if (located) {
     const { line, col } = lineCol(input, located.index);
-    return `${located.message} at line ${line}, column ${col}.`;
+    return say(
+      `${located.message} at line ${line}, column ${col}.`,
+      `${located.message} di baris ${line}, lajur ${col}.`,
+    );
   }
   // Not located (should not happen): the engine's own words, trimmed so a
   // long document is never echoed back inside the message.
@@ -179,10 +196,11 @@ function parsePreservingNumbers(input: string): { value: unknown; restore: (json
 }
 
 export const run: TextRun = async (input, opts) => {
+  const say = sayer(opts);
   try {
     JSON.parse(input);
   } catch (err) {
-    throw new ToolError(explainParseError(err, input));
+    throw new ToolError(explainParseError(err, input, say));
   }
   const { value: parsed, restore } = parsePreservingNumbers(input);
 
@@ -198,10 +216,10 @@ export const run: TextRun = async (input, opts) => {
     output,
     language: 'json',
     stats: [
-      { label: 'Keys', value: String(keys) },
-      { label: 'Depth', value: String(depth) },
-      { label: 'Size', value: `${output.length} B` },
-      ...(saved > 0 ? [{ label: 'Saved', value: `${saved} B` }] : []),
+      { label: say('Keys', 'Kunci'), value: String(keys) },
+      { label: say('Depth', 'Kedalaman'), value: String(depth) },
+      { label: say('Size', 'Saiz'), value: `${output.length} B` },
+      ...(saved > 0 ? [{ label: say('Saved', 'Dijimatkan'), value: `${saved} B` }] : []),
     ],
   };
 };

@@ -1,4 +1,5 @@
 import type { TextRun } from '../types';
+import { sayer } from '../say';
 
 function hexToRgba(hex: string, alpha: number): string {
   const h = hex.trim().replace('#', '');
@@ -9,6 +10,7 @@ function hexToRgba(hex: string, alpha: number): string {
 }
 
 export const run: TextRun = async (_input, opts) => {
+  const say = sayer(opts);
   const { x = 0, y = 8, blur = 24, spread = -6, opacity = 18, color = '#131316', inset = false } = opts as Record<string, never> & {
     x?: number; y?: number; blur?: number; spread?: number; opacity?: number; color?: string; inset?: boolean;
   };
@@ -19,9 +21,9 @@ export const run: TextRun = async (_input, opts) => {
     language: 'css',
     preview: `box-shadow: ${value}`,
     stats: [
-      { label: 'Offset', value: `${x}, ${y}` },
-      { label: 'Blur', value: `${blur}px` },
-      { label: 'Spread', value: `${spread}px` },
+      { label: say('Offset', 'Ofset'), value: `${x}, ${y}` },
+      { label: say('Blur', 'Kabur'), value: `${blur}px` },
+      { label: say('Spread', 'Sebaran'), value: `${spread}px` },
     ],
   };
 };

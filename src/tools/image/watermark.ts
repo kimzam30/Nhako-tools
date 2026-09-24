@@ -17,7 +17,7 @@ export const run: FileRun = async (files, opts, ctx) => {
 
   const out: { name: string; blob: Blob }[] = [];
   for (const [i, file] of files.entries()) {
-    const bitmap = await decode(file);
+    const bitmap = await decode(file, say);
     const mime = sameFormat(file);
     const canvas = draw(bitmap, bitmap.width, bitmap.height, mime);
     const c = canvas.getContext('2d') as CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
@@ -59,7 +59,7 @@ export const run: FileRun = async (files, opts, ctx) => {
       stamp(x, y);
     }
     bitmap.close();
-    out.push({ name: replaceExtension(file.name, EXTENSION[mime]).replace(/(\.[^.]+)$/, '-watermarked$1'), blob: await toBlob(canvas, mime, 0.92) });
+    out.push({ name: replaceExtension(file.name, EXTENSION[mime]).replace(/(\.[^.]+)$/, '-watermarked$1'), blob: await toBlob(canvas, mime, 0.92, say) });
     ctx.onProgress((i + 1) / files.length);
   }
 

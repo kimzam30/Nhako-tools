@@ -1,6 +1,6 @@
 import { ToolError, type FileRun } from '../types';
 import { bytesToBlob } from '../../lib/format';
-import { isEncrypted, passwordWorks, qpdf } from '../../lib/qpdf';
+import { inspectPdf, passwordWorks, qpdf } from '../../lib/qpdf';
 import { sayer } from '../say';
 import { stem } from './load';
 
@@ -16,7 +16,11 @@ export const run: FileRun = async (files, opts, ctx) => {
   const password = String(opts.password ?? '');
   const input = new Uint8Array(await file.arrayBuffer());
 
-  if (!(await isEncrypted(input))) {
+  const state = await inspectPdf(input);
+  if (state === 'unreadable') {
+    throw new ToolError(say(`Could not read "${file.name}" as a PDF.`, `"${file.name}" tidak dapat dibaca sebagai PDF.`));
+  }
+  if (state === 'plain') {
     throw new ToolError(say(
       `"${file.name}" has no password or restrictions. There is nothing to unlock.`,
       `"${file.name}" tiada kata laluan atau sekatan. Tiada apa-apa untuk dibuka.`,

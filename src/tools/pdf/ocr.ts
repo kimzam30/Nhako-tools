@@ -23,7 +23,7 @@ export const run: FileRun = async (files, opts, ctx) => {
   const lang = isOcrLanguage(opts.language) ? opts.language : 'eng+msa';
   const skipText = opts.skipText !== false;
 
-  const view = await loadDocument(file);
+  const view = await loadDocument(file, say);
   const doc = await openPdf(file, say);
   const { degrees } = await import('pdf-lib');
   const pages = doc.getPages();

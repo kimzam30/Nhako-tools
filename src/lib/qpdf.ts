@@ -72,13 +72,17 @@ export async function passwordWorks(input: Uint8Array, password: string): Promis
 }
 
 /** pdf-lib refuses encrypted files outright, which makes it a reliable test. */
-export async function isEncrypted(input: Uint8Array): Promise<boolean> {
+export async function inspectPdf(input: Uint8Array): Promise<'encrypted' | 'plain' | 'unreadable'> {
   const { PDFDocument } = await import('pdf-lib');
   try {
-    await PDFDocument.load(input, { updateMetadata: false });
-    return false;
+    const doc = await PDFDocument.load(input, { updateMetadata: false });
+    // Touch the catalog: load() accepts anything starting with "%PDF", so a
+    // truncated file looked simply "not encrypted" and Unlock told the user
+    // there was nothing to unlock, about a file it could not read at all.
+    doc.getPageCount();
+    return 'plain';
   } catch (err) {
-    return /encrypt/i.test(String(err));
+    return /encrypt/i.test(String(err)) ? 'encrypted' : 'unreadable';
   }
 }
 

@@ -24,6 +24,9 @@ async function loadModel(onProgress?: (fraction: number) => void) {
     env.allowLocalModels = false;
     env.useBrowserCache = true;
     env.backends.onnx.wasm.wasmPaths = __ORT_BASE__;
+    // One thread: this runtime's threaded build spawns workers from code that
+    // does not survive bundling ("g is not defined"), and falls back anyway.
+    env.backends.onnx.wasm.numThreads = 1;
     const model = await AutoModel.from_pretrained('Xenova/modnet', {
       quantized: true,
       progress_callback: (d: { status: string; file?: string; loaded?: number; total?: number }) => {

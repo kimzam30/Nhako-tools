@@ -80,6 +80,9 @@ export const run: FileRun = async (files, opts, ctx) => {
   // pulls it from cdn.jsdelivr.net, a second third party the privacy page
   // did not mention.
   env.backends.onnx.wasm.wasmPaths = __ORT_BASE__;
+  // One thread: this runtime's threaded build spawns workers from code that
+  // does not survive bundling ("g is not defined"), and falls back anyway.
+  env.backends.onnx.wasm.numThreads = 1;
 
   ctx.onProgress(0, say('Loading model', 'Memuatkan model'));
   // Progress arrives per file (config, tokenizer, encoder, decoder), each

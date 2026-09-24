@@ -2,20 +2,22 @@ import { ToolError, type FileRun } from '../types';
 import { withFiles, onFFmpegProgress, probeDuration } from '../../lib/ffmpeg';
 import { planBitrate } from './bitrate';
 import { fetchFile } from '@ffmpeg/util';
+import { sayer } from '../say';
 
 export const run: FileRun = async (files, opts, ctx) => {
+  const say = sayer(opts);
   const file = files[0];
-  if (!file) throw new ToolError('No file selected.');
+  if (!file) throw new ToolError(say('No file selected.', 'Tiada fail dipilih.'));
 
-  const duration = await probeDuration(file, (label) => ctx.onProgress(0, label));
+  const duration = await probeDuration(file, (label) => ctx.onProgress(0, label), say);
   const audioChoice = String(opts.audio ?? '128');
   const audioKbps = audioChoice === 'none' ? 0 : Number(audioChoice);
-  const plan = planBitrate(duration, Number(opts.targetMB), audioKbps);
+  const plan = planBitrate(duration, Number(opts.targetMB), audioKbps, say);
 
   const input = 'input.mp4';
   const output = 'output.mp4';
 
-  onFFmpegProgress((fraction) => ctx.onProgress(fraction, 'Encoding'));
+  onFFmpegProgress((fraction) => ctx.onProgress(fraction, say('Encoding', 'Mengekod')));
 
   const data = await withFiles({ [input]: await fetchFile(file) }, [output], async (ffmpeg) => {
     // Audio is re-encoded to a known bitrate rather than copied, so the size
@@ -34,7 +36,10 @@ export const run: FileRun = async (files, opts, ctx) => {
       output,
     ];
     if ((await ffmpeg.exec(args)) !== 0) {
-      throw new ToolError('The encoder failed on this file. It may use an unsupported codec.');
+      throw new ToolError(say(
+        'The encoder failed on this file. It may use an unsupported codec.',
+        'Pengekod gagal pada fail ini. Ia mungkin menggunakan kodek yang tidak disokong.',
+      ));
     }
     return ffmpeg.readFile(output);
   });
@@ -45,6 +50,9 @@ export const run: FileRun = async (files, opts, ctx) => {
   return {
     blob,
     filename: file.name.replace(/\.[^/.]+$/, '') + '-compressed.mp4',
-    summary: `${actualMB.toFixed(1)} MB · target was ${opts.targetMB} MB · ${plan.videoKbps}k video`,
+    summary: say(
+      `${actualMB.toFixed(1)} MB · target was ${opts.targetMB} MB · ${plan.videoKbps}k video`,
+      `${actualMB.toFixed(1)} MB · sasaran ${opts.targetMB} MB · video ${plan.videoKbps}k`,
+    ),
   };
 };

@@ -1,4 +1,5 @@
 import type { TextRun } from '../types';
+import { sayer } from '../say';
 
 export interface Counts {
   words: number; characters: number; charactersNoSpaces: number;
@@ -24,20 +25,26 @@ export function count(text: string): Counts {
   };
 }
 
-export const run: TextRun = async (input) => {
+export const run: TextRun = async (input, opts) => {
+  const say = sayer(opts);
   const c = count(input);
   const rows: [string, string | number][] = [
-    ['Words', c.words], ['Characters', c.characters], ['Characters (no spaces)', c.charactersNoSpaces],
-    ['Sentences', c.sentences], ['Paragraphs', c.paragraphs], ['Lines', c.lines],
-    ['Reading time', `~${c.readingMinutes} min`], ['Speaking time', `~${c.speakingMinutes} min`],
+    [say('Words', 'Perkataan'), c.words],
+    [say('Characters', 'Aksara'), c.characters],
+    [say('Characters (no spaces)', 'Aksara (tanpa ruang)'), c.charactersNoSpaces],
+    [say('Sentences', 'Ayat'), c.sentences],
+    [say('Paragraphs', 'Perenggan'), c.paragraphs],
+    [say('Lines', 'Baris'), c.lines],
+    [say('Reading time', 'Masa membaca'), `~${c.readingMinutes} min`],
+    [say('Speaking time', 'Masa bertutur'), `~${c.speakingMinutes} min`],
   ];
   const width = Math.max(...rows.map(([k]) => k.length));
   return {
     output: rows.map(([k, v]) => `${k.padEnd(width)}  ${v}`).join('\n'),
     stats: [
-      { label: 'Words', value: String(c.words) },
-      { label: 'Chars', value: String(c.characters) },
-      { label: 'Read', value: `~${c.readingMinutes}m` },
+      { label: say('Words', 'Perkataan'), value: String(c.words) },
+      { label: say('Chars', 'Aksara'), value: String(c.characters) },
+      { label: say('Read', 'Baca'), value: `~${c.readingMinutes}m` },
     ],
   };
 };

@@ -1,4 +1,5 @@
 import { ToolError, type FileRun } from '../types';
+import { sayer, type Say } from '../say';
 import { decode, draw, toBlob, replaceExtension, formatOf, EXTENSION, type Encodable } from '../../lib/canvas';
 import { fitToSize, kbToBytes, exactBytes, targetLabel } from '../../lib/fit-size';
 
@@ -26,18 +27,19 @@ function targetFormat(file: File, choice: string): Encodable {
 }
 
 export const run: FileRun = async (files, opts, ctx) => {
-  if (files.length === 0) throw new ToolError(opts.locale === 'ms' ? 'Tiada fail dipilih.' : 'No file selected.');
+  const say = sayer(opts);
+  if (files.length === 0) throw new ToolError(say('No file selected.', 'Tiada fail dipilih.'));
   const targetKb = Number(opts.target ?? 0);
-  if (targetKb > 0) return toTarget(files, kbToBytes(targetKb), String(opts.format ?? 'auto'), opts.locale === 'ms', ctx);
+  if (targetKb > 0) return toTarget(files, kbToBytes(targetKb), String(opts.format ?? 'auto'), opts.locale === 'ms', say, ctx);
 
   const quality = Number(opts.quality ?? 75) / 100;
   const choice = String(opts.format ?? 'auto');
 
   const encoded: { name: string; blob: Blob; before: number; kept: boolean }[] = [];
   for (const [i, file] of files.entries()) {
-    const bitmap = await decode(file);
+    const bitmap = await decode(file, say);
     const mime = outputFormat(file, choice);
-    const blob = await toBlob(draw(bitmap, bitmap.width, bitmap.height, mime), mime, quality);
+    const blob = await toBlob(draw(bitmap, bitmap.width, bitmap.height, mime), mime, quality, say);
     bitmap.close();
 
     // A "compressed" file must never be bigger than what went in. When the
@@ -58,13 +60,22 @@ export const run: FileRun = async (files, opts, ctx) => {
   const keptCount = encoded.filter((e) => e.kept).length;
   const pngKept = encoded.some((e) => e.kept && e.name.toLowerCase().endsWith('.png'));
 
-  const parts = [
-    change > 0 ? `${change}% smaller` : change < 0 ? `${-change}% larger` : 'Same size',
-    ...(keptCount > 0
-      ? [`${keptCount === encoded.length ? (encoded.length === 1 ? 'original' : 'originals') : `${keptCount} original${keptCount === 1 ? '' : 's'}`} kept, re-encoding was not smaller`]
-      : []),
-    ...(pngKept ? ['choose WebP to shrink PNGs'] : []),
-  ];
+  const ms = opts.locale === 'ms';
+  const parts = ms
+    ? [
+      change > 0 ? `${change}% lebih kecil` : change < 0 ? `${-change}% lebih besar` : 'Saiz sama',
+      ...(keptCount > 0
+        ? [`${keptCount === encoded.length ? 'asal' : `${keptCount} asal`} dikekalkan, pengekodan semula tidak lebih kecil`]
+        : []),
+      ...(pngKept ? ['pilih WebP untuk mengecilkan PNG'] : []),
+    ]
+    : [
+      change > 0 ? `${change}% smaller` : change < 0 ? `${-change}% larger` : 'Same size',
+      ...(keptCount > 0
+        ? [`${keptCount === encoded.length ? (encoded.length === 1 ? 'original' : 'originals') : `${keptCount} original${keptCount === 1 ? '' : 's'}`} kept, re-encoding was not smaller`]
+        : []),
+      ...(pngKept ? ['choose WebP to shrink PNGs'] : []),
+    ];
   const summary = parts.join(' · ');
 
   const first = encoded[0]!;
@@ -76,13 +87,13 @@ export const run: FileRun = async (files, opts, ctx) => {
   return {
     blob: await zip.generateAsync({ type: 'blob' }),
     filename: 'compressed-images.zip',
-    summary: `${encoded.length} images · ${summary}`,
+    summary: ms ? `${encoded.length} imej · ${summary}` : `${encoded.length} images · ${summary}`,
   };
 };
 
 /** Compress every file to land under `target` bytes. */
 async function toTarget(
-  files: File[], target: number, choice: string, ms: boolean,
+  files: File[], target: number, choice: string, ms: boolean, say: Say,
   ctx: Parameters<FileRun>[2],
 ): ReturnType<FileRun> {
   const label = targetLabel(target / 1000);
@@ -101,11 +112,11 @@ async function toTarget(
       continue;
     }
 
-    const bitmap = await decode(file);
+    const bitmap = await decode(file, say);
     const fit = await fitToSize(async (quality, scale) => {
       const w = Math.max(1, Math.round(bitmap.width * scale));
       const h = Math.max(1, Math.round(bitmap.height * scale));
-      return toBlob(draw(bitmap, w, h, mime), mime, quality);
+      return toBlob(draw(bitmap, w, h, mime), mime, quality, say);
     }, target, {
       onAttempt: (_a, n) => ctx.onProgress((i + Math.min(0.95, n / 12)) / files.length, ms ? 'Mencari saiz terbaik' : 'Finding the best fit'),
     });

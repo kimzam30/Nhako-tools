@@ -1,6 +1,6 @@
 import { ToolError, type FileRun } from '../types';
 import { bytesToBlob } from '../../lib/format';
-import { isEncrypted, qpdf, randomPassword } from '../../lib/qpdf';
+import { inspectPdf, qpdf, randomPassword } from '../../lib/qpdf';
 import { sayer } from '../say';
 import { stem } from './load';
 
@@ -23,7 +23,11 @@ export const run: FileRun = async (files, opts, ctx) => {
   ctx.onProgress(0.2, say('Loading the encryption engine', 'Memuatkan enjin penyulitan'));
   const input = new Uint8Array(await file.arrayBuffer());
 
-  if (await isEncrypted(input)) {
+  const state = await inspectPdf(input);
+  if (state === 'unreadable') {
+    throw new ToolError(say(`Could not read "${file.name}" as a PDF.`, `"${file.name}" tidak dapat dibaca sebagai PDF.`));
+  }
+  if (state === 'encrypted') {
     throw new ToolError(say(
       'This PDF is already encrypted. Unlock it first, then protect it with a new password.',
       'PDF ini sudah disulitkan. Buka kuncinya dahulu, kemudian lindungi dengan kata laluan baharu.',

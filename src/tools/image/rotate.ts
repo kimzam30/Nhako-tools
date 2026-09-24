@@ -10,7 +10,7 @@ export const run: FileRun = async (files, opts, ctx) => {
 
   const out: { name: string; blob: Blob }[] = [];
   for (const [i, file] of files.entries()) {
-    const bitmap = await decode(file);
+    const bitmap = await decode(file, say);
     const turn = action === 'cw' || action === 'ccw';
     const w = turn ? bitmap.height : bitmap.width;
     const h = turn ? bitmap.width : bitmap.height;
@@ -26,7 +26,7 @@ export const run: FileRun = async (files, opts, ctx) => {
     else if (action === 'flip-v') c.scale(1, -1);
     c.drawImage(bitmap, -bitmap.width / 2, -bitmap.height / 2);
     bitmap.close();
-    out.push({ name: replaceExtension(file.name, EXTENSION[mime]), blob: await toBlob(canvas, mime, 0.92) });
+    out.push({ name: replaceExtension(file.name, EXTENSION[mime]), blob: await toBlob(canvas, mime, 0.92, say) });
     ctx.onProgress((i + 1) / files.length);
   }
 

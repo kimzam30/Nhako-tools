@@ -1,4 +1,8 @@
 import { ToolError, type TextRun } from '../types';
+import { sayer, type Say } from '../say';
+
+/** English on its own, for the unit tests, which have no page locale. */
+const englishOnly: Say = sayer({});
 
 const toUrlSafe = (s: string) => s.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 const fromUrlSafe = (s: string) => {
@@ -16,31 +20,38 @@ export function encode(text: string, urlSafe = false): string {
 }
 
 /** Decode Base64 (standard or URL-safe) to UTF-8 text. */
-export function decode(b64: string): string {
+export function decode(b64: string, say: Say = englishOnly): string {
   let bin: string;
   try {
     bin = atob(fromUrlSafe(b64));
   } catch {
-    throw new ToolError('Not valid Base64. Check for stray characters or truncated input.');
+    throw new ToolError(say(
+      'Not valid Base64. Check for stray characters or truncated input.',
+      'Bukan Base64 yang sah. Periksa aksara terpesong atau input terpotong.',
+    ));
   }
   const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
   try {
     return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
   } catch {
-    throw new ToolError('Decoded successfully, but the result is not valid UTF-8 text. It may be binary data.');
+    throw new ToolError(say(
+      'Decoded successfully, but the result is not valid UTF-8 text. It may be binary data.',
+      'Berjaya dinyahkod, tetapi hasilnya bukan teks UTF-8 yang sah. Ia mungkin data binari.',
+    ));
   }
 }
 
 export const run: TextRun = async (input, opts) => {
+  const say = sayer(opts);
   const urlSafe = Boolean(opts.urlSafe);
-  const output = opts.mode === 'decode' ? decode(input) : encode(input, urlSafe);
+  const output = opts.mode === 'decode' ? decode(input, say) : encode(input, urlSafe);
   const ratio = input.length ? Math.round((output.length / input.length) * 100) : 100;
   return {
     output,
     stats: [
-      { label: 'In', value: `${input.length} ch` },
-      { label: 'Out', value: `${output.length} ch` },
-      { label: 'Ratio', value: `${ratio}%` },
+      { label: say('In', 'Masuk'), value: say(`${input.length} ch`, `${input.length} aks`) },
+      { label: say('Out', 'Keluar'), value: say(`${output.length} ch`, `${output.length} aks`) },
+      { label: say('Ratio', 'Nisbah'), value: `${ratio}%` },
     ],
   };
 };

@@ -1,20 +1,18 @@
 import { ToolError, type FileRun } from '../types';
 import { bytesToBlob } from '../../lib/format';
+import { sayer } from '../say';
+import { openPdf } from './load';
 
 export const run: FileRun = async (files, opts, ctx) => {
+  const say = sayer(opts);
   const file = files[0];
-  if (!file) throw new ToolError('No file selected.');
+  if (!file) throw new ToolError(say('No file selected.', 'Tiada fail dipilih.'));
   const text = String(opts.text ?? '').trim();
-  if (!text) throw new ToolError('Enter some watermark text.');
+  if (!text) throw new ToolError(say('Enter some watermark text.', 'Masukkan teks tera air.'));
 
-  const { PDFDocument, StandardFonts, degrees, rgb } = await import('pdf-lib');
+  const { StandardFonts, degrees, rgb } = await import('pdf-lib');
 
-  let doc;
-  try {
-    doc = await PDFDocument.load(await file.arrayBuffer());
-  } catch {
-    throw new ToolError(`Could not read "${file.name}". If it is password-protected, unlock it first.`);
-  }
+  const doc = await openPdf(file, say);
 
   const font = await doc.embedFont(StandardFonts.HelveticaBold);
 
@@ -24,10 +22,12 @@ export const run: FileRun = async (files, opts, ctx) => {
   const supported = new Set(font.getCharacterSet());
   const unsupported = [...new Set([...text].filter((c) => !supported.has(c.codePointAt(0)!)))];
   if (unsupported.length > 0) {
-    throw new ToolError(
+    throw new ToolError(say(
       `The watermark font covers Latin characters only and cannot draw: ${unsupported.slice(0, 8).join(' ')}. ` +
       'Remove those characters and try again.',
-    );
+      `Fon tera air meliputi aksara Latin sahaja dan tidak dapat melukis: ${unsupported.slice(0, 8).join(' ')}. ` +
+      'Buang aksara itu dan cuba lagi.',
+    ));
   }
   const size = Number(opts.size ?? 52);
   const angle = Number(opts.angle ?? 45);
@@ -55,6 +55,6 @@ export const run: FileRun = async (files, opts, ctx) => {
   return {
     blob: bytesToBlob(await doc.save(), 'application/pdf'),
     filename: file.name.replace(/\.pdf$/i, '') + '-watermarked.pdf',
-    summary: `"${text}" on ${pages.length} page${pages.length === 1 ? '' : 's'}`,
+    summary: say(`"${text}" on ${pages.length} page${pages.length === 1 ? '' : 's'}`, `"${text}" pada ${pages.length} halaman`),
   };
 };

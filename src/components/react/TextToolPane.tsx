@@ -37,7 +37,9 @@ export default function TextToolPane({ tool, locale = 'en' }: Props) {
     const ticket = ++runId.current;
     try {
       const mod = await loadTool(id);
-      const out = await (mod.run as (i: string, o: OptionValues, i2?: string) => Promise<TextToolResult>)(a, opts, b);
+      // The locale rides along with the options, exactly as it does for file
+      // tools, so a text tool words its own errors in the page's language.
+      const out = await (mod.run as (i: string, o: OptionValues, i2?: string) => Promise<TextToolResult>)(a, { ...opts, locale }, b);
       if (ticket !== runId.current) return;
       setResult(out);
       setError(null);
@@ -46,7 +48,7 @@ export default function TextToolPane({ tool, locale = 'en' }: Props) {
       setResult(null);
       setError(err instanceof ToolError || err instanceof Error ? err.message : t.inputError);
     }
-  }, [id, t]);
+  }, [id, locale, t]);
 
   // Whether there is anything to run is derived, never stored: writing it to
   // state would mean a synchronous setState on mount for every text tool.

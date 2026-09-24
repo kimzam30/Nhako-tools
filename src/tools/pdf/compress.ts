@@ -3,6 +3,8 @@ import { bytesToBlob } from '../../lib/format';
 import { loadDocument } from '../../lib/pdfjs';
 import { surface, toBlob } from '../../lib/canvas';
 import { fitToSize, kbToBytes, exactBytes, targetLabel } from '../../lib/fit-size';
+import { sayer, type Say } from '../say';
+import { openPdf } from './load';
 
 /**
  * Two genuinely different strategies, named honestly.
@@ -20,7 +22,7 @@ type PdfJsDocument = Awaited<ReturnType<typeof loadDocument>>;
 type Canvas = ReturnType<typeof surface>;
 
 /** Render every page at `scale` pixels per point. */
-async function renderPages(source: PdfJsDocument, scale: number, onPage?: (i: number) => void) {
+async function renderPages(source: PdfJsDocument, scale: number, ms: boolean, onPage?: (i: number) => void) {
   const pages: { canvas: Canvas; width: number; height: number }[] = [];
   for (let i = 1; i <= source.numPages; i++) {
     const page = await source.getPage(i);
@@ -31,7 +33,7 @@ async function renderPages(source: PdfJsDocument, scale: number, onPage?: (i: nu
     const viewport = page.getViewport({ scale });
     const canvas = surface(Math.max(1, Math.ceil(viewport.width)), Math.max(1, Math.ceil(viewport.height)));
     const ctx2d = canvas.getContext('2d');
-    if (!ctx2d) throw new ToolError('Could not get a drawing context.');
+    if (!ctx2d) throw new ToolError(ms ? 'Tidak dapat memperoleh konteks lukisan.' : 'Could not get a drawing context.');
     await page.render({
       canvas: canvas as HTMLCanvasElement,
       canvasContext: ctx2d as CanvasRenderingContext2D,
@@ -59,26 +61,19 @@ const baseName = (file: File) => file.name.replace(/\.pdf$/i, '') + '-compressed
 
 export const run: FileRun = async (files, opts, ctx) => {
   const ms = opts.locale === 'ms';
+  const say = sayer(opts);
   const file = files[0];
   if (!file) throw new ToolError(ms ? 'Tiada fail dipilih.' : 'No file selected.');
-  const { PDFDocument } = await import('pdf-lib');
   const original = file.size;
   const targetKb = Number(opts.target ?? 0);
 
   if (targetKb > 0 || opts.mode !== 'strong') {
     ctx.onProgress(0.1);
-    let doc;
-    try {
-      doc = await PDFDocument.load(await file.arrayBuffer());
-    } catch {
-      throw new ToolError(ms
-        ? `Tidak dapat membaca "${file.name}". Jika ia dilindungi kata laluan, buka kuncinya dahulu.`
-        : `Could not read "${file.name}". If it is password-protected, unlock it first.`);
-    }
+    const doc = await openPdf(file, say);
     ctx.onProgress(0.2);
     const bytes = await doc.save({ useObjectStreams: true });
 
-    if (targetKb > 0) return toTarget(file, bytes, kbToBytes(targetKb), ms, ctx);
+    if (targetKb > 0) return toTarget(file, bytes, kbToBytes(targetKb), ms, say, ctx);
 
     ctx.onProgress(1);
     const saved = original - bytes.byteLength;
@@ -93,8 +88,8 @@ export const run: FileRun = async (files, opts, ctx) => {
 
   // Strong: render each page and re-encode it as a JPEG. Shrinks scans
   // dramatically; the cost is that text stops being selectable.
-  const source = await loadDocument(file);
-  const pages = await renderPages(source, RENDER_SCALE, (i) => ctx.onProgress((i / source.numPages) * 0.9));
+  const source = await loadDocument(file, say);
+  const pages = await renderPages(source, RENDER_SCALE, ms, (i) => ctx.onProgress((i / source.numPages) * 0.9));
   const bytes = await buildPdf(pages, Number(opts.quality ?? 70) / 100);
   ctx.onProgress(1);
   const saved = original - bytes.byteLength;
@@ -116,7 +111,7 @@ export const run: FileRun = async (files, opts, ctx) => {
  * highest quality and resolution that still fits.
  */
 async function toTarget(
-  file: File, lossless: Uint8Array, target: number, ms: boolean, ctx: Parameters<FileRun>[2],
+  file: File, lossless: Uint8Array, target: number, ms: boolean, say: Say, ctx: Parameters<FileRun>[2],
 ): ReturnType<FileRun> {
   const label = targetLabel(target / 1000);
 
@@ -133,13 +128,13 @@ async function toTarget(
     };
   }
 
-  const source = await loadDocument(file);
+  const source = await loadDocument(file, say);
   // Render once per resolution step, not once per quality guess.
   let cached: { scale: number; pages: Awaited<ReturnType<typeof renderPages>> } | null = null;
   const fit = await fitToSize(async (quality, scale) => {
     if (cached?.scale !== scale) {
       cached = null; // release the previous step's canvases first
-      cached = { scale, pages: await renderPages(source, RENDER_SCALE * scale) };
+      cached = { scale, pages: await renderPages(source, RENDER_SCALE * scale, ms) };
     }
     return bytesToBlob(await buildPdf(cached.pages, quality), 'application/pdf');
   }, target, {

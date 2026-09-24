@@ -3,7 +3,7 @@ import { bytesToBlob } from '../../lib/format';
 import { decode, surface, toBlob } from '../../lib/canvas';
 import { mmToPt } from '../../lib/pdf-geometry';
 import { readExif } from '../image/metadata';
-import { sayer } from '../say';
+import { sayer, type Say } from '../say';
 
 /** Page sizes in points. */
 const PAGES: Record<string, [number, number]> = { a4: [595.28, 841.89], letter: [612, 792] };
@@ -29,11 +29,11 @@ export function jpegOrientation(b: Uint8Array): number {
  * cannot hold (WebP, GIF, BMP...), and JPEGs whose EXIF says "rotate me",
  * because a PDF ignores EXIF and the photo would land sideways.
  */
-async function embeddable(file: File): Promise<{ kind: 'jpg' | 'png'; bytes: Uint8Array; width: number; height: number }> {
+async function embeddable(file: File, say: Say): Promise<{ kind: 'jpg' | 'png'; bytes: Uint8Array; width: number; height: number }> {
   const bytes = new Uint8Array(await file.arrayBuffer());
   const isJpeg = bytes[0] === 0xff && bytes[1] === 0xd8;
   const isPng = bytes[0] === 0x89 && bytes[1] === 0x50;
-  const bitmap = await decode(file); // applies EXIF orientation
+  const bitmap = await decode(file, say); // applies EXIF orientation
 
   if ((isJpeg && jpegOrientation(bytes) === 1) || isPng) {
     const out = { kind: isPng ? 'png' as const : 'jpg' as const, bytes, width: bitmap.width, height: bitmap.height };
@@ -61,7 +61,7 @@ export const run: FileRun = async (files, opts, ctx) => {
   const margin = mmToPt(Number(opts.margin ?? 0));
 
   for (const [i, file] of files.entries()) {
-    const img = await embeddable(file);
+    const img = await embeddable(file, say);
     const embedded = img.kind === 'png' ? await doc.embedPng(img.bytes) : await doc.embedJpg(img.bytes);
 
     let pageW: number;

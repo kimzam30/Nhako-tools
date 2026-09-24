@@ -3,6 +3,7 @@ import { RATIOS, clampRect, initialRect, type Rect } from '../../tools/image/cro
 import { surface, toBlob, replaceExtension, EXTENSION, hasAlpha, formatOf, type Encodable } from '../../lib/canvas';
 import { bytes } from '../../lib/format';
 import { filesBeforeHydration } from './hydration';
+import { sayer } from '../../tools/say';
 import type { Locale } from '../../i18n/paths';
 
 const TEXT = {
@@ -57,14 +58,24 @@ export default function CropImage({ locale = 'en', accept }: { locale?: Locale; 
       const c = canvas.getContext('2d') as CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
       if (!hasAlpha(mime)) { c.fillStyle = '#ffffff'; c.fillRect(0, 0, rect.w, rect.h); }
       c.drawImage(image.bitmap, rect.x, rect.y, rect.w, rect.h, 0, 0, rect.w, rect.h);
-      const blob = await toBlob(canvas, mime, 0.92);
+      // toBlob throws when the browser cannot encode the source's own format,
+      // which is real: Safari cannot write WebP. Unhandled, the crop simply
+      // never appeared and the only trace was a console rejection.
+      let blob;
+      try {
+        blob = await toBlob(canvas, mime, 0.92, sayer({ locale }));
+      } catch (err) {
+        if (live) setError(err instanceof Error ? err.message : TEXT[locale].bad);
+        return;
+      }
       if (!live) return;
+      setError(null);
       if (outUrl.current) URL.revokeObjectURL(outUrl.current);
       outUrl.current = URL.createObjectURL(blob);
       setOutput({ url: outUrl.current, name: replaceExtension(image.file.name, EXTENSION[mime]).replace(/(\.[^.]+)$/, '-cropped$1'), size: blob.size });
     }, 300);
     return () => { live = false; clearTimeout(timer); };
-  }, [image, rect]);
+  }, [image, rect, locale]);
 
   async function load(file: File | undefined) {
     if (!file) return;
@@ -191,6 +202,10 @@ export default function CropImage({ locale = 'en', accept }: { locale?: Locale; 
           <span onPointerDown={(e) => drag(e, 'se')} className={`${handle} -right-2 -bottom-2 cursor-nwse-resize`} />
         </div>
       </div>
+
+      {/* The error lived only in the empty state, so anything that went wrong
+          after an image was loaded had nowhere to appear. */}
+      {error && <p className="rounded-lg border border-err bg-err-subtle px-4 py-3 text-sm text-err">{error}</p>}
 
       <div aria-live="polite" className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3">
         <span data-numeric className="flex-1 text-sm">{t.size(rect.w, rect.h)}{output ? ` · ${bytes(output.size)}` : ''}</span>

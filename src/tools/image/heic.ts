@@ -75,7 +75,7 @@ export const run: FileRun = async (files, opts, ctx) => {
     const c = canvas.getContext('2d') as CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
     if (image instanceof ImageData) c.putImageData(image, 0, 0);
     else { c.drawImage(image, 0, 0); image.close(); }
-    out.push({ name: replaceExtension(file.name, ext), blob: await toBlob(canvas, mime, Number(opts.quality ?? 92) / 100) });
+    out.push({ name: replaceExtension(file.name, ext), blob: await toBlob(canvas, mime, Number(opts.quality ?? 92) / 100, say) });
     ctx.onProgress((i + 1) / files.length);
   }
 

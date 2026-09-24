@@ -274,8 +274,17 @@ test.describe('Remove background (downloads a model from Hugging Face)', () => {
 });
 
 test.describe('Audio to text', () => {
+  // The model is a download, then a full run: the default 30s is not enough.
+  test.setTimeout(300_000);
+
   test('Malay fetches the multilingual model, never the English-only one', async ({ page }) => {
     const models: string[] = [];
+    // The ONNX runtime's threaded build spawns pthread workers from code that
+    // does not survive bundling; it threw "g is not defined" three times per
+    // run and fell back to one thread, so the tool worked and nothing caught
+    // it. numThreads = 1 is the fix, and this is what would see it come back.
+    const crashes: string[] = [];
+    page.on('pageerror', (e) => { if (e.message) crashes.push(e.message); });
     page.on('request', (r) => { const m = /huggingface\.co\/(Xenova\/whisper-[^/]+)\//.exec(r.url()); if (m && !models.includes(m[1]!)) models.push(m[1]!); });
     await page.goto('/media/transcribe');
     await page.getByLabel('Language').selectOption('ms');
@@ -290,6 +299,10 @@ test.describe('Audio to text', () => {
     await page.locator('input[type=file]').setInputFiles({ name: 'quiet.wav', mimeType: 'audio/wav', buffer: wav });
     await expect.poll(() => models, { timeout: 60_000 }).toContain('Xenova/whisper-base');
     expect(models.some((m) => m.endsWith('.en'))).toBe(false);
+
+    // Let the run reach the point where the runtime starts its session.
+    await expect(page.getByRole('link', { name: 'Save' }).or(page.locator('p[class*="text-err"]'))).toBeVisible({ timeout: 180_000 });
+    expect(crashes).toEqual([]);
   });
 });
 

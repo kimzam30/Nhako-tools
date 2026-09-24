@@ -1,6 +1,12 @@
 /**
- * Exercise every tool in a real browser and report what actually happens.
- * Run against `npm run preview` (needs the COOP/COEP headers).
+ * Exercise every tool with a generic interface in a real browser and report
+ * what actually happens. Run against `npm run preview` (needs the COOP/COEP
+ * headers).
+ *
+ * The seven tools with their own interface (kind 'app': Organize, Sign, Scan,
+ * Crop image, Passport photo, Salary calculator, Teleprompter) cannot be
+ * driven from here, because there is no shared drop-zone-and-options shape to
+ * drive. They are covered by the e2e suite, which knows each of their UIs.
  */
 /* global window, document, DataTransfer */
 import { chromium } from '@playwright/test';
@@ -13,10 +19,61 @@ const BASE = process.env.BASE ?? 'http://localhost:4321';
 const only = process.argv[2];
 
 const PDF = fileURLToPath(new URL('../e2e/fixtures/three-pages.pdf', import.meta.url));
+const HEIC = fileURLToPath(new URL('../e2e/fixtures/photo.heic', import.meta.url));
+const SCRATCH = mkdtempSync(join(tmpdir(), 'nhako-sweep-'));
+
+/** A minimal .docx, so Office to PDF has something real to convert. */
+function docx() {
+  const path = join(SCRATCH, 'surat.docx');
+  const files = {
+    '[Content_Types].xml': '<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="xml" ContentType="application/xml"/><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>',
+    '_rels/.rels': '<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>',
+    'word/document.xml': '<?xml version="1.0"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>Surat rasmi kepada Pengarah</w:t></w:r></w:p></w:body></w:document>',
+  };
+  // A stored (uncompressed) ZIP, written by hand so the script needs no deps.
+  const parts = []; const central = []; let offset = 0;
+  const crcTable = Array.from({ length: 256 }, (_, n) => {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    return c >>> 0;
+  });
+  const crc32 = (buf) => {
+    let c = 0xffffffff;
+    for (const b of buf) c = crcTable[(c ^ b) & 0xff] ^ (c >>> 8);
+    return (c ^ 0xffffffff) >>> 0;
+  };
+  for (const [name, text] of Object.entries(files)) {
+    const data = Buffer.from(text, 'utf8');
+    const nameBuf = Buffer.from(name, 'utf8');
+    const crc = crc32(data);
+    const local = Buffer.alloc(30);
+    local.writeUInt32LE(0x04034b50, 0); local.writeUInt16LE(20, 4);
+    local.writeUInt32LE(crc, 14); local.writeUInt32LE(data.length, 18); local.writeUInt32LE(data.length, 22);
+    local.writeUInt16LE(nameBuf.length, 26);
+    parts.push(local, nameBuf, data);
+    const dir = Buffer.alloc(46);
+    dir.writeUInt32LE(0x02014b50, 0); dir.writeUInt16LE(20, 4); dir.writeUInt16LE(20, 6);
+    dir.writeUInt32LE(crc, 16); dir.writeUInt32LE(data.length, 20); dir.writeUInt32LE(data.length, 24);
+    dir.writeUInt16LE(nameBuf.length, 28); dir.writeUInt32LE(offset, 42);
+    central.push(dir, nameBuf);
+    offset += local.length + nameBuf.length + data.length;
+  }
+  const body = Buffer.concat(parts);
+  const dirBuf = Buffer.concat(central);
+  const end = Buffer.alloc(22);
+  end.writeUInt32LE(0x06054b50, 0);
+  end.writeUInt16LE(Object.keys(files).length, 8); end.writeUInt16LE(Object.keys(files).length, 10);
+  end.writeUInt32LE(dirBuf.length, 12); end.writeUInt32LE(body.length, 16);
+  writeFileSync(path, Buffer.concat([body, dirBuf, end]));
+  return path;
+}
+const DOCX = docx();
 // The image fixture is drawn here rather than read from disk: it used to
 // point at dist/_fixtures/test.png, which nothing ever created, so every
 // image tool reported THREW. Half of it is transparent on purpose.
-const PNG = join(mkdtempSync(join(tmpdir(), 'nhako-sweep-')), 'test.png');
+const PNG = join(SCRATCH, 'test.png');
+/** A page of printed text, for the two OCR tools. */
+const TEXT_PNG = join(SCRATCH, 'printed.png');
 
 const TEXT_CASES = {
   'dev/json': '{"b":1,"a":{"d":2,"c":[3,4]}}',
@@ -51,6 +108,15 @@ const FILE_CASES = {
   'media/compress-video': { video: true, timeout: 90_000 },
   'media/extract-audio': { video: true, timeout: 90_000 },
   'media/transcribe': { video: true, timeout: 300_000, note: 'downloads ~39MB model' },
+  'image/watermark': { files: [PNG], options: { Text: 'DRAFT' } },
+  'image/heic-to-jpg': { files: [HEIC], timeout: 60_000 },
+  'image/ocr': { files: [TEXT_PNG], timeout: 120_000, note: 'downloads ~15MB of language data' },
+  'pdf/ocr': { files: [PDF], timeout: 120_000, note: 'the fixture already has text, so it reports that' },
+  'pdf/protect': { files: [PDF], options: { Password: 'rahsia123' } },
+  // Locked by pdf/protect at startup, so Unlock is exercised on a real
+  // encrypted file rather than on one with nothing to unlock.
+  'pdf/unlock': { locked: true, options: { Password: 'rahsia123' }, timeout: 60_000 },
+  'pdf/office-to-pdf': { files: [DOCX], timeout: 420_000, note: 'downloads ~77MB of LibreOffice' },
 };
 
 const RECORD = `
@@ -92,8 +158,51 @@ const results = [];
     return c.toDataURL('image/png');
   });
   writeFileSync(PNG, Buffer.from(dataUrl.split(',')[1], 'base64'));
+
+  const textUrl = await page.evaluate(() => {
+    const c = document.createElement('canvas');
+    c.width = 1500; c.height = 360;
+    const x = c.getContext('2d');
+    x.fillStyle = '#fff'; x.fillRect(0, 0, 1500, 360);
+    x.fillStyle = '#111'; x.font = '52px Georgia, serif';
+    x.fillText('The quick brown fox jumps over the lazy dog.', 50, 120);
+    x.fillText('Selamat pagi semua, terima kasih kerana datang.', 50, 230);
+    return c.toDataURL('image/png');
+  });
+  writeFileSync(TEXT_PNG, Buffer.from(textUrl.split(',')[1], 'base64'));
   await page.close();
 }
+
+/**
+ * A password-protected PDF, made by the site's own Protect tool.
+ *
+ * Unlock has nothing to say about a file that was never locked, so without
+ * this the only thing it could report here is "nothing to unlock", which is
+ * not the path anyone uses it for.
+ */
+async function lockedPdf() {
+  const ctx = await browser.newContext({ serviceWorkers: 'block' });
+  const page = await ctx.newPage();
+  try {
+    await page.goto(`${BASE}/pdf/protect`, { waitUntil: 'domcontentloaded' });
+    await page.getByLabel('Password').fill('rahsia123');
+    await page.locator('input[type=file]').setInputFiles(PDF);
+    await page.getByRole('link', { name: 'Save' }).waitFor({ timeout: 60_000 });
+    const href = await page.getByRole('link', { name: 'Save' }).getAttribute('href');
+    const b64 = await page.evaluate(async (h) => {
+      const bytes = new Uint8Array(await (await fetch(h)).arrayBuffer());
+      let out = '';
+      for (let i = 0; i < bytes.length; i += 0x8000) out += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+      return btoa(out);
+    }, href);
+    const path = join(SCRATCH, 'locked.pdf');
+    writeFileSync(path, Buffer.from(b64, 'base64'));
+    return path;
+  } finally {
+    await ctx.close();
+  }
+}
+const LOCKED = await lockedPdf();
 
 async function check(page) {
   const body = await page.locator('body').innerText();
@@ -120,7 +229,10 @@ for (const [id, cfg] of Object.entries(FILE_CASES)) {
         i.files = dt.files; i.dispatchEvent(new Event('change', { bubbles: true }));
       });
     } else {
-      await page.locator('input[type=file]').setInputFiles(cfg.files);
+      for (const [label, value] of Object.entries(cfg.options ?? {})) {
+        await page.getByLabel(label, { exact: true }).first().fill(value);
+      }
+      await page.locator('input[type=file]').setInputFiles(cfg.locked ? [LOCKED] : cfg.files);
     }
     const budget = cfg.timeout ?? 30_000;
     const start = Date.now();
