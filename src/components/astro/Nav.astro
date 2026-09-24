@@ -4,6 +4,7 @@ import { categoryLabel, localePath, ui, type Locale } from '../../i18n';
 import Logo from './Logo.astro';
 import ThemeToggle from './ThemeToggle.astro';
 import CommandPalette from './CommandPalette.astro';
+import CoffeeButton from './CoffeeButton.astro';
 
 interface Props { locale: Locale; path: string; alternates: boolean }
 const { locale, path, alternates } = Astro.props;
@@ -24,11 +25,6 @@ const active = (segment: string) => path === `/${segment}` || path.startsWith(`/
           links home, and losing two words is a better trade than a nav that
           shows one category and looks like it has only one. */}
       <span class="hidden sm:inline"><span class="text-accent">Nhako</span>Tools</span>
-      <span
-        class="runtime-dot ml-1 size-1.5 rounded-full bg-accent"
-        title={t.runtimeTitle}
-        aria-hidden="true"
-      ></span>
     </a>
 
     {/*
@@ -89,6 +85,8 @@ const active = (segment: string) => path === `/${segment}` || path.startsWith(`/
           {t.switchLanguageShort}
         </a>
       )}
+      {/* Phones keep the coffee link in the footer: the bar is already full. */}
+      <span class="hidden sm:contents"><CoffeeButton locale={locale} variant="icon" /></span>
       <ThemeToggle locale={locale} />
     </div>
   </nav>

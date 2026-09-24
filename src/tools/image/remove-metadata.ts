@@ -5,14 +5,14 @@ import { stripMetadata, UnsupportedFormat, type Found } from './metadata';
 
 const MIME = { jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' } as const;
 
-/** "GPS location 3.13901, 101.68685 · camera Apple iPhone 15 · taken 2026:09:01 10:22:11" */
+/** "GPS location 3.13901, 101.68685; camera Apple iPhone 15; taken 2026:09:01 10:22:11" */
 export function describe(found: Found, say: Say): string {
   const parts: string[] = [];
   if (found.gps) parts.push(say('GPS location', 'lokasi GPS') + ` ${found.gps.lat.toFixed(5)}, ${found.gps.lon.toFixed(5)}`);
   if (found.camera) parts.push(say('camera', 'kamera') + ` ${found.camera}`);
   if (found.taken) parts.push(say('taken', 'diambil') + ` ${found.taken}`);
   if (found.software) parts.push(say('software', 'perisian') + ` ${found.software}`);
-  return parts.join(' · ');
+  return parts.join('; ');
 }
 
 const cleanName = (name: string) => name.replace(/(\.[^./]+)$/, '-clean$1');
@@ -52,7 +52,7 @@ export const run: FileRun = async (files, opts, ctx) => {
       summary: fields === 0 ? nothing : [
         say(`Removed ${fields} field${fields === 1 ? '' : 's'}, image untouched`, `${fields} medan dibuang, imej tidak diubah`),
         detail,
-      ].filter(Boolean).join(' · '),
+      ].filter(Boolean).join('; '),
     };
   }
 
@@ -63,8 +63,8 @@ export const run: FileRun = async (files, opts, ctx) => {
     blob: await zip.generateAsync({ type: 'blob' }),
     filename: 'clean-images.zip',
     summary: fields === 0 ? nothing : say(
-      `${out.length} images · ${fields} fields removed${withGps ? ` · ${withGps} had a GPS location` : ''}`,
-      `${out.length} imej · ${fields} medan dibuang${withGps ? ` · ${withGps} ada lokasi GPS` : ''}`,
+      `${out.length} images, ${fields} fields removed${withGps ? `, ${withGps} had a GPS location` : ''}`,
+      `${out.length} imej, ${fields} medan dibuang${withGps ? `, ${withGps} ada lokasi GPS` : ''}`,
     ),
   };
 };

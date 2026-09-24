@@ -51,8 +51,8 @@ export const run: FileRun = async (files, opts, ctx) => {
     blob,
     filename: file.name.replace(/\.[^/.]+$/, '') + '-compressed.mp4',
     summary: say(
-      `${actualMB.toFixed(1)} MB · target was ${opts.targetMB} MB · ${plan.videoKbps}k video`,
-      `${actualMB.toFixed(1)} MB · sasaran ${opts.targetMB} MB · video ${plan.videoKbps}k`,
+      `${actualMB.toFixed(1)} MB, target was ${opts.targetMB} MB, ${plan.videoKbps}k video`,
+      `${actualMB.toFixed(1)} MB, sasaran ${opts.targetMB} MB, video ${plan.videoKbps}k`,
     ),
   };
 };

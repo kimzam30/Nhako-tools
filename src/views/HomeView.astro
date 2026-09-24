@@ -1,10 +1,11 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ToolTile from '../components/astro/ToolTile.astro';
-import HeroReadout from '../components/astro/HeroReadout.astro';
 import { TOOLS, toolsIn } from '../tools/registry';
+import { popularLinks } from '../tools/popular';
 import { CATEGORIES, toolId } from '../tools/types';
 import { groupsIn, hasGroups } from '../tools/groups';
+import { GROUP, PACK, PACK_XL, span } from '../components/astro/pack';
 import { LANG, categoryLabel, groupLabel, localizeTool, localePath, ui, type Locale } from '../i18n';
 
 interface Props { locale: Locale }
@@ -36,8 +37,13 @@ const jsonLd = {
   jsonLd={jsonLd}
 >
   <div class="mx-auto max-w-6xl px-4 sm:px-6">
-    <section class="grid items-center gap-10 pt-12 pb-10 sm:pt-16 sm:pb-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:gap-14">
-      <div>
+    {/*
+      A directory hero: the search IS the call to action, and the jobs students
+      come for most sit one tap under it. It used to share the row with a typed
+      terminal readout; with that gone (2026-09-25) the hero is one column, and
+      the space goes to getting someone to their tool, not to decoration.
+    */}
+    <section class="pt-10 pb-6 sm:pt-14 sm:pb-8">
       <h1 class="max-w-3xl text-3xl font-bold leading-[1.12] tracking-tight sm:text-4xl">
         {/* The wedge leads and carries full strength. The mechanism, which is
             what the tool count describes, supports it. The brief is explicit
@@ -46,23 +52,63 @@ const jsonLd = {
         {t.heroSubtitle}
         <span class="block text-muted">{t.heroTitle(TOOLS.length)}</span>
       </h1>
-      <p class="mt-4 max-w-xl text-base text-muted">{t.heroBody}</p>
+      <p class="mt-4 max-w-2xl text-base text-muted">{t.heroBody}</p>
 
-      <div class="mt-7 max-w-md">
+      <div class="mt-7 max-w-2xl">
         <label for="tool-search" class="sr-only">{t.searchAll}</label>
-        <input
-          id="tool-search"
-          type="search"
-          autocomplete="off"
-          placeholder={t.searchPlaceholder(TOOLS.length)}
-          class="w-full rounded-md border border-border bg-surface px-3.5 py-2.5 text-sm outline-none transition-colors placeholder:text-muted hover:border-border-strong focus:border-accent"
-        />
+        <div class="relative">
+          <svg class="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" stroke-linecap="round" />
+          </svg>
+          <input
+            id="tool-search"
+            type="search"
+            autocomplete="off"
+            placeholder={t.searchPlaceholder(TOOLS.length)}
+            class="h-12 w-full rounded-lg border border-border-strong bg-surface pl-11 pr-4 text-base outline-none transition-colors placeholder:text-muted hover:border-accent focus:border-accent"
+          />
+        </div>
         <p id="search-status" role="status" class="mt-2 h-4 text-2xs text-muted" data-template={t.searchCount(1111, 2222)}></p>
       </div>
-      </div>
 
-      <HeroReadout locale={locale} />
+      <div class="mt-2 flex flex-wrap items-center gap-2" data-popular>
+        <span class="mr-1 text-2xs font-semibold uppercase tracking-wider text-muted">{t.popular}</span>
+        {popularLinks(locale).map((p) => (
+          <a
+            href={p.href}
+            class="inline-flex items-center rounded border border-border bg-surface px-3 py-1.5 text-xs text-text transition-colors duration-[120ms] hover:border-accent hover:text-accent pointer-coarse:min-h-11 pointer-coarse:px-4"
+          >
+            {p.name}
+          </a>
+        ))}
+      </div>
     </section>
+
+    {/*
+      The catalogue's table of contents, pinned under the nav while the page
+      scrolls. At 50 tools a visitor can scroll to what they want; at 80 they
+      should not have to. Each chip carries its live count, and the anchors
+      work with no JavaScript. Sections set scroll-margin to clear both bars.
+    */}
+  </div>
+  <nav aria-label={t.jumpTo} class="sticky top-14 z-30 border-y border-border bg-bg/90 backdrop-blur-sm" data-jump>
+    <div class="mx-auto max-w-6xl px-4 sm:px-6">
+      <ul class="-mx-3 flex gap-1 overflow-x-auto py-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {CATEGORIES.map((category) => (
+          <li class="shrink-0">
+            <a
+              href={`#${category}`}
+              class="inline-flex items-center gap-2 rounded px-3 py-1.5 text-sm text-muted transition-colors duration-[120ms] hover:bg-sunken hover:text-text pointer-coarse:min-h-11"
+            >
+              {categoryLabel(category, locale)}
+              <span data-numeric class="text-2xs text-muted">{toolsIn(category).length}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </nav>
+  <div class="mx-auto max-w-6xl px-4 sm:px-6">
 
     {/*
       Every tool is here exactly once. Cross-listings (a tool shown in a second
@@ -71,37 +117,32 @@ const jsonLd = {
       read as a bug.
     */}
     {CATEGORIES.map((category) => (
-      <section id={category} class="scroll-mt-20 pb-8 pt-10" data-category-section={category}>
+      <section id={category} class="scroll-mt-32 pb-4 pt-8" data-category-section={category}>
         <div class="mb-4 flex items-baseline gap-2.5">
           <h2 class="text-2xs font-semibold uppercase tracking-[0.14em] text-muted">
             <a href={localePath(locale, `/${category}`)} class="transition-colors hover:text-accent">
               {categoryLabel(category, locale)}
             </a>
           </h2>
-          {/* The hue identifies the category and nothing more. It used to be a
-              segment at the head of a full-width rule; with the rule gone it is
-              drawn as a dot, so it reads as a marker rather than as the stub of
-              a line that is no longer there. It stays redundant with the
-              heading beside it by design: colour is never the only encoding. */}
-          <span class="size-1.5 shrink-0 rounded-full" style={`background:var(--cat-${category})`} aria-hidden="true"></span>
           <span data-numeric class="ml-auto font-mono text-2xs text-muted">{toolsIn(category).length}</span>
         </div>
 
         {hasGroups(category)
-          ? groupsIn(category).map((group) => (
-              /* Space above a heading must beat space below it, or the label
-                 reads as belonging to the group it follows. Measured at 768px
-                 before this fix: 14px above, 5px below, the wrong way round.
-                 The rule under the heading binds it downwards as well. */
-              <section data-group class="mt-6 first:mt-0">
-                <h3 class="mb-2 text-2xs font-medium tracking-wide text-muted">{groupLabel(category, group.id, locale)}</h3>
-                <div class="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {toolsIn(category).filter((tool) => tool.group === group.id).map((tool) => (
-                    <ToolTile tool={localizeTool(tool, locale)} href={localePath(locale, `/${toolId(tool)}`)} />
-                  ))}
-                </div>
-              </section>
-            ))
+          ? (
+            <div class={`${PACK} ${PACK_XL}`}>
+              {groupsIn(category).map((group) => {
+                const members = toolsIn(category).filter((tool) => tool.group === group.id);
+                return (
+                  <section data-group class={`${GROUP} ${span(members.length)}`}>
+                    <h3 class="col-span-full text-2xs font-medium tracking-wide text-muted">{groupLabel(category, group.id, locale)}</h3>
+                    {members.map((tool) => (
+                      <ToolTile tool={localizeTool(tool, locale)} href={localePath(locale, `/${toolId(tool)}`)} />
+                    ))}
+                  </section>
+                );
+              })}
+            </div>
+          )
           : (
             <div class="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {toolsIn(category).map((tool) => (

@@ -27,6 +27,6 @@ export const run: FileRun = async (files, opts, ctx) => {
   return {
     blob: bytesToBlob(await merged.save(), 'application/pdf'),
     filename: 'merged.pdf',
-    summary: say(`${pdfs.length} files · ${pageCount} pages`, `${pdfs.length} fail · ${pageCount} halaman`),
+    summary: say(`${pdfs.length} files, ${pageCount} pages`, `${pdfs.length} fail, ${pageCount} halaman`),
   };
 };

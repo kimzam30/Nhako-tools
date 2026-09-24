@@ -2,9 +2,13 @@
    Motion
    
    The governing principle (see DESIGN_BRIEF.md §4): motion must read as
-   machinery working, never as decoration. Terminal readouts, stepped reveals
-   and monospace tickers reinforce the instrument. Easing overshoot,
+   machinery working, never as decoration. Stepped reveals reinforce the
+   instrument. Easing overshoot,
    hover-scale and bouncy entrances still do not.
+
+   The NeraOS layer (nera.css) is the deliberate exception Kim asked for on
+   2026-09-25: the background butterflies, the loading readout and the
+   finished state. They follow NeraOS, not the rules below.
 
    Two hard rules:
      1. Nothing on a tool page's critical path moves. The drop zone, options
@@ -63,116 +67,10 @@
   }
 
   /* --- Result status ------------------------------------------------------
-     The one deliberate exception to rule 1 above.
-
-     Rule 1 exists so that someone waiting on their file is never watching an
-     animation instead. That reasoning applies to the WAIT. It does not apply
-     to the MOMENT THE WAIT ENDS, which is the single instant the user is
-     definitely looking at this region and the single fact they came for. Flat
-     and unannounced, the result row was indistinguishable from the idle gauge
-     it replaced, and on a fast tool the whole state change could pass between
-     two glances. So the finish announces itself, and nothing else here moves.
-
-     It stays inside the house language: the panel rises and settles once, the
-     tick is DRAWN rather than popped, and a rule sweeps the top edge the way a
-     readout confirms a reading. No overshoot, no scale, no bounce. Every piece
-     is one-shot; nothing loops, so there is no ambient motion left behind.
-
-     Space is reserved by the layout, not by the animation, so CLS stays 0. */
-
-  [data-status] {
-    animation: status-settle 240ms var(--ease-out) both;
-  }
-
-  @keyframes status-settle {
-    from { transform: translateY(5px); }
-    to   { transform: none; }
-  }
-
-  /* The sweep is a child pseudo-element on the panel's top edge: a single
-     accent pass, left to right, that lands with the tick and does not repeat. */
-  [data-status]::after {
-    content: '';
-    position: absolute;
-    inset-block-start: 0;
-    inset-inline: 0;
-    block-size: 1px;
-    transform-origin: left center;
-    animation: status-sweep 460ms var(--ease-out) both;
-  }
-
-  [data-status='done']::after { background: var(--ok); }
-  [data-status='error']::after { background: var(--err); }
-
-  @keyframes status-sweep {
-    from { transform: scaleX(0); }
-    to   { transform: scaleX(1); }
-  }
-
-  /* The tick and the bar of the error mark draw themselves along their own
-     path. pathLength="1" is set on the element, so one unit is the whole
-     stroke and these numbers never need to track the geometry. */
-  [data-status-mark] {
-    stroke-dasharray: 1;
-    stroke-dashoffset: 1;
-    animation: status-draw 300ms var(--ease-out) 110ms both;
-  }
-
-  /* The dot of the error mark has no length to draw, so it steps in on time
-     with the bar above it rather than fading. */
-  [data-status-dot] {
-    animation: status-dot 1ms steps(1, end) 400ms both;
-  }
-
-  @keyframes status-draw {
-    to { stroke-dashoffset: 0; }
-  }
-
-  @keyframes status-dot {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-  }
-
-  /* The ring around the mark closes in one pass, starting from twelve
-     o'clock, which is why it carries its own rotation. */
-  [data-status-ring] {
-    transform-origin: center;
-    rotate: -90deg;
-    stroke-dasharray: 1;
-    stroke-dashoffset: 1;
-    animation: status-draw 380ms var(--ease-out) both;
-  }
-
-  /* --- Local runtime indicator ------------------------------------------ */
-  /* A slow pulse in the nav. It is the one piece of ambient motion that runs
-     on a tool page, so it is deliberately small and off to the side. */
-  .runtime-dot {
-    animation: runtime-pulse 2.8s var(--ease-in-out) infinite;
-  }
-
-  @keyframes runtime-pulse {
-    0%, 100% { opacity: 1; }
-    50%      { opacity: 0.35; }
-  }
-
-  /* --- Hero readout ------------------------------------------------------ */
-  .readout-cursor {
-    animation: cursor-blink 1.05s steps(1, end) infinite;
-  }
-
-  @keyframes cursor-blink {
-    0%, 49%   { opacity: 1; }
-    50%, 100% { opacity: 0; }
-  }
-
-  /* Rows are hidden only once the script has taken control, so with no JS the
-     whole readout renders as static text. */
-  [data-readout][data-typing] [data-row] {
-    visibility: hidden;
-  }
-  [data-readout][data-typing] [data-row][data-shown] {
-    visibility: visible;
-  }
+     Moved to nera.css on 2026-09-25, when the finished and failed states took
+     on the NeraOS theme. The reasoning that allowed them to move at all still
+     holds: the wait stays still, and only the moment the wait ends announces
+     itself, once, with nothing left looping afterwards. */
 
   /* --- Reduced motion ---------------------------------------------------- */
   /* tokens.css already flattens durations globally. These are the cases that
@@ -184,32 +82,6 @@
       opacity: 1 !important;
       transform: none !important;
       animation: none !important;
-    }
-
-    .runtime-dot,
-    .readout-cursor {
-      animation: none !important;
-      opacity: 1 !important;
-    }
-
-    /* The result still has to READ as finished without motion, so these assert
-       the end state rather than merely shortening the way to it: the tick and
-       the ring sit fully drawn, the sweep sits fully extended. */
-    [data-status],
-    [data-status]::after,
-    [data-status-mark],
-    [data-status-ring],
-    [data-status-dot] {
-      animation: none !important;
-      transform: none !important;
-      stroke-dashoffset: 0 !important;
-      opacity: 1 !important;
-    }
-
-    [data-status-ring] { rotate: -90deg !important; }
-
-    [data-readout][data-typing] [data-row] {
-      visibility: visible !important;
     }
   }
 }

@@ -24,7 +24,7 @@ export const run: FileRun = async (files, opts, ctx) => {
     const W = bitmap.width;
     const H = bitmap.height;
     const size = Math.max(10, Math.round(Math.min(W, H) * sizePct));
-    c.font = `600 ${size}px system-ui, -apple-system, "Segoe UI", sans-serif`;
+    c.font = `600 ${size}px -apple-system, BlinkMacSystemFont, system-ui, sans-serif`;
     c.fillStyle = `rgba(${rgb},${opacity})`;
     // A thin opposite-coloured outline keeps the text readable on any photo.
     c.strokeStyle = `rgba(${rgb === '0,0,0' ? '255,255,255' : '0,0,0'},${opacity * 0.35})`;

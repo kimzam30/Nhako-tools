@@ -169,7 +169,7 @@ test.describe('image tools', () => {
     // Put the EXIF block right after SOI.
     const tagged = Buffer.concat([jpeg.subarray(0, 2), exifWithGps(), jpeg.subarray(2)]);
     await page.locator('input[type=file]').setInputFiles({ name: 'holiday.jpg', mimeType: 'image/jpeg', buffer: tagged });
-    await expect(page.getByText(/GPS location 3\.13900, 101\.68533 · camera Pixel 9 Nhako/)).toBeVisible();
+    await expect(page.getByText(/GPS location 3\.13900, 101\.68533; camera Pixel 9 Nhako/)).toBeVisible();
     const clean = await saved(page);
     expect(clean.includes(Buffer.from('Pixel 9'))).toBe(false);
     // Same compressed image data, byte for byte, after the headers.

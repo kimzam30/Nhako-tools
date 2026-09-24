@@ -1,3 +1,4 @@
+import { TOOLS } from '../src/tools/registry';
 import { test, expect, type Page } from '@playwright/test';
 import { CATEGORIES } from '../src/tools/types';
 import { groupsIn } from '../src/tools/groups';
@@ -31,9 +32,9 @@ test.describe('category pages', () => {
     await expect(groups).toHaveCount(PDF_GROUPS);
     await expect(groups.first()).toHaveText('Organise pages');
 
-    // 18 own. PDF's cross-listings point outwards, into Image, so nothing
-    // arrives here: the count is exactly the category's own tools.
-    await expect(page.locator('main [data-tool-card]')).toHaveCount(18);
+    // PDF's own tools. Its cross-listings point outwards, into Image, so
+    // nothing arrives here: the count is exactly the category's own tools.
+    await expect(page.locator('main [data-tool-card]')).toHaveCount(TOOLS.filter((t) => t.category === 'pdf').length);
   });
 
   test('a flat category renders no job headings', async ({ page }) => {
@@ -42,10 +43,10 @@ test.describe('category pages', () => {
     await expect(page.locator('main [data-tool-card]')).toHaveCount(4);
   });
 
-  test('the one-tool category still has a real page', async ({ page }) => {
+  test('the smallest category still has a real page', async ({ page }) => {
     await page.goto('/calc');
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-    await expect(page.locator('main [data-tool-card]')).toHaveCount(1);
+    await expect(page.locator('main [data-tool-card]')).toHaveCount(TOOLS.filter((t) => t.category === 'calc').length);
   });
 
   test('a cross-listed tool appears in the other category, and only once', async ({ page }) => {
@@ -70,7 +71,7 @@ test.describe('category pages', () => {
 
   test('the homepage lists every tool exactly once', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('main [data-tool-card]')).toHaveCount(43);
+    await expect(page.locator('main [data-tool-card]')).toHaveCount(TOOLS.length);
   });
 });
 

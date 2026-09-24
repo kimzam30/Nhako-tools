@@ -152,7 +152,7 @@ export default function FileStage({
 
             <span className="truncate text-2xs font-medium" title={it.file.name}>{it.file.name}</span>
             <span data-numeric className="truncate text-2xs text-muted">
-              {(it.meta?.facts ?? []).join(' · ')}
+              {(it.meta?.facts ?? []).join(', ')}
             </span>
 
             <div className="flex items-center gap-1">

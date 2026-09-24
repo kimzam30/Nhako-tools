@@ -46,7 +46,7 @@ export const run: FileRun = async (files, opts, ctx) => {
     ));
   }
   const accuracy = Math.round(confidence / words);
-  const summary = say(`${words.toLocaleString()} words · ${accuracy}% confidence`, `${words.toLocaleString()} perkataan · keyakinan ${accuracy}%`);
+  const summary = say(`${words.toLocaleString()} words, ${accuracy}% confidence`, `${words.toLocaleString()} perkataan, keyakinan ${accuracy}%`);
   const base = files.length === 1 ? files[0]!.name.replace(/\.[^.]+$/, '') : 'ocr';
 
   if (asPdf) {

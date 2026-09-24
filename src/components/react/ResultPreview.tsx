@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { bytes } from '../../lib/format';
 import type { Locale } from '../../i18n/paths';
+import PixelSprite from './PixelSprite';
 
 /**
  * Shows what the tool actually produced, decoded from the output blob itself.
@@ -121,7 +122,10 @@ export default function ResultPreview({ blob, locale = 'en' }: { blob: Blob; loc
   if (!view && busy) {
     return (
       <Shell t={t} kind="pending">
-        <p className="py-10 text-center text-xs text-muted">{t.building}</p>
+        <div className="flex flex-col items-center gap-3 py-10">
+          <span className="flap"><PixelSprite name="butterfly" scale={3} /></span>
+          <p className="nera-msg !m-0">{t.building}</p>
+        </div>
       </Shell>
     );
   }

@@ -14,7 +14,7 @@ const CARDS = [
   ['pdf', 'PDF tools', 'Merge, split, compress, convert. No upload'],
   ['media', 'Media tools', 'Compress video, extract audio, transcribe'],
   ['image', 'Image tools', 'Compress, passport photos, resize. No upload'],
-  ['calc', 'Calculators', 'Take-home pay: EPF, SOCSO, EIS and PCB'],
+  ['calc', 'Calculators', 'Take-home pay and CGPA, from official tables'],
   ['dev', 'Developer tools', 'JSON, JWT, Base64, hashes, and more'],
 ];
 
@@ -27,21 +27,21 @@ const page = await browser.newPage({ viewport: { width: 1200, height: 630 } });
 for (const [slug, heading, sub] of CARDS) {
   await page.setContent(`<!doctype html><meta charset="utf-8">
     <style>
-      @font-face { font-family: 'IS'; src: url('data:font/woff2;base64,') }
       * { margin: 0; box-sizing: border-box }
+      /* Light and in the site's one system face, to match the site itself
+         (light by default and SF only, since 2026-09-25). */
       body {
-        width: 1200px; height: 630px; background: #0b0b0e; color: #f2f2f5;
-        font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+        width: 1200px; height: 630px; background: #ffffff; color: #131316;
+        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
         display: flex; flex-direction: column; justify-content: space-between;
         padding: 72px 80px;
       }
       .mark { width: 88px; height: 88px }
       h1 { font-size: 78px; line-height: 1.05; letter-spacing: -0.035em; font-weight: 700 }
-      p  { font-size: 32px; color: #9a9aa8; margin-top: 20px; letter-spacing: -0.01em }
-      .foot { display: flex; align-items: center; gap: 14px; font-size: 26px; color: #9a9aa8;
-              font-family: ui-monospace, monospace }
-      .dot { width: 12px; height: 12px; border-radius: 99px; background: #ff91e7 }
-      .brand { color: #ff91e7; font-weight: 600 }
+      p  { font-size: 32px; color: #63636e; margin-top: 20px; letter-spacing: -0.01em }
+      .foot { display: flex; align-items: center; gap: 14px; font-size: 26px; color: #63636e;
+              border-top: 2px solid #ebebee; padding-top: 28px; font-variant-numeric: tabular-nums }
+      .brand { color: #c7009b; font-weight: 600 }
     </style>
     <div class="mark">${mark}</div>
     <div>
@@ -49,7 +49,6 @@ for (const [slug, heading, sub] of CARDS) {
       <p>${sub}</p>
     </div>
     <div class="foot">
-      <span class="dot"></span>
       <span>tools.<span class="brand">nhako</span>.com</span>
       <span style="margin-left:auto">0 bytes uploaded</span>
     </div>`);

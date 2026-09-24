@@ -18,5 +18,8 @@ export const WORKER_TOOLS: Record<string, () => Promise<ToolModule>> = {
   'pdf/to-text': () => import('../tools/pdf/to-text'),
   'pdf/page-numbers': () => import('../tools/pdf/page-numbers'),
   'pdf/crop': () => import('../tools/pdf/crop'),
+  'pdf/remove-pages': () => import('../tools/pdf/remove-pages'),
+  'pdf/extract-pages': () => import('../tools/pdf/extract-pages'),
+  'pdf/n-up': () => import('../tools/pdf/n-up'),
   'image/remove-metadata': () => import('../tools/image/remove-metadata'),
 };

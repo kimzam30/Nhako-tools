@@ -1,0 +1,90 @@
+---
+/**
+ * The NeraOS sky: pixel butterflies drifting behind every page.
+ *
+ * The flight is NeraOS's `startButterflies` (js/app.js) ported line for line:
+ * a random walk on the heading, a sine bob on top, wrap-around at the edges,
+ * the body turned to face the way it is flying, and each sprite flapping on
+ * its own period between 0.3s and 0.55s. Count, scale and speed are the
+ * desktop values NeraOS uses (7 butterflies, scale 2 to 4, speed 0.55).
+ *
+ * It sits BEHIND the page (z-index -1 on the root stacking context), so
+ * panels, the drop zone and every control paint over it and nothing on a tool
+ * page is ever covered. pointer-events is none throughout.
+ *
+ * Inline rather than a bundled island: the homepage ships no site JS bundle
+ * and this keeps it that way. Reduced motion gets no sky at all, because a
+ * butterfly frozen mid-page reads as a stray mark, not a background.
+ */
+import { BUTTERFLY_COLORS, PALETTE, SPRITES } from '../../lib/butterfly';
+
+const rows = SPRITES.butterfly;
+---
+
+<div id="sky" aria-hidden="true"></div>
+
+<script is:inline define:vars={{ rows, palette: PALETTE, colors: BUTTERFLY_COLORS }}>
+  (() => {
+    const sky = document.getElementById('sky');
+    if (!sky || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const rand = (a, b) => a + Math.random() * (b - a);
+    const cache = new Map();
+    const spriteURL = (overrides) => {
+      const key = JSON.stringify(overrides);
+      if (cache.has(key)) return cache.get(key);
+      const canvas = document.createElement('canvas');
+      canvas.width = rows[0].length;
+      canvas.height = rows.length;
+      const ctx = canvas.getContext('2d');
+      rows.forEach((row, y) => {
+        [...row].forEach((ch, x) => {
+          if (ch === '.') return;
+          ctx.fillStyle = overrides[ch] || palette[ch];
+          ctx.fillRect(x, y, 1, 1);
+        });
+      });
+      const url = canvas.toDataURL();
+      cache.set(key, url);
+      return url;
+    };
+
+    const count = 7, minScale = 2, maxScale = 4, speed = 0.55;
+    let W = innerWidth, H = innerHeight;
+    const flies = [];
+    for (let i = 0; i < count; i++) {
+      const wrap = document.createElement('div');
+      wrap.className = 'bfly flap';
+      const scale = Math.round(rand(minScale, maxScale));
+      const img = new Image();
+      img.src = spriteURL(colors[i % colors.length]);
+      img.width = rows[0].length * scale;
+      img.height = rows.length * scale;
+      img.className = 'px';
+      img.alt = '';
+      img.draggable = false;
+      img.style.animationDuration = rand(0.3, 0.55).toFixed(2) + 's';
+      wrap.appendChild(img);
+      sky.appendChild(wrap);
+      flies.push({ el: wrap, x: rand(0, W), y: rand(0, H), a: rand(0, Math.PI * 2), v: rand(0.5, 1) * speed, phase: rand(0, 10) });
+    }
+
+    addEventListener('resize', () => { W = innerWidth; H = innerHeight; });
+
+    const tick = (t) => {
+      for (const f of flies) {
+        f.a += (Math.random() - 0.5) * 0.12;
+        f.x += Math.cos(f.a) * f.v;
+        f.y += Math.sin(f.a) * f.v + Math.sin(t * 0.004 + f.phase) * 0.35;
+        if (f.x < -60) f.x = W + 40;
+        if (f.x > W + 60) f.x = -40;
+        if (f.y < -60) f.y = H + 40;
+        if (f.y > H + 60) f.y = -40;
+        const deg = (f.a * 180) / Math.PI + 90;
+        f.el.style.transform = `translate(${f.x.toFixed(1)}px, ${f.y.toFixed(1)}px) rotate(${deg.toFixed(1)}deg)`;
+      }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  })();
+</script>

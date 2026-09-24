@@ -75,8 +75,8 @@ export const run: FileRun = async (files, opts, ctx) => {
     blob: await zip.generateAsync({ type: 'blob' }),
     filename: 'resized-images.zip',
     summary: say(
-      `${out.length - untouched} images resized${untouched ? ` · ${untouched} already small enough, left untouched` : ''}`,
-      `${out.length - untouched} imej diubah saiz${untouched ? ` · ${untouched} sudah cukup kecil, dibiarkan` : ''}`,
+      `${out.length - untouched} images resized${untouched ? `, ${untouched} already small enough, left untouched` : ''}`,
+      `${out.length - untouched} imej diubah saiz${untouched ? `, ${untouched} sudah cukup kecil, dibiarkan` : ''}`,
     ),
   };
 };

@@ -12,7 +12,7 @@ describe('worker tool map', () => {
   it('lists only DOM-free tools', () => {
     // Anything needing a canvas, ffmpeg or an AudioContext must stay on the
     // main thread; putting it here would fail at runtime inside the worker.
-    const domBound = ['pdf/to-image', 'pdf/compress', 'image/', 'media/'];
+    const domBound = ['pdf/to-image', 'pdf/compress', 'pdf/grayscale', 'pdf/to-powerpoint', 'image/', 'media/'];
     // Image tools that only rewrite bytes and never touch a canvas.
     const byteOnly = new Set(['image/remove-metadata']);
     for (const id of Object.keys(WORKER_TOOLS)) {

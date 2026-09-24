@@ -76,7 +76,7 @@ export const run: FileRun = async (files, opts, ctx) => {
         : []),
       ...(pngKept ? ['choose WebP to shrink PNGs'] : []),
     ];
-  const summary = parts.join(' · ');
+  const summary = parts.join(', ');
 
   const first = encoded[0]!;
   if (encoded.length === 1) return { blob: first.blob, filename: first.name, summary };
@@ -87,7 +87,7 @@ export const run: FileRun = async (files, opts, ctx) => {
   return {
     blob: await zip.generateAsync({ type: 'blob' }),
     filename: 'compressed-images.zip',
-    summary: ms ? `${encoded.length} imej · ${summary}` : `${encoded.length} images · ${summary}`,
+    summary: ms ? `${encoded.length} imej, ${summary}` : `${encoded.length} images, ${summary}`,
   };
 };
 

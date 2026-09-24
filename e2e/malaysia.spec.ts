@@ -50,7 +50,7 @@ test.describe('Bahasa Melayu', () => {
    * The tools built in phase 1 and after word their own messages through
    * `say()`; the ones from the original rebuild did not, so /ms/pdf/merge
    * refused a single file in English, /ms/pdf/split reported an out-of-range
-   * page in English, and every summary line read "2 files · 6 pages". The
+   * page in English, and every summary line read "2 files, 6 pages". The
    * Pages field was the worst of it: `parsePageRange` is shared by four tools,
    * including two that were otherwise translated.
    */
@@ -75,7 +75,7 @@ test.describe('Bahasa Melayu', () => {
       await page.getByRole('button', { name: 'Kosongkan' }).click();
       await page.locator('input[type=file]').setInputFiles([await pdf(), await pdf()]);
       await page.getByRole('button', { name: 'Gabungkan menjadi satu PDF' }).click();
-      await expect(page.getByText('2 fail · 6 halaman')).toBeVisible({ timeout: 30_000 });
+      await expect(page.getByText('2 fail, 6 halaman')).toBeVisible({ timeout: 30_000 });
     });
 
     test('the shared Pages field complains in Malay', async ({ page }) => {
@@ -155,7 +155,8 @@ test.describe('Bahasa Melayu', () => {
   test('searching in Malay finds a tool, and results stay on Malay pages', async ({ page }) => {
     await page.goto('/ms');
     await page.locator('#tool-search').fill('gabung');
-    await expect(page.getByRole('link', { name: /Gabung PDF/ })).toBeVisible();
+    // Scoped to the catalogue: the same tool is also a popular shortcut above it.
+    await expect(page.locator('main [data-tool-card]').getByRole('link', { name: /Gabung PDF/ })).toBeVisible();
     await page.keyboard.press('ControlOrMeta+k');
     await page.locator('#palette-input').fill('gaji');
     await page.keyboard.press('Enter');

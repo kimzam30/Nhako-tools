@@ -2,10 +2,13 @@
 import Logo from './Logo.astro';
 import { NAV_CATEGORIES } from '../../tools/groups';
 import { categoryLabel, localePath, ui, type Locale } from '../../i18n';
+import { community } from '../../i18n/community';
+import CoffeeButton from './CoffeeButton.astro';
 
 interface Props { locale: Locale }
 const { locale } = Astro.props;
 const t = ui(locale);
+const c = community(locale);
 
 // Deliberately thin. The old footer carried nine links to pages that did not
 // exist (Blog, Best practices, Pro experience, Contact, Legal…) plus three
@@ -13,7 +16,7 @@ const t = ui(locale);
 const year = new Date().getFullYear();
 ---
 
-<footer class="mt-20 border-t border-border">
+<footer class="mt-12 border-t border-border">
   {/*
     A browse path at the foot of a long tool page. It is the one place a way
     back up into the catalogue belongs on a page that is otherwise about a
@@ -35,7 +38,9 @@ const year = new Date().getFullYear();
       <span class="font-semibold text-text"><span class="text-accent">Nhako</span>Tools</span>
       <span>{t.footerLine}</span>
     </p>
-    <ul class="flex items-center gap-5">
+    <ul class="flex flex-wrap items-center gap-x-5 gap-y-2">
+      <li><a class="transition-colors hover:text-accent" href={localePath(locale, '/feedback')}>{c.feedback}</a></li>
+      <li><CoffeeButton locale={locale} variant="text" /></li>
       <li><a class="transition-colors hover:text-accent" href={localePath(locale, '/about')}>{t.about}</a></li>
       <li><a class="transition-colors hover:text-accent" href={localePath(locale, '/privacy')}>{t.privacy}</a></li>
       <li>
@@ -43,7 +48,6 @@ const year = new Date().getFullYear();
           {t.source}
         </a>
       </li>
-      <li aria-hidden="true">·</li>
       <li>MIT © {year}</li>
     </ul>
   </div>

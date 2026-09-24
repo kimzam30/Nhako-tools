@@ -8,6 +8,7 @@ import { bytes } from '../../lib/format';
 import { exactBytes, targetLabel } from '../../lib/fit-size';
 import { localePath, type Locale } from '../../i18n/paths';
 import { valueBeforeHydration, filesBeforeHydration } from './hydration';
+import NeraLoader from './NeraLoader';
 
 const TEXT = {
   en: {
@@ -339,7 +340,7 @@ export default function PhotoMaker({ locale = 'en', accept }: { locale?: Locale;
             <p className="mt-1 text-xs text-muted">
               {t.source}:{' '}
               <a className="underline decoration-border underline-offset-2 hover:text-accent" href={preset.source.url} rel="noopener noreferrer">{preset.source.title}</a>
-              {' · '}{preset.source.checked}
+              {', '}{preset.source.checked}
             </p>
           )}
         </div>
@@ -419,7 +420,7 @@ export default function PhotoMaker({ locale = 'en', accept }: { locale?: Locale;
 
           <div className="flex flex-col gap-4" aria-live="polite">
             {matteState.name === 'busy' && (
-              <p className="rounded-lg border border-border bg-surface px-4 py-3 text-sm">{matteState.label}…</p>
+              <NeraLoader label={matteState.label} />
             )}
             {matteState.name === 'error' && (
               <div className="flex items-start gap-3 rounded-lg border border-err bg-err-subtle px-4 py-3">
@@ -448,10 +449,10 @@ export default function PhotoMaker({ locale = 'en', accept }: { locale?: Locale;
             {outputs ? (
               <div className="flex flex-col gap-2">
                 <a href={outputs.photo.url} download="photo-35x50.jpg" data-testid="save-photo" className="flex items-center justify-between gap-3 rounded bg-accent px-3 py-2 text-sm font-medium text-accent-on transition-colors hover:bg-accent-hover">
-                  <span>{t.savePhoto}</span><span data-numeric className="text-2xs opacity-80">{outputs.photo.w}×{outputs.photo.h} · {bytes(outputs.photo.size)}</span>
+                  <span>{t.savePhoto}</span><span data-numeric className="text-2xs opacity-80">{outputs.photo.w}×{outputs.photo.h}, {bytes(outputs.photo.size)}</span>
                 </a>
                 <a href={outputs.sheet.url} download="photo-4r-sheet.jpg" data-testid="save-sheet" className="flex items-center justify-between gap-3 rounded border border-border px-3 py-2 text-sm font-medium transition-colors hover:border-accent hover:text-accent">
-                  <span>{t.saveSheet}</span><span data-numeric className="text-2xs text-muted">1800×1200 · {bytes(outputs.sheet.size)}</span>
+                  <span>{t.saveSheet}</span><span data-numeric className="text-2xs text-muted">1800×1200, {bytes(outputs.sheet.size)}</span>
                 </a>
                 <p className="text-xs leading-snug text-muted">{t.sheetNote(outputs.sheet.copies)}</p>
               </div>

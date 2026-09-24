@@ -8,6 +8,7 @@ import { ResultBar, ErrorBar, type Finished } from './ResultBar';
 import { filesBeforeHydration } from './hydration';
 import { islandText } from '../../i18n/island';
 import type { Locale } from '../../i18n/paths';
+import { BusyLabel } from './NeraLoader';
 
 /**
  * Split PDF, with the pages on screen and a tick box on each one.
@@ -275,7 +276,7 @@ export default function SplitPdf({ locale = 'en', accept }: { locale?: Locale; a
             type="button" onClick={() => void split()} disabled={busy || !ready || picked.size === 0}
             className="rounded bg-accent px-3 py-1.5 text-sm font-medium text-accent-on transition-colors duration-[120ms] hover:bg-accent-hover disabled:opacity-50"
           >
-            {busy ? t.working : t.split}
+            {busy ? <BusyLabel label={t.working} /> : t.split}
           </button>
           <button type="button" onClick={clear} className="rounded border border-border px-3 py-1.5 text-sm text-muted transition-colors hover:border-border-strong hover:text-text">
             {t.startOver}

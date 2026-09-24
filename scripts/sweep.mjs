@@ -87,9 +87,14 @@ const TEXT_CASES = {
   'dev/diff': 'alpha\nbeta\ngamma',
 };
 
+// `action`: the staging apps (Merge, Split, JPG to PDF) deliberately do not
+// run when a file lands; a person stages files, then presses this button.
+// `filesFirst`: a `stageFirst` tool withholds its settings until a file is in.
+// Both changed on 2026-09-24 and the sweep was not updated until 2026-09-25,
+// so these four read as HANG/THREW in between without anything being broken.
 const FILE_CASES = {
-  'pdf/merge': { files: [PDF, PDF] },
-  'pdf/split': { files: [PDF] },
+  'pdf/merge': { files: [PDF, PDF], action: 'Combine into one PDF' },
+  'pdf/split': { files: [PDF], action: 'Split' },
   'pdf/compress': { files: [PDF] },
   'pdf/to-image': { files: [PDF] },
   'pdf/to-text': { files: [PDF] },
@@ -100,7 +105,7 @@ const FILE_CASES = {
   'image/resize': { files: [PNG] },
   'image/rotate': { files: [PNG] },
   'image/remove-metadata': { files: [PNG] },
-  'pdf/jpg-to-pdf': { files: [PNG] },
+  'pdf/jpg-to-pdf': { files: [PNG], action: 'Make the PDF' },
   'pdf/page-numbers': { files: [PDF] },
   'pdf/crop': { files: [PDF] },
   'pdf/to-word': { files: [PDF] },
@@ -108,7 +113,7 @@ const FILE_CASES = {
   'media/compress-video': { video: true, timeout: 90_000 },
   'media/extract-audio': { video: true, timeout: 90_000 },
   'media/transcribe': { video: true, timeout: 300_000, note: 'downloads ~39MB model' },
-  'image/watermark': { files: [PNG], options: { Text: 'DRAFT' } },
+  'image/watermark': { files: [PNG], options: { Text: 'DRAFT' }, filesFirst: true },
   'image/heic-to-jpg': { files: [HEIC], timeout: 60_000 },
   'image/ocr': { files: [TEXT_PNG], timeout: 120_000, note: 'downloads ~15MB of language data' },
   'pdf/ocr': { files: [PDF], timeout: 120_000, note: 'the fixture already has text, so it reports that' },
@@ -117,6 +122,12 @@ const FILE_CASES = {
   // encrypted file rather than on one with nothing to unlock.
   'pdf/unlock': { locked: true, options: { Password: 'rahsia123' }, timeout: 60_000 },
   'pdf/office-to-pdf': { files: [DOCX], timeout: 420_000, note: 'downloads ~77MB of LibreOffice' },
+  'pdf/n-up': { files: [PDF] },
+  'pdf/remove-pages': { files: [PDF], options: { 'Pages to remove': '1' } },
+  'pdf/extract-pages': { files: [PDF], options: { 'Pages to extract': '1' } },
+  'pdf/grayscale': { files: [PDF], timeout: 60_000 },
+  'pdf/repair': { files: [PDF], timeout: 60_000 },
+  'pdf/to-powerpoint': { files: [PDF], timeout: 60_000 },
 };
 
 const RECORD = `
@@ -229,12 +240,23 @@ for (const [id, cfg] of Object.entries(FILE_CASES)) {
         i.files = dt.files; i.dispatchEvent(new Event('change', { bubbles: true }));
       });
     } else {
+      const input = page.locator('input[type=file]').first();
+      if (cfg.filesFirst) await input.setInputFiles(cfg.files);
       for (const [label, value] of Object.entries(cfg.options ?? {})) {
         await page.getByLabel(label, { exact: true }).first().fill(value);
       }
-      await page.locator('input[type=file]').setInputFiles(cfg.locked ? [LOCKED] : cfg.files);
+      if (!cfg.filesFirst) await input.setInputFiles(cfg.locked ? [LOCKED] : cfg.files);
+      if (cfg.action) {
+        const button = page.getByRole('button', { name: cfg.action, exact: true });
+        await button.and(page.locator(':enabled')).waitFor({ timeout: 15_000 });
+        await button.click();
+      }
     }
     const budget = cfg.timeout ?? 30_000;
+    // A stage-first tool first asks for its text (deliberately, see
+    // preview.spec.ts), then re-runs once it is typed. Wait for that run
+    // rather than reading the prompt as the result.
+    if (cfg.filesFirst) await page.locator('[data-status="done"]').waitFor({ timeout: budget }).catch(() => {});
     const start = Date.now();
     let state;
     while (Date.now() - start < budget) {

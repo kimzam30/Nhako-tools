@@ -7,9 +7,8 @@
    ========================================================================== */
 
 @import 'tailwindcss';
-@import '@fontsource-variable/instrument-sans';
-@import '@fontsource-variable/jetbrains-mono';
 @import './motion.css';
+@import './nera.css';
 
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
@@ -154,8 +153,15 @@
   --color-cat-dev: var(--cat-dev);
   --color-cat-media: var(--cat-media);
 
-  --font-sans: 'Instrument Sans Variable', ui-sans-serif, system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
+  /* ONE typeface, the one iOS uses (Kim, 2026-09-25): San Francisco.
+     Apple licenses SF Pro only for mock-ups of Apple-platform software, so it
+     cannot be served as a web font. It is reached through the system instead:
+     -apple-system IS SF Pro on iPhone, iPad and Mac, and every other device
+     falls back to its own interface face. No font file is downloaded at all.
+     --font-mono is the same stack on purpose: figures line up through
+     tabular numerals, not a second typeface. tokens.test.ts enforces this. */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', system-ui, sans-serif;
+  --font-mono: var(--font-sans);
 
   /* Type ramp: tight, but with a floor. Instrument, not brochure.
 
@@ -221,10 +227,10 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  /* Numbers are ALWAYS mono. The single most load-bearing detail in the
-     philosophy: it is what makes the product read as an instrument. */
-  [data-numeric], output, .tabular {
-    font-family: var(--font-mono);
+  /* Numbers always line up. They used to do it by switching to a monospace
+     face; with one typeface allowed, SF's tabular figures do it instead, and
+     every column of digits still reads as an instrument's readout. */
+  [data-numeric], output, .tabular, .font-mono {
     font-variant-numeric: tabular-nums;
     font-feature-settings: 'tnum';
   }

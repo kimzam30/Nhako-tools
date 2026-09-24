@@ -1,5 +1,5 @@
 /**
- * The 43 tool marks.
+ * One mark per tool.
  *
  * Every mark is ONE BASE with ONE OPERATION applied to it. Nothing is drawn
  * freehand, so no choice is arbitrary and a 44th tool draws itself by picking
@@ -114,6 +114,34 @@ export const MARKS: Record<string, string> = {
     '<path d="M12.8 13.4h9.4v7.9h-9.4z"/>' +
     '<path d="M15.2 13.4v-2.1a2.3 2.3 0 0 1 4.6 0"/>',
 
+  /* Page base, operation: a strike through it. */
+  'pdf/remove-pages':
+    '<path d="M6 2.6h8.4L18 6.2v15.2H6z"/><path d="M14.4 2.6v3.6H18"/>' +
+    '<path d="M9.2 10.4l5.6 5.6"/><path d="M14.8 10.4l-5.6 5.6"/>',
+  /* Page base, operation: an arrow lifting out of it to the top right. */
+  'pdf/extract-pages':
+    '<path d="M2.6 6.6h7.4l3 3v11.8H2.6z"/><path d="M10 6.6v3h3"/>' +
+    '<path d="M8.4 15.6L20.8 3.2"/><path d="M14.6 2.6h6.8v6.8"/>',
+  /* A sheet holding four pages, the way handouts print. */
+  'pdf/n-up':
+    '<path d="M3.4 2.6h17.2v18.8H3.4z"/>' +
+    '<path d="M5.8 5.2h5.2v5.6H5.8z"/><path d="M13 5.2h5.2v5.6H13z"/>' +
+    '<path d="M5.8 13.2h5.2v5.6H5.8z"/><path d="M13 13.2h5.2v5.6H13z"/>',
+  /* Page base, operation: a disc half ruled, colour taken to its tone. */
+  'pdf/grayscale':
+    '<path d="M6 2.6h8.4L18 6.2v15.2H6z"/><path d="M14.4 2.6v3.6H18"/>' +
+    '<circle cx="12" cy="13.6" r="3.9"/><path d="M12 9.7v7.8"/>' +
+    '<path d="M12 11.4h3.4"/><path d="M12 13.6h3.9"/><path d="M12 15.8h3.4"/>',
+  /* Page base, operation: a cross, the mark of first aid. */
+  'pdf/repair':
+    '<path d="M6 2.6h8.4L18 6.2v15.2H6z"/><path d="M14.4 2.6v3.6H18"/>' +
+    '<path d="M12 10v7.2"/><path d="M8.4 13.6h7.2"/>',
+  /* Page to slide: the convert grammar, arriving at a screen on a stand. */
+  'pdf/to-powerpoint':
+    '<path d="M1.4 6.8h3.5l3.3 3.3v7.1H1.4z"/><path d="M4.9 6.8v3.3h3.3"/>' +
+    '<path d="M9.8 12h3.4"/><path d="M11.4 10.2L13.2 12l-1.8 1.8"/>' +
+    '<path d="M14.4 6.6h8.2v6.8h-8.2z"/><path d="M18.5 13.4v3.4"/><path d="M16.2 16.8h4.6"/>',
+
   // ===== Image, 11. Base: photo. ===========================================
   'image/compress':
     '<path d="M7.5 6.6h9v10.8h-9z"/><circle cx="10.1" cy="9.6" r="1"/>' +
@@ -225,6 +253,10 @@ export const MARKS: Record<string, string> = {
     '<path d="M7 10.4h5.6"/><path d="M15 10.4h2"/>' +
     '<path d="M7 14.2h9.8"/>' +
     '<path d="M7 18h4"/><path d="M14.2 18h2.8"/>',
+  /* A mortarboard: the one shape every student reads as "grades". */
+  'calc/cgpa':
+    '<path d="M1.8 9.4L12 4.8l10.2 4.6L12 14z"/>' +
+    '<path d="M6 11.2v4.6c3.6 2.4 8.4 2.4 12 0v-4.6"/><path d="M20.2 10.2v5.6"/>',
 };
 
 /** Every tool id that has a mark. Used by the registry test. */

@@ -1,0 +1,53 @@
+---
+/**
+ * The Buy Me a Coffee button. `icon` sits in the nav beside the theme toggle,
+ * `full` is the labelled button on About, Feedback and the footer.
+ *
+ * A plain link to an external page: no Buy Me a Coffee widget script, which
+ * would put a third party on every page of a site that promises it has none.
+ */
+import PixelSprite from '../react/PixelSprite';
+import { COFFEE_URL } from '../../lib/community';
+import { community } from '../../i18n/community';
+import type { Locale } from '../../i18n';
+
+interface Props { locale: Locale; variant?: 'icon' | 'full' | 'text' }
+const { locale, variant = 'full' } = Astro.props;
+const t = community(locale);
+---
+{variant === 'icon' && (
+  <a
+    href={COFFEE_URL}
+    rel="noopener noreferrer"
+    target="_blank"
+    aria-label={t.coffeeLabel}
+    title={t.coffee}
+    data-coffee
+    class="grid size-8 place-items-center rounded border border-border text-muted transition-colors duration-[120ms] hover:border-border-strong hover:text-text pointer-coarse:size-11"
+  >
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+      <path d="M4 9h13v5a5 5 0 01-5 5H9a5 5 0 01-5-5V9z" stroke-linejoin="round" />
+      <path d="M17 11h1.5a2.5 2.5 0 010 5H17" />
+      <path d="M8 3.5v2.5M11.5 3.5v2.5" stroke-linecap="round" />
+    </svg>
+  </a>
+)}
+{variant === 'full' && (
+  <a
+    href={COFFEE_URL}
+    rel="noopener noreferrer"
+    target="_blank"
+    aria-label={t.coffeeLabel}
+    data-coffee
+    class="nera-done inline-flex items-center gap-3 px-4 py-2.5 text-sm font-semibold transition-transform duration-[120ms] hover:-translate-y-px active:translate-x-px active:translate-y-px pointer-coarse:min-h-11"
+  >
+    <span class="flap"><PixelSprite name="heart" scale={2} /></span>
+    <span class="nera-title !text-sm">{t.coffee}</span>
+  </a>
+)}
+{variant === 'text' && (
+  <a href={COFFEE_URL} rel="noopener noreferrer" target="_blank" aria-label={t.coffeeLabel} data-coffee class="inline-flex items-center gap-1.5 transition-colors hover:text-accent pointer-coarse:min-h-11">
+    <PixelSprite name="heart" scale={1} />
+    {t.coffee}
+  </a>
+)}

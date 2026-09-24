@@ -122,6 +122,23 @@ test.describe('Merge PDF', () => {
     await expect(page.locator('[data-stage-card]')).toHaveCount(1);
   });
 
+  test('a non-PDF picked before the page hydrates is still named', async ({ page }) => {
+    // Hold every island script until the files are in, so the pre-hydration
+    // path runs every time instead of only when the machine is busy. That
+    // path used to filter the .txt out without a word (found 2026-09-25).
+    let release!: () => void;
+    const gate = new Promise<void>((r) => { release = r; });
+    await page.route('**/_astro/*.js', async (route) => { await gate; await route.continue(); });
+    await page.goto('/pdf/merge', { waitUntil: 'domcontentloaded' });
+    await page.locator('input[type=file]').setInputFiles([
+      await pdf([100], 'a.pdf'),
+      { name: 'notes.txt', mimeType: 'text/plain', buffer: Buffer.from('hello') },
+    ]);
+    release();
+    await expect(page.locator('[data-status-message]')).toContainText('notes.txt');
+    await expect(page.locator('[data-stage-card]')).toHaveCount(1);
+  });
+
   test('editing the queue invalidates the result it no longer matches', async ({ page }) => {
     await page.goto('/pdf/merge');
     await page.locator('input[type=file]').setInputFiles([await pdf([100], 'a.pdf'), await pdf([200], 'b.pdf')]);

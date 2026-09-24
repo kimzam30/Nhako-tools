@@ -63,6 +63,7 @@ const jsonLd = {
     ],
   },
 };
+import { GROUP, PACK, PACK_XL, span } from '../components/astro/pack';
 ---
 
 <BaseLayout
@@ -74,7 +75,7 @@ const jsonLd = {
   category={category}
   jsonLd={jsonLd}
 >
-  <div class="mx-auto max-w-4xl px-4 sm:px-6">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6">
     <nav aria-label={t.breadcrumb} class="pt-8 text-2xs text-muted">
       <a href={href('/')} class="transition-colors hover:text-accent">{t.breadcrumbTools}</a>
       <span aria-hidden="true"> / </span>
@@ -84,31 +85,55 @@ const jsonLd = {
     <header class="mb-8 mt-4">
       <div class="flex items-baseline gap-2.5">
         <h1 class="text-2xl font-bold tracking-tight">{label}</h1>
-        <span class="size-1.5 shrink-0 rounded-full" style={`background:var(--cat-${category})`} aria-hidden="true"></span>
         <span data-numeric class="ml-auto font-mono text-2xs text-muted">{count}</span>
       </div>
       <p class="mt-3 max-w-2xl text-sm leading-relaxed text-muted">{t.categoryIntro[category]}</p>
     </header>
 
+    {/* Section shortcuts, so a category that keeps growing stays one tap
+        deep: the reader sees every job the category covers before scrolling. */}
+    {grouped && (
+      <nav aria-label={t.jumpToGroup} class="-mt-3 mb-8">
+        <ul class="flex flex-wrap gap-2">
+          {groups.map((group) => (
+            <li>
+              <a
+                href={`#group-${group.id}`}
+                class="inline-flex items-center gap-2 rounded border border-border bg-surface px-3 py-1.5 text-xs text-text transition-colors duration-[120ms] hover:border-accent hover:text-accent pointer-coarse:min-h-11"
+              >
+                {groupLabel(category, group.id, locale)}
+                <span data-numeric class="text-muted">{rowsIn(group.id).length}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    )}
+
     {grouped
-      ? groups.map((group) => (
-          <section class="mb-9">
-            <h2 class="mb-2 text-2xs font-semibold uppercase tracking-[0.14em] text-muted">
-              {groupLabel(category, group.id, locale)}
-            </h2>
-            <div class="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-              {rowsIn(group.id).map((tool) => (
-                <ToolTile
-                  tool={localizeTool(tool, locale)}
-                  href={href(`/${toolId(tool)}`)}
-                  presets={presetsFor(tool)}
-                />
-              ))}
-            </div>
-          </section>
-        ))
+      ? (
+        <div class={`${PACK} ${PACK_XL} mb-9`}>
+          {groups.map((group) => {
+            const rows = rowsIn(group.id);
+            return (
+              <section id={`group-${group.id}`} class={`${GROUP} ${span(rows.length)} scroll-mt-20`}>
+                <h2 class="col-span-full text-2xs font-semibold uppercase tracking-[0.14em] text-muted">
+                  {groupLabel(category, group.id, locale)}
+                </h2>
+                {rows.map((tool) => (
+                  <ToolTile
+                    tool={localizeTool(tool, locale)}
+                    href={href(`/${toolId(tool)}`)}
+                    presets={presetsFor(tool)}
+                  />
+                ))}
+              </section>
+            );
+          })}
+        </div>
+      )
       : (
-        <div class="mb-9 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="mb-9 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {own.map((tool) => (
             <ToolTile
               tool={localizeTool(tool, locale)}

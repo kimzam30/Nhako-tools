@@ -187,3 +187,42 @@ describe('type ramp', () => {
     expect(body).toBeGreaterThan(floor);
   });
 });
+
+describe('one typeface', () => {
+  /*
+   * Kim, 2026-09-25: the iOS font everywhere, and only that font. SF Pro is
+   * reached through the system stack (it cannot be licensed as a web font),
+   * so the rule is enforced as: no web font is imported or preloaded anywhere
+   * in the site, and every font-family names the one stack.
+   *
+   * The single exception is the typed signature in Sign PDF, which draws the
+   * signature itself in a script face and bakes it into the signed PDF. That
+   * is ink on a document, not the site's typography.
+   */
+  const SIGNATURE_INK = 'src/components/react/SignPdf.tsx';
+
+  it('uses the San Francisco system stack for both font tokens', () => {
+    const theme = css.match(/@theme inline \{([\s\S]*?)\n\}/)?.[1] ?? '';
+    expect(theme).toMatch(/--font-sans:\s*-apple-system, BlinkMacSystemFont, 'SF Pro Text'/);
+    expect(theme).toMatch(/--font-mono:\s*var\(--font-sans\)/);
+  });
+
+  it('imports no web font anywhere in the site', async () => {
+    const { readdirSync, statSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const root = fileURLToPath(new URL('..', import.meta.url));
+    const offenders: string[] = [];
+    const walk = (dir: string) => {
+      for (const name of readdirSync(dir)) {
+        const path = join(dir, name);
+        if (statSync(path).isDirectory()) { walk(path); continue; }
+        if (!/\.(astro|tsx?|css|mjs)$/.test(name) || /\.test\.ts$/.test(name)) continue;
+        const rel = path.slice(root.length - 'src/'.length);
+        const text = readFileSync(path, 'utf8');
+        if (/@fontsource|\.woff2?['"?]|fonts\.googleapis/.test(text) && !rel.endsWith(SIGNATURE_INK)) offenders.push(rel);
+      }
+    };
+    walk(root);
+    expect(offenders).toEqual([]);
+  });
+});

@@ -54,7 +54,8 @@ export const GROUPS: Partial<Record<Category, readonly ToolGroup[]>> = {
     { id: 'convert', label: 'Convert to and from PDF' },
     { id: 'mark-up', label: 'Edit and sign' },
     { id: 'shrink', label: 'Reduce file size' },
-    { id: 'secure', label: 'Password and permissions' },
+    { id: 'print', label: 'Print' },
+    { id: 'secure', label: 'Passwords and repair' },
   ],
   image: [
     { id: 'shrink', label: 'Reduce file size' },

@@ -104,7 +104,7 @@ export default function FilePreview({ files, nextStep, locale = 'en' }: {
               <div className="min-w-0">
                 <p className="truncate text-xs font-medium" title={file.name}>{file.name}</p>
                 <p data-numeric className="mt-0.5 truncate text-2xs text-muted">
-                  {(meta?.facts ?? [bytes(file.size)]).join(' · ')}
+                  {(meta?.facts ?? [bytes(file.size)]).join(', ')}
                 </p>
               </div>
             </li>

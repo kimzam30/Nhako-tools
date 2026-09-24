@@ -1,0 +1,241 @@
+/* ==========================================================================
+   NeraOS layer
+
+   Kim asked on 2026-09-25 for the NeraOS butterflies behind the site and for
+   every loading and finished state to follow the NeraOS theme exactly, while
+   the rest of Nhako Tools keeps its own design. Everything NeraOS lives in
+   this one file so the boundary between the two stays visible.
+
+   The values are NeraOS's own (github.com/kimzam30/NeraOS, css/style.css),
+   except the typeface: NeraOS's Silkscreen pixel font was replaced by the
+   site's one system face on 2026-09-25, when only SF was allowed.
+   the flap, the striped boot bar that fills in steps, the hard 3px offset
+   shadow, the stepped window and toast entrances, `pop`, `shake`, and the
+   square pink petals from the finale.
+   ========================================================================== */
+
+:root {
+  --nera-ink: #3f3350;
+  --nera-ink-soft: #6f6280;
+  --nera-line: #7d6b8f;
+  --nera-pink: #f49ac1;
+  --nera-pink-soft: #fbe3ef;
+  --nera-lav: #c3a6f0;
+  --nera-lav-soft: #efe7fb;
+  /* NeraOS's memory-match win colour is #b34a7d, which is 4.24:1 on the
+     lavender end of this panel. Nudged to the nearest shade on the same hue
+     that clears AA on every stop (4.62:1). Asserted in nera.test.ts. */
+  --nera-win: #aa4677;
+  --nera-panel: linear-gradient(140deg, #ffffff 0%, #fdf1f7 45%, #f1e9fb 100%);
+  --nera-track: #ffffff;
+  --nera-shadow: 3px 3px 0 rgb(90 70 110 / 0.18);
+}
+
+/* NeraOS has no dark theme. These keep the same hues and the same hard
+   shadow, moved onto a dusk panel so the text still clears AA. */
+[data-theme='dark'] {
+  --nera-ink: #efe6f8;
+  --nera-ink-soft: #b9abc9;
+  --nera-line: #8d7aa1;
+  --nera-win: #f7a1c4;
+  --nera-panel: linear-gradient(140deg, #1d1724 0%, #22162a 45%, #1b1629 100%);
+  --nera-track: #141019;
+  --nera-shadow: 3px 3px 0 rgb(0 0 0 / 0.45);
+}
+
+@layer base {
+  img.px, svg.px {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    display: block;
+  }
+
+  /* --- The sky ------------------------------------------------------------ */
+  #sky {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .bfly {
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0.85;
+    will-change: transform;
+  }
+
+  /* NeraOS: scaleX between 1 and 0.35, alternate, so the wings close and
+     open rather than snapping. */
+  .flap img, .flap svg {
+    animation: nera-flap 0.5s ease-in-out infinite alternate;
+    transform-origin: center;
+  }
+  @keyframes nera-flap {
+    from { transform: scaleX(1); }
+    to   { transform: scaleX(0.35); }
+  }
+
+  /* --- Loading: the boot screen ------------------------------------------ */
+  .nera-load {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    color: var(--nera-ink);
+    background: var(--nera-panel);
+    border: 1px solid var(--nera-line);
+    box-shadow: var(--nera-shadow);
+    border-radius: 0;
+    animation: nera-win-open 0.18s steps(3);
+  }
+  .nera-load-body { flex: 1; min-width: 0; }
+  .nera-msg {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    color: var(--nera-ink);
+    margin: 0 0 8px;
+  }
+  .nera-pct {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--nera-ink-soft);
+  }
+  .nera-bar {
+    height: 16px;
+    border: 1px solid var(--nera-line);
+    background: var(--nera-track);
+    padding: 2px;
+    box-shadow: var(--nera-shadow);
+  }
+  .nera-fill {
+    height: 100%;
+    width: 0%;
+    background: repeating-linear-gradient(90deg, var(--nera-pink) 0 8px, var(--nera-lav) 8px 16px);
+    transition: width 0.4s steps(6);
+  }
+  /* A job with no measurable progress still fills the bar, and the stripes
+     march in whole-stripe steps so it reads as pixels, not a smooth slide. */
+  .nera-fill[data-indeterminate] {
+    width: 100%;
+    background-size: 16px 100%;
+    animation: nera-march 0.6s steps(2) infinite;
+  }
+  @keyframes nera-march {
+    to { background-position: 16px 0; }
+  }
+
+  /* A button that is busy gets the same flapping butterfly the readout has. */
+  .nera-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* --- Finished and failed ----------------------------------------------- */
+  .nera-done {
+    color: var(--nera-ink);
+    background: var(--nera-panel);
+    border: 1px solid var(--nera-line);
+    box-shadow: var(--nera-shadow);
+    border-radius: 0;
+  }
+  .nera-title {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .nera-done .nera-title { color: var(--nera-win); }
+
+  /* NeraOS windows and toasts arrive in three frames, not a smooth ease. */
+  [data-status] {
+    animation: nera-win-open 0.18s steps(3) both;
+  }
+  @keyframes nera-win-open {
+    from { transform: scale(0.96); opacity: 0; }
+  }
+
+  /* The boot bar completing: the striped fill runs across the top edge in
+     six steps, which is exactly how the NeraOS boot bar moves. */
+  [data-status]::after {
+    content: '';
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline: 0;
+    block-size: 3px;
+    transform-origin: left center;
+    animation: nera-sweep 0.4s steps(6) both;
+  }
+  [data-status='done']::after {
+    background: repeating-linear-gradient(90deg, var(--nera-pink) 0 8px, var(--nera-lav) 8px 16px);
+  }
+  [data-status='error']::after { background: var(--err); }
+  @keyframes nera-sweep {
+    from { transform: scaleX(0); }
+    to   { transform: scaleX(1); }
+  }
+
+  .nera-pop {
+    animation: nera-pop 0.5s ease both;
+  }
+  @keyframes nera-pop {
+    0%  { transform: scale(0); }
+    70% { transform: scale(1.15); }
+  }
+
+  /* The NeraOS lock screen's "wrong password": the butterfly shakes its head. */
+  .nera-shake {
+    animation: nera-shake 0.6s ease-in-out both;
+  }
+  @keyframes nera-shake {
+    0%, 100% { transform: rotate(0); }
+    20% { transform: rotate(-16deg); }
+    40% { transform: rotate(14deg); }
+    60% { transform: rotate(-10deg); }
+    80% { transform: rotate(6deg); }
+  }
+
+  /* The finale's petals, scaled down to one panel. */
+  .nera-petals {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .nera-petal {
+    position: absolute;
+    top: -10px;
+    width: 6px;
+    height: 6px;
+    background: var(--nera-pink);
+    animation: nera-fall linear forwards;
+  }
+  .nera-petal:nth-child(3n) { background: var(--nera-lav); }
+  @keyframes nera-fall {
+    to { transform: translateY(var(--fall, 140px)) rotate(540deg); opacity: 0; }
+  }
+
+  @media print {
+    #sky { display: none; }
+  }
+
+  /* tokens.css already flattens every duration. These assert end states:
+     the finished panel sits fully drawn and the petals are simply absent. */
+  @media (prefers-reduced-motion: reduce) {
+    .flap img, .flap svg,
+    .nera-fill[data-indeterminate],
+    .nera-pop, .nera-shake,
+    [data-status], [data-status]::after {
+      animation: none !important;
+      transform: none !important;
+      opacity: 1 !important;
+    }
+    .nera-petals { display: none; }
+  }
+}

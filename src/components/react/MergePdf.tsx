@@ -7,6 +7,7 @@ import { ResultBar, ErrorBar, type Finished } from './ResultBar';
 import { filesBeforeHydration } from './hydration';
 import { islandText } from '../../i18n/island';
 import type { Locale } from '../../i18n/paths';
+import { BusyLabel } from './NeraLoader';
 
 /**
  * Merge PDF, with somewhere to put the files down first.
@@ -47,10 +48,17 @@ export default function MergePdf({ locale = 'en', accept }: { locale?: Locale; a
   const t = TEXT[locale];
   const ui = islandText(locale);
 
-  const [items, setItems] = useState<Staged[]>(() => filesBeforeHydration(INPUT_ID).filter(isPdf).map(stage));
+  // Files picked before hydration go through the same rule as `add` below:
+  // a non-PDF among them is named, not silently dropped. Filtering here alone
+  // lost the message whenever hydration was slow (seen under test load).
+  const [early] = useState(() => filesBeforeHydration(INPUT_ID));
+  const [items, setItems] = useState<Staged[]>(() => early.filter(isPdf).map(stage));
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<Finished | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(() => {
+    const bad = early.find((f) => !isPdf(f));
+    return bad ? t.notPdf(bad.name) : null;
+  });
   const [rename, setRename] = useState<string | null>(null);
   const [announce, setAnnounce] = useState('');
 
@@ -166,7 +174,7 @@ export default function MergePdf({ locale = 'en', accept }: { locale?: Locale; a
               disabled={busy || items.length < 2}
               className="rounded bg-accent px-3 py-1.5 text-sm font-medium text-accent-on transition-colors duration-[120ms] hover:bg-accent-hover disabled:opacity-50"
             >
-              {busy ? t.working : t.combine}
+              {busy ? <BusyLabel label={t.working} /> : t.combine}
             </button>
             <button type="button" onClick={clear} className="rounded border border-border px-3 py-1.5 text-sm text-muted transition-colors hover:border-border-strong hover:text-text">
               {ui.clear}

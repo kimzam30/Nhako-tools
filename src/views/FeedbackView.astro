@@ -1,0 +1,55 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import FeedbackForm from '../components/react/FeedbackForm';
+import CoffeeButton from '../components/astro/CoffeeButton.astro';
+import { TOOLS } from '../tools/registry';
+import { toolId } from '../tools/types';
+import { localizeTool, type Locale } from '../i18n';
+import { community } from '../i18n/community';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const t = community(locale);
+const tools = TOOLS
+  .map((tool) => ({ id: toolId(tool), name: localizeTool(tool, locale).name }))
+  .sort((a, b) => a.name.localeCompare(b.name, locale));
+const link = 'text-accent underline underline-offset-2';
+---
+<BaseLayout
+  title={t.feedback}
+  documentTitle={`${t.feedback} | Nhako Tools`}
+  description={t.feedbackDescription}
+  path="/feedback"
+  locale={locale}
+>
+  <div class="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+    <div class="lg:grid lg:grid-cols-[minmax(0,46rem)_minmax(0,1fr)] lg:items-start lg:gap-12">
+      <div>
+        <header class="mb-8">
+          <h1 class="text-2xl font-bold tracking-tight">{t.feedbackTitle}</h1>
+          <p class="mt-3 max-w-2xl text-sm leading-relaxed text-muted">{t.feedbackIntro}</p>
+        </header>
+
+        <div class="rounded-lg border border-border bg-surface p-5 sm:p-6">
+          <FeedbackForm client:load locale={locale} tools={tools} />
+        </div>
+
+        <p class="mt-4 max-w-2xl text-xs leading-relaxed text-muted">{t.whatIsSent}</p>
+      </div>
+
+      <aside class="mt-10 space-y-8 lg:mt-14">
+        <section>
+          <h2 class="mb-2 text-sm font-semibold">{t.supportTitle}</h2>
+          <p class="mb-4 text-sm leading-relaxed text-muted">{t.supportBody}</p>
+          <CoffeeButton locale={locale} />
+        </section>
+        <section>
+          <h2 class="mb-2 text-sm font-semibold">GitHub</h2>
+          <p class="text-sm leading-relaxed text-muted">
+            {t.otherWays} <a class={link} href="https://github.com/kimzam30/Nhako-tools/issues" rel="noopener noreferrer">{t.otherWaysLink}</a>.
+          </p>
+        </section>
+      </aside>
+    </div>
+  </div>
+</BaseLayout>

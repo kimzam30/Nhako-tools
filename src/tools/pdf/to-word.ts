@@ -88,8 +88,8 @@ export const run: FileRun = async (files, opts, ctx) => {
     blob: bytesToBlob(bytes, DOCX),
     filename: file.name.replace(/\.pdf$/i, '') + '.docx',
     summary: say(
-      `${doc.numPages} page${doc.numPages === 1 ? '' : 's'} · ${paragraphs} paragraphs · ${headings} headings`,
-      `${doc.numPages} halaman · ${paragraphs} perenggan · ${headings} tajuk`,
+      `${doc.numPages} page${doc.numPages === 1 ? '' : 's'}, ${paragraphs} paragraphs, ${headings} headings`,
+      `${doc.numPages} halaman, ${paragraphs} perenggan, ${headings} tajuk`,
     ),
   };
 };

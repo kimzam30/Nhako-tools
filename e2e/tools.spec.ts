@@ -42,7 +42,7 @@ test.describe('file tools', () => {
     // the extension cannot be edited away. The Save link below carries the
     // reassembled name, which is the part that actually reaches the disk.
     await expect(page.getByLabel('File name')).toHaveValue('merged', { timeout: 20_000 });
-    await expect(page.getByText(/2 files · 5 pages/)).toBeVisible();
+    await expect(page.getByText(/2 files, 5 pages/)).toBeVisible();
 
     const download = await Promise.all([
       page.waitForEvent('download'),
@@ -201,7 +201,7 @@ test.describe('input given before the page is interactive', () => {
     release();
     await expect(page.locator('[data-stage-card]')).toHaveCount(2, { timeout: 20_000 });
     await page.getByRole('button', { name: 'Combine into one PDF' }).click();
-    await expect(page.getByText(/2 files · 5 pages/)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(/2 files, 5 pages/)).toBeVisible({ timeout: 20_000 });
   });
 });
 
@@ -346,7 +346,7 @@ test.describe('navigation and chrome', () => {
     const context = await browser.newContext({ javaScriptEnabled: false });
     const page = await context.newPage();
     await page.goto('/');
-    await expect(page.getByRole('link', { name: /Merge PDF/ })).toBeVisible();
+    await expect(page.locator('main [data-tool-card]').getByRole('link', { name: /Merge PDF/ })).toBeVisible();
     await context.close();
   });
 });

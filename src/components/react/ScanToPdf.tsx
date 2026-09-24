@@ -3,6 +3,7 @@ import { applyFilter, detectPage, flatSize, pageFor, placeImage, warp, type Filt
 import { bytes } from '../../lib/format';
 import type { Locale } from '../../i18n/paths';
 import { filesBeforeHydration } from './hydration';
+import { BusyLabel } from './NeraLoader';
 
 const TEXT = {
   en: {
@@ -241,11 +242,11 @@ export default function ScanToPdf({ locale = 'en' }: { locale?: Locale }) {
               {(['a4', 'letter', 'fit'] as const).map((k) => <option key={k} value={k}>{t.papers[k]}</option>)}
             </select>
           </label>
-          <span data-numeric className="flex-1 text-sm text-muted">{t.pages(pages.length)}{busy ? ` · ${busy}` : ''}</span>
+          <span data-numeric className="flex-1 text-sm text-muted">{t.pages(pages.length)}{busy ? `, ${busy}` : ''}</span>
           {output ? (
-            <a href={output.url} download="scan.pdf" className="rounded bg-accent px-4 py-2 text-sm font-semibold text-accent-on hover:bg-accent-hover">{t.save} · {bytes(output.size)}</a>
+            <a href={output.url} download="scan.pdf" className="rounded bg-accent px-4 py-2 text-sm font-semibold text-accent-on hover:bg-accent-hover">{t.save} ({bytes(output.size)})</a>
           ) : (
-            <button type="button" onClick={() => void save()} disabled={Boolean(busy)} className="rounded bg-accent px-4 py-2 text-sm font-semibold text-accent-on hover:bg-accent-hover disabled:opacity-50" data-testid="make-pdf">{t.save}</button>
+            <button type="button" onClick={() => void save()} disabled={Boolean(busy)} className="rounded bg-accent px-4 py-2 text-sm font-semibold text-accent-on hover:bg-accent-hover disabled:opacity-50" data-testid="make-pdf">{busy ? <BusyLabel label={busy} /> : t.save}</button>
           )}
         </div>
       )}
@@ -333,7 +334,7 @@ function CornerEditor({ page, t, onApply, onClose }: { page: Page; t: (typeof TE
           <button
             key={i} type="button" aria-label={t.corner(i)}
             onPointerDown={(e) => drag(e, i)} onKeyDown={(e) => key(e, i)}
-            className="absolute size-7 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-accent shadow focus-visible:ring-4"
+            className="absolute size-7 -translate-x-1/2 -translate-y-1/2 rounded-sm border-2 border-white bg-accent shadow focus-visible:ring-4"
             style={pct(p)} data-corner={i}
           />
         ))}

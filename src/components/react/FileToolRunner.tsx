@@ -6,6 +6,7 @@ import OptionsPanel from './OptionsPanel';
 import FilePreview from './FilePreview';
 import ResultPreview from './ResultPreview';
 import { ResultBar, ErrorBar } from './ResultBar';
+import NeraLoader from './NeraLoader';
 import { optionsBeforeHydration } from './hydration';
 import { localePath, type Locale } from '../../i18n/paths';
 import { islandText } from '../../i18n/island';
@@ -331,18 +332,10 @@ export default function FileToolRunner({ tool, locale = 'en', initialOptions }: 
 
       <div aria-live="polite" aria-atomic="true">
         {busy && (
-          <div className="rounded-lg border border-border bg-sunken px-4 py-3 shadow-[inset_0_1px_0_var(--edge)]">
-            <div className="flex items-baseline justify-between gap-4 text-sm">
-              <span>{phase.label ?? t.working}…</span>
-              {/* Only heavy tools get a bar; a bar on a 400ms task feels slower. */}
-              {tool.heavy && <span data-numeric className="text-xs text-muted">{Math.round(phase.progress * 100)}%</span>}
-            </div>
-            {tool.heavy && (
-              <div className="mt-2 h-1 overflow-hidden rounded-full bg-sunken">
-                <div className="h-full bg-accent transition-[width] duration-200" style={{ width: `${phase.progress * 100}%` }} />
-              </div>
-            )}
-          </div>
+          /* Heavy tools report a real fraction; the rest get the marching
+             bar, because a percentage on a 400ms task is a number nobody
+             has time to read. */
+          <NeraLoader label={phase.label ?? t.working} progress={tool.heavy ? phase.progress : undefined} />
         )}
 
         {phase.name === 'done' && (

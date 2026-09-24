@@ -117,7 +117,7 @@ export const run: FileRun = async (files, opts, ctx) => {
   return {
     blob: new Blob([text.trim()], { type: 'text/plain;charset=utf-8' }),
     filename: file.name.replace(/\.[^/.]+$/, '') + '-transcript.txt',
-    summary: say(`${minutes.toFixed(1)} min · ${text.trim().split(/\s+/).length} words`, `${minutes.toFixed(1)} min · ${text.trim().split(/\s+/).length} perkataan`),
+    summary: say(`${minutes.toFixed(1)} min, ${text.trim().split(/\s+/).length} words`, `${minutes.toFixed(1)} min, ${text.trim().split(/\s+/).length} perkataan`),
     text: text.trim(),
   };
 };

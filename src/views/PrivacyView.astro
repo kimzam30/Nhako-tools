@@ -44,7 +44,7 @@ const h2 = 'mb-2 text-sm font-semibold text-text';
           <h2 class={h2}>Apa yang diminta</h2>
           <p>Secara tepat, kerana "tiada apa-apa meninggalkan komputer anda" patut ada butirannya:</p>
           <ul class="mt-3 space-y-1.5">
-            <li>Halaman itu sendiri, JavaScript-nya dan fon yang dihoskan sendiri. Semuanya dari domain ini.</li>
+            <li>Halaman itu sendiri dan JavaScript-nya, dari domain ini. Tiada fon dimuat turun: laman ini menggunakan fon sistem peranti anda. Satu-satunya pengecualian ialah fon tulisan tangan untuk tandatangan bertaip dalam Tandatangan PDF, juga dari domain ini.</li>
             <li>
               Untuk alat video dan audio, enjin WebAssembly ffmpeg (kira-kira 31 MB), juga dari
               domain ini. Ia disimpan dalam cache selepas penggunaan pertama.
@@ -110,6 +110,18 @@ const h2 = 'mb-2 text-sm font-semibold text-text';
         </section>
 
         <section>
+          <h2 class={h2}>Borang maklum balas</h2>
+          <p>
+            Halaman Maklum balas ialah satu-satunya borang di laman ini. Apabila anda menekan
+            Hantar, dan hanya ketika itu, apa yang anda taip dihantar ke pangkalan data Supabase:
+            jenis maklum balas, alat yang anda pilih, penilaian, mesej, peranan anda dan cara
+            menghubungi anda jika anda mengisinya, bahasa halaman, dan halaman yang anda datangi.
+            Tiada fail dan tiada kuki. Orang ramai hanya boleh menambah maklum balas, bukan
+            membacanya; hanya pembina laman ini boleh membacanya.
+          </p>
+        </section>
+
+        <section>
           <h2 class={h2}>Apa yang disimpan pada peranti anda</h2>
           <p>
             Satu entri <code class={code}>localStorage</code> yang merekodkan sama ada anda memilih
@@ -154,7 +166,7 @@ const h2 = 'mb-2 text-sm font-semibold text-text';
           <h2 class={h2}>What does get requested</h2>
           <p>Being precise, because "nothing leaves your machine" deserves the fine print:</p>
           <ul class="mt-3 space-y-1.5">
-            <li>The page itself, its JavaScript, and the self-hosted fonts. All from this domain.</li>
+            <li>The page itself and its JavaScript, from this domain. No fonts are downloaded: the site uses your device's own system font. The one exception is the handwriting face for a typed signature in Sign PDF, also from this domain.</li>
             <li>
               For the video and audio tools, the ffmpeg WebAssembly engine (about 31 MB), also
               from this domain. It is cached after the first use.
@@ -215,6 +227,17 @@ const h2 = 'mb-2 text-sm font-semibold text-text';
             what you type into a tool, or its results. The script and its
             reports go to this same domain, so they show up in the Network tab next to
             everything else, where you can check exactly what they contain.
+          </p>
+        </section>
+
+        <section>
+          <h2 class={h2}>The feedback form</h2>
+          <p>
+            The Feedback page is the one form on this site. When you press Send, and only then,
+            what you typed goes to a Supabase database: the kind of feedback, the tool you picked,
+            your rating, your message, your role and a way to reach you if you filled them in,
+            the page language, and the page you came from. No files and no cookies. The public
+            can only add feedback, never read it; only the person who builds the site can.
           </p>
         </section>
 

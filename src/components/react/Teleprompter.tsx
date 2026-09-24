@@ -302,9 +302,9 @@ export default function Teleprompter({ locale = 'en' }: { locale?: Locale }) {
         </label>
         <p data-numeric className="mt-2 text-xs text-muted" aria-live="polite" data-testid="stats">
           {t.stats(script.words.length, clock(readingSeconds(script.words.length, settings.wpm)), settings.wpm)}
-          {script.sections.length > 0 && ` · ${t.sectionsCount(script.sections.length)}`}
-          {pauses > 0 && ` · ${t.pausesCount(pauses)}`}
-          {' · '}{t.savedHere}
+          {script.sections.length > 0 && `, ${t.sectionsCount(script.sections.length)}`}
+          {pauses > 0 && `, ${t.pausesCount(pauses)}`}
+          {', '}{t.savedHere}
         </p>
         <details className="mt-3 text-sm">
           <summary className="cursor-pointer text-xs font-medium text-muted hover:text-text">{t.formatHelp}</summary>

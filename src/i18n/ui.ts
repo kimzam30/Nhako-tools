@@ -9,7 +9,6 @@ import type { Locale } from './paths';
 const en = {
   skip: 'Skip to content',
   home: 'Nhako Tools, home',
-  runtimeTitle: 'Everything runs locally in your browser',
   mainNav: 'Main',
   switchLanguage: 'Bahasa Melayu',
   switchLanguageShort: 'BM',
@@ -34,9 +33,11 @@ const en = {
   heroSubtitle: 'Nothing uploads. Nothing waits.',
   heroBody: 'Every tool here works on your device. There is no upload step, so there is no queue, no file size cap and no daily limit, and no account to make.',
   searchAll: 'Search all tools',
+  popular: 'Popular with students',
+  jumpTo: 'Jump to a category',
+  jumpToGroup: 'Jump to a section',
   searchCount: (visible: number, total: number) => `${visible} of ${total} tools`,
   searchEmpty: 'No tool matches that. Try a different word: the search covers what each tool does, not just its name.',
-  readout: [['runtime', 'local'], ['uploaded', '0 bytes'], ['tools', 'ready'], ['queue', 'none'], ['account', 'not required']] as [string, string][],
 
   homeTitle: 'Nhako Tools: free PDF, image and video tools, no upload',
   homeDescription: (n: number) => `${n} PDF, image, calculator and developer tools that run entirely in your browser. No upload, no size limit, no account.`,
@@ -97,7 +98,6 @@ export type UiStrings = typeof en;
 const ms: UiStrings = {
   skip: 'Langkau ke kandungan',
   home: 'Nhako Tools, laman utama',
-  runtimeTitle: 'Semuanya berjalan dalam pelayar anda',
   mainNav: 'Utama',
   switchLanguage: 'English',
   switchLanguageShort: 'EN',
@@ -122,9 +122,11 @@ const ms: UiStrings = {
   heroSubtitle: 'Tiada muat naik. Tiada menunggu.',
   heroBody: 'Setiap alat di sini berfungsi pada peranti anda. Tiada langkah muat naik, jadi tiada giliran, tiada had saiz fail, tiada had harian dan tiada akaun perlu dibuat.',
   searchAll: 'Cari semua alat',
+  popular: 'Popular dalam kalangan pelajar',
+  jumpTo: 'Lompat ke kategori',
+  jumpToGroup: 'Lompat ke bahagian',
   searchCount: (visible, total) => `${visible} daripada ${total} alat`,
   searchEmpty: 'Tiada alat yang sepadan. Cuba perkataan lain: carian meliputi apa yang dilakukan setiap alat, bukan namanya sahaja.',
-  readout: [['runtime', 'tempatan'], ['dimuat naik', '0 bait'], ['alat', 'sedia'], ['giliran', 'tiada'], ['akaun', 'tidak perlu']],
 
   homeTitle: 'Nhako Tools: alat PDF, imej dan kalkulator percuma, tanpa muat naik',
   homeDescription: (n) => `${n} alat PDF, imej, kalkulator dan pembangun yang berjalan sepenuhnya dalam pelayar anda. Tiada muat naik, tiada had saiz, tiada akaun.`,

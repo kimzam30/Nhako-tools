@@ -39,6 +39,13 @@ const PAGES = [
   ['/malaysia', 'collection page'],
   ['/ms/image', 'Malay category page'],
   ['/ms/malaysia', 'Malay collection page'],
+  ['/feedback', 'feedback form'],
+  ['/ms/feedback', 'Malay feedback form'],
+  ['/about', 'about, with community and support'],
+  ['/calc/cgpa', 'CGPA calculator'],
+  ['/ms/calc/cgpa', 'Malay CGPA calculator'],
+  ['/pdf/n-up', 'print handouts'],
+  ['/pdf/to-powerpoint', 'PDF to PowerPoint'],
 ] as const;
 
 for (const [path, label] of PAGES) {

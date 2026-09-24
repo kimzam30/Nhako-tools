@@ -51,8 +51,8 @@ export const run: FileRun = async (files, opts, ctx) => {
     blob: bytesToBlob(await doc.save(), 'application/pdf'),
     filename: `${stem(file)}-cropped.pdf`,
     summary: say(
-      `${indices.length} page${indices.length === 1 ? '' : 's'} cropped · hidden content is still in the file`,
-      `${indices.length} halaman dipotong · kandungan tersembunyi masih ada dalam fail`,
+      `${indices.length} page${indices.length === 1 ? '' : 's'} cropped, hidden content is still in the file`,
+      `${indices.length} halaman dipotong, kandungan tersembunyi masih ada dalam fail`,
     ),
   };
 };

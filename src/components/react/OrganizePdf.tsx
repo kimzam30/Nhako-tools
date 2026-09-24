@@ -5,6 +5,7 @@ import { bytes } from '../../lib/format';
 import { filesBeforeHydration } from './hydration';
 import { useDragOrder, dragClass, DROP_GAP } from './drag-order';
 import type { Locale } from '../../i18n/paths';
+import { BusyLabel } from './NeraLoader';
 
 const TEXT = {
   en: {
@@ -241,7 +242,7 @@ export default function OrganizePdf({ locale = 'en', accept }: { locale?: Locale
             {t.restore}
           </button>
           <button type="button" onClick={reset} className="rounded border border-border px-3 py-1.5 text-sm text-muted hover:text-text">{t.reset}</button>
-          <button type="button" disabled={busy || items.length === 0} onClick={() => void save()} className="rounded bg-accent px-3 py-1.5 text-sm font-medium text-accent-on hover:bg-accent-hover disabled:opacity-50">{busy ? t.saving : t.save}</button>
+          <button type="button" disabled={busy || items.length === 0} onClick={() => void save()} className="rounded bg-accent px-3 py-1.5 text-sm font-medium text-accent-on hover:bg-accent-hover disabled:opacity-50">{busy ? <BusyLabel label={t.saving} /> : t.save}</button>
         </div>
       </div>
 
@@ -249,7 +250,7 @@ export default function OrganizePdf({ locale = 'en', accept }: { locale?: Locale
         {output && (
           <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3">
             <span className="text-ok" aria-hidden="true">✓</span>
-            <span data-numeric className="flex-1 text-sm">organized.pdf · {t.pages(items.length)} · {bytes(output.size)}</span>
+            <span data-numeric className="flex-1 text-sm">organized.pdf, {t.pages(items.length)}, {bytes(output.size)}</span>
             <a href={output.url} download="organized.pdf" className="rounded bg-accent px-3 py-1.5 text-sm font-medium text-accent-on hover:bg-accent-hover">{locale === 'ms' ? 'Simpan' : 'Save'}</a>
           </div>
         )}

@@ -1,7 +1,9 @@
 import type { FileToolResult } from '../../tools/types';
 import { bytes, duration } from '../../lib/format';
-import StatusMark from './StatusMark';
+import StatusMark, { Petals } from './StatusMark';
 import CopyButton from './CopyButton';
+import { COFFEE_URL } from '../../lib/community';
+import { community } from '../../i18n/community';
 import type { IslandStrings } from '../../i18n/island';
 
 /**
@@ -38,19 +40,20 @@ export function ResultBar({ done, name, onRename, onClear, t, idBase }: {
     done.result.summary,
     bytes(done.size),
     done.elapsed === undefined ? '' : duration(done.elapsed),
-  ].filter(Boolean).join(' · ');
+  ].filter(Boolean).join(', ');
 
   return (
     <div
       data-status="done"
-      className="relative flex flex-wrap items-center gap-x-4 gap-y-3 overflow-hidden rounded-lg border border-ok bg-ok-subtle px-4 py-3"
+      className="nera-done relative flex flex-wrap items-center gap-x-4 gap-y-3 overflow-hidden px-4 py-3"
     >
-      {/* Drawn, not printed. See motion.css "Result status" for why this is
-          the one thing on the critical path allowed to move. */}
+      {/* NeraOS: see nera.css for why the finish is the one moment on the
+          critical path that is allowed to move. */}
+      <Petals />
       <StatusMark kind="done" />
 
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-ok">{t.doneLabel}</p>
+        <p className="nera-title">{t.doneLabel}</p>
         <p data-numeric className="text-2xs text-muted">{facts}</p>
       </div>
 
@@ -110,7 +113,34 @@ export function ResultBar({ done, name, onRename, onClear, t, idBase }: {
           />
         </div>
       )}
+
+      <AfterDone />
     </div>
+  );
+}
+
+/**
+ * One line at the foot of every finished job, the moment someone has just been
+ * helped: where to say how it went, and where to chip in. The tool is worked
+ * out from the address, so no caller has to pass it and every bespoke app gets
+ * the same line for free.
+ */
+function AfterDone() {
+  const path = typeof location === 'undefined' ? '/' : location.pathname;
+  const ms = path === '/ms' || path.startsWith('/ms/');
+  const bare = ms ? path.slice(3) || '/' : path;
+  const tool = bare.split('/').filter(Boolean).slice(0, 2).join('/');
+  const c = community(ms ? 'ms' : 'en');
+  const q = new URLSearchParams({ kind: 'review', from: path });
+  if (tool.includes('/')) q.set('tool', tool);
+  const feedback = `${ms ? '/ms' : ''}/feedback?${q.toString()}`;
+  const link = 'underline decoration-border underline-offset-2 transition-colors hover:text-accent';
+  return (
+    <p data-after-done className="basis-full text-xs text-muted">
+      {c.afterDone}{' '}
+      <a className={link} href={feedback}>{c.afterDoneFeedback}</a>{' '}{c.afterDoneOr}{' '}
+      <a className={link} href={COFFEE_URL} rel="noopener noreferrer" target="_blank">{c.afterDoneCoffee}</a>.
+    </p>
   );
 }
 
@@ -119,10 +149,10 @@ export function ErrorBar({ message, onClear, t }: {
   message: string; onClear: () => void; t: IslandStrings;
 }) {
   return (
-    <div data-status="error" className="relative flex items-start gap-3 overflow-hidden rounded-lg border border-err bg-err-subtle px-4 py-3">
+    <div data-status="error" className="nera-done relative flex items-start gap-3 overflow-hidden px-4 py-3">
       <StatusMark kind="error" />
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-err">{t.errorLabel}</p>
+        <p className="nera-title text-err">{t.errorLabel}</p>
         {/* `data-status-message` is what the suite reads. The label above it is
             also .text-err, so a class-based selector picks the heading and
             never reaches what actually went wrong. */}

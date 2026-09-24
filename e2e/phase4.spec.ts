@@ -67,7 +67,7 @@ test.describe('OCR', () => {
     await expect(out).toBeVisible({ timeout: 90_000 });
     const text = (await out.inputValue()).toLowerCase();
     for (const w of ['quick', 'brown', 'lazy', 'selamat', 'pagi', 'terima', 'kasih', 'kerana', 'datang']) expect(text).toContain(w);
-    await expect(page.getByText(/\d+ words · \d+% confidence/)).toBeVisible();
+    await expect(page.getByText(/\d+ words, \d+% confidence/)).toBeVisible();
   });
 
   test('makes a scanned PDF searchable, with the text over the right words, even on a sideways page', async ({ page }) => {
@@ -216,7 +216,7 @@ test.describe('PDF to Word', () => {
   test('rebuilds headings, paragraphs and styles into a valid .docx', async ({ page }) => {
     await page.goto('/pdf/to-word');
     await page.locator('input[type=file]').setInputFiles({ name: 'laporan.pdf', mimeType: 'application/pdf', buffer: await samplePdf() });
-    await expect(page.getByText(/2 pages · \d+ paragraphs · 1 headings/)).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByText(/2 pages, \d+ paragraphs, 1 headings/)).toBeVisible({ timeout: 60_000 });
     const docx = await saved(page);
     const JSZip = (await import('jszip')).default;
     const xml = await (await JSZip.loadAsync(docx)).file('word/document.xml')!.async('string');

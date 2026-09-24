@@ -98,7 +98,7 @@ export const run: FileRun = async (files, opts, ctx) => {
     blob: bytesToBlob(bytes, 'application/pdf'),
     filename: baseName(file),
     summary: saved > 0
-      ? (ms ? `${Math.round((saved / original) * 100)}% lebih kecil · teks tidak lagi boleh dipilih` : `${Math.round((saved / original) * 100)}% smaller · text is no longer selectable`)
+      ? (ms ? `${Math.round((saved / original) * 100)}% lebih kecil, teks tidak lagi boleh dipilih` : `${Math.round((saved / original) * 100)}% smaller, text is no longer selectable`)
       : (ms ? 'Tidak lebih kecil daripada asal kerana PDF ini sudah cekap. Teks tidak lagi boleh dipilih.' : `No smaller than the original, because this PDF was already efficient. Text is no longer selectable.`),
   };
 };
@@ -152,8 +152,8 @@ async function toTarget(
     filename: baseName(file),
     summary: fit.fits
       ? (ms
-        ? `Di bawah ${label}: ${exactBytes(fit.blob.size)} · halaman kini imej ${dpi} dpi, teks tidak boleh dipilih`
-        : `Under ${label}: ${exactBytes(fit.blob.size)} · pages are now ${dpi} dpi images, text not selectable`)
+        ? `Di bawah ${label}: ${exactBytes(fit.blob.size)}, halaman kini imej ${dpi} dpi, teks tidak boleh dipilih`
+        : `Under ${label}: ${exactBytes(fit.blob.size)}, pages are now ${dpi} dpi images, text not selectable`)
       : (ms
         ? `Tidak dapat mencapai ${label} dan kekal boleh dibaca. Paling kecil: ${exactBytes(fit.blob.size)}. Cuba pisahkan PDF dahulu`
         : `Could not reach ${label} and stay readable. Smallest: ${exactBytes(fit.blob.size)}. Try splitting the PDF first`),

@@ -576,7 +576,7 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
 
       {recording && (
         <div className="absolute left-3 top-3 z-30 flex items-center gap-2 rounded-full bg-black/70 px-3 py-1.5 text-sm text-white" data-testid="rec-badge">
-          <span className="size-2.5 animate-pulse rounded-full bg-red-500" aria-hidden="true" />
+          <span className="size-2.5 animate-pulse bg-red-500" aria-hidden="true" />
           <span className="font-mono tabular-nums">{t.rec} {clock(elapsed)}</span>
         </div>
       )}

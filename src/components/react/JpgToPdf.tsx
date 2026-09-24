@@ -8,6 +8,7 @@ import { ResultBar, ErrorBar, type Finished } from './ResultBar';
 import { filesBeforeHydration } from './hydration';
 import { islandText } from '../../i18n/island';
 import type { Locale } from '../../i18n/paths';
+import { BusyLabel } from './NeraLoader';
 
 /**
  * JPG to PDF, where the order of the photos is the order of the document.
@@ -51,11 +52,17 @@ export default function JpgToPdf({ locale = 'en', accept, options }: {
   const t = TEXT[locale];
   const ui = islandText(locale);
 
-  const [items, setItems] = useState<Staged[]>(() => filesBeforeHydration(INPUT_ID).filter(isImage).map(stage));
+  // Same rule as `add` below for files picked before hydration: a non-image
+  // is named, not silently dropped. See the matching note in MergePdf.
+  const [early] = useState(() => filesBeforeHydration(INPUT_ID));
+  const [items, setItems] = useState<Staged[]>(() => early.filter(isImage).map(stage));
   const [values, setValues] = useState<OptionValues>(() => defaultOptions(options));
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<Finished | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(() => {
+    const bad = early.find((f) => !isImage(f));
+    return bad ? t.notImage(bad.name) : null;
+  });
   const [rename, setRename] = useState<string | null>(null);
   const [announce, setAnnounce] = useState('');
 
@@ -168,7 +175,7 @@ export default function JpgToPdf({ locale = 'en', accept, options }: {
               disabled={busy}
               className="rounded bg-accent px-3 py-1.5 text-sm font-medium text-accent-on transition-colors duration-[120ms] hover:bg-accent-hover disabled:opacity-50"
             >
-              {busy ? t.working : t.build}
+              {busy ? <BusyLabel label={t.working} /> : t.build}
             </button>
             <button type="button" onClick={clear} className="rounded border border-border px-3 py-1.5 text-sm text-muted transition-colors hover:border-border-strong hover:text-text">
               {ui.clear}

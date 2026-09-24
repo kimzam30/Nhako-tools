@@ -86,6 +86,32 @@ export const TOOLS: readonly ToolMeta[] = [
     limits: ['Cropping hides content; it does not delete it. The trimmed area is still inside the file, and some editors can reveal it. Do not rely on cropping to remove sensitive information.'],
     related: ['pdf/organize', 'pdf/compress', 'image/crop'],
   },
+  {
+    slug: 'remove-pages', category: 'pdf', name: 'Remove pages', kind: 'file', group: 'organise',
+    blurb: 'Delete the pages you list.',
+    description: 'Delete pages from a PDF in your browser: type the pages to drop, like 1, 4-6, and keep the rest in order. Lossless and nothing is uploaded.',
+    keywords: ['remove pages', 'delete pages', 'delete pdf pages', 'drop pages', 'buang halaman', 'padam halaman'],
+    accept: 'application/pdf,.pdf',
+    options: [
+      { kind: 'text', key: 'range', label: 'Pages to remove', default: '', placeholder: '1, 4-6', help: 'Page numbers or ranges, separated by commas.' },
+    ],
+    about: 'Removes exactly the pages you list and keeps every other page in its original order. Pages are not re-rendered, so nothing loses quality. To pick pages by looking at them instead, use Organize PDF.',
+    limits: ['At least one page has to stay.', 'Password-protected PDFs must be unlocked first.'],
+    related: ['pdf/extract-pages', 'pdf/organize', 'pdf/split'],
+  },
+  {
+    slug: 'extract-pages', category: 'pdf', name: 'Extract pages', kind: 'file', group: 'organise',
+    blurb: 'Copy the pages you list into a new PDF.',
+    description: 'Extract pages from a PDF into a new file in your browser, in the order you type them, like 5, 1-3. Lossless, and nothing is uploaded.',
+    keywords: ['extract pages', 'pull pages', 'save pages', 'select pages', 'copy pages', 'ambil halaman', 'ekstrak halaman'],
+    accept: 'application/pdf,.pdf',
+    options: [
+      { kind: 'text', key: 'range', label: 'Pages to extract', default: '', placeholder: '5, 1-3', help: 'In the order you want them. A page listed twice is kept once.' },
+    ],
+    about: 'Copies the pages you list into a new PDF in exactly the order you typed, so "5, 1-3" puts page 5 first. The original is untouched. To tick pages from a grid instead, or split every page into its own file, use Split PDF.',
+    limits: ['A page listed twice appears once, where it was first listed.', 'Password-protected PDFs must be unlocked first.'],
+    related: ['pdf/remove-pages', 'pdf/split', 'pdf/merge'],
+  },
 
   {
     slug: 'jpg-to-pdf', category: 'pdf', name: 'JPG to PDF', kind: 'app', group: 'convert', alsoIn: [{ category: 'image', group: 'convert' }],
@@ -152,6 +178,22 @@ export const TOOLS: readonly ToolMeta[] = [
     about: 'Reads each page\'s text with its position, size and font, rebuilds lines into paragraphs and headings the way you would read them, and writes a real .docx with bold, italic, fonts and page breaks. The result is text you can edit, not pictures of the pages.',
     limits: ['Images, tables, columns and colours are not carried over: this gets you the text and its structure, to edit or reuse. For an exact visual copy, keep the PDF.', 'Scanned PDFs have no text to convert. Run them through OCR PDF first.', 'Unusual layouts, like text in several columns or around pictures, may come out in the wrong order.'],
     related: ['pdf/office-to-pdf', 'pdf/ocr', 'pdf/to-text'],
+  },
+  {
+    slug: 'to-powerpoint', category: 'pdf', name: 'PDF to PowerPoint', kind: 'file', group: 'convert', heavy: true,
+    blurb: 'Turn PDF pages into editable slides.',
+    description: 'Convert PDF to PowerPoint (.pptx) in your browser. Every page becomes a slide that looks the same, with its text in editable boxes. No upload.',
+    keywords: ['pdf to powerpoint', 'pdf to pptx', 'pdf to ppt', 'slides', 'presentation', 'lecture slides', 'edit slides', 'pdf ke powerpoint'],
+    accept: 'application/pdf,.pdf',
+    options: [
+      { kind: 'select', key: 'mode', label: 'Slides', default: 'editable', choices: [
+        { value: 'editable', label: 'Editable text over the page' },
+        { value: 'picture', label: 'Pictures of the pages only' },
+      ], help: 'Editable keeps the look and lets you change the words. Pictures match exactly but cannot be edited.' },
+    ],
+    about: 'Each page is drawn twice: once as it is, and once without its words. The word-free picture becomes the slide, so every shape, photo and background stays exactly where it was, and the text goes back on top as real text boxes in the same place, size, font and colour.',
+    limits: ['Scanned pages have no text to make editable; they come through as pictures. Run the PDF through OCR PDF first.', 'Charts, shapes and photos are kept as part of the slide picture, not as separate editable objects.', 'Text keeps its position and style, but a font your computer lacks is replaced by a similar one.'],
+    related: ['pdf/to-word', 'pdf/office-to-pdf', 'pdf/n-up'],
   },
   {
     slug: 'to-text', category: 'pdf', name: 'PDF to text', kind: 'file', group: 'convert',
@@ -276,6 +318,47 @@ export const TOOLS: readonly ToolMeta[] = [
     ],
   },
   {
+    slug: 'n-up', category: 'pdf', name: 'Print handouts', kind: 'file', group: 'print',
+    blurb: 'Put 2, 4, 6 or 9 slides on each sheet.',
+    description: 'Print lecture slides several to a page: 2, 4, 6, 9 or 16 PDF pages on each A4 or Letter sheet, in your browser. Free, no upload.',
+    keywords: ['n-up', 'handouts', 'slides per page', 'multiple pages per sheet', 'print slides', 'lecture notes', 'pages per sheet', 'cetak slaid'],
+    accept: 'application/pdf,.pdf',
+    options: [
+      { kind: 'select', key: 'perSheet', label: 'Pages per sheet', default: '4', choices: [
+        { value: '2', label: '2' }, { value: '4', label: '4' }, { value: '6', label: '6' },
+        { value: '8', label: '8' }, { value: '9', label: '9' }, { value: '16', label: '16' },
+      ] },
+      { kind: 'select', key: 'paper', label: 'Paper', default: 'a4', choices: [{ value: 'a4', label: 'A4' }, { value: 'letter', label: 'US Letter' }] },
+      { kind: 'select', key: 'orientation', label: 'Sheet', default: 'auto', choices: [
+        { value: 'auto', label: 'Whichever fits larger' }, { value: 'portrait', label: 'Portrait' }, { value: 'landscape', label: 'Landscape' },
+      ] },
+      { kind: 'select', key: 'order', label: 'Order', default: 'across', choices: [
+        { value: 'across', label: 'Left to right, then down' }, { value: 'down', label: 'Top to bottom, then across' },
+      ] },
+      { kind: 'toggle', key: 'border', label: 'Frame each page', default: true },
+      { kind: 'text', key: 'range', label: 'Pages', default: '', placeholder: 'all, or 1-5, 8', help: 'Leave empty to include every page.' },
+    ],
+    about: 'Each page is scaled to fill its cell without changing shape and placed the way it displays, so a slide stored sideways still prints upright. Pages are embedded, not turned into pictures, so text stays sharp at any size.',
+    limits: ['Every sheet uses the layout that suits the first page. Pages of a different shape are still fitted into their cells.', 'Password-protected PDFs must be unlocked first.'],
+    related: ['pdf/grayscale', 'pdf/to-powerpoint', 'pdf/compress'],
+  },
+  {
+    slug: 'grayscale', category: 'pdf', name: 'Grayscale PDF', kind: 'file', group: 'print', heavy: true,
+    blurb: 'Turn every page black and white for printing.',
+    description: 'Convert a PDF to grayscale in your browser, for cheaper black-and-white printing at a print shop. Choose the pages and quality. No upload.',
+    keywords: ['grayscale', 'greyscale', 'black and white', 'b&w', 'monochrome', 'remove colour', 'print', 'hitam putih'],
+    accept: 'application/pdf,.pdf',
+    options: [
+      { kind: 'select', key: 'dpi', label: 'Quality', default: '150', choices: [
+        { value: '150', label: 'Standard (150 dpi)' }, { value: '300', label: 'High (300 dpi)' },
+      ], help: 'Standard is plenty for notes and slides. High suits small print and fine diagrams.' },
+      { kind: 'text', key: 'range', label: 'Pages', default: '', placeholder: 'all, or 1-5, 8', help: 'Leave empty to convert every page. Other pages stay in colour.' },
+    ],
+    about: 'Each chosen page is drawn, turned to shades of grey the way a monochrome printer sees it, and placed back at its original size. Pages you leave out are copied through untouched.',
+    limits: ['Converted pages become images, so their text is no longer selectable or searchable.', 'To keep the text, most printers can also print in black and white from the print dialog.', 'Password-protected PDFs must be unlocked first.'],
+    related: ['pdf/n-up', 'pdf/compress', 'pdf/to-image'],
+  },
+  {
     slug: 'protect', category: 'pdf', name: 'Protect PDF', kind: 'file', group: 'secure', heavy: true,
     blurb: 'Lock a PDF with a password.',
     description: 'Password-protect a PDF with AES-256 encryption in your browser, and optionally block printing or copying. The password never leaves your device.',
@@ -303,6 +386,16 @@ export const TOOLS: readonly ToolMeta[] = [
     about: 'Decrypts the file with qpdf, compiled to run in your browser, and saves a copy with no password and no restrictions.',
     limits: ['This does not crack passwords. You need the password that opens the file.', 'Only unlock files you have the right to use.'],
     related: ['pdf/protect', 'pdf/compress', 'pdf/merge'],
+  },
+  {
+    slug: 'repair', category: 'pdf', name: 'Repair PDF', kind: 'file', group: 'secure', heavy: true,
+    blurb: 'Fix a PDF that will not open.',
+    description: 'Repair a damaged or corrupted PDF in your browser: rebuild a broken structure from a cut-off download or a bad save. Free, nothing is uploaded.',
+    keywords: ['repair', 'fix', 'corrupt', 'corrupted', 'damaged', 'broken pdf', 'recover', 'will not open', 'baiki pdf'],
+    accept: 'application/pdf,.pdf',
+    about: 'Reads the file with qpdf, the standard open-source PDF tool, which rebuilds a broken cross-reference table and recovers every object it can find, then writes a clean copy. The copy is opened again with a second PDF reader before you get it, so a repair that does not open is never handed over.',
+    limits: ['A file with parts missing (a download cut off halfway) gets back only the pages that arrived.', 'Password-protected PDFs must be unlocked first.', 'The repair engine (about 1.3 MB) downloads from this site the first time it runs.'],
+    related: ['pdf/compress', 'pdf/unlock', 'pdf/organize'],
   },
 
   // ─── Media ────────────────────────────────────────────────────────────────
@@ -578,6 +671,16 @@ export const TOOLS: readonly ToolMeta[] = [
     about: 'Enter a monthly salary and your household, and get every statutory deduction with the employer\'s share alongside. EPF comes from the Third Schedule, SOCSO and EIS from PERKESO\'s tables, and PCB from LHDN\'s published formula, checked against LHDN\'s own worked example to the sen.',
     limits: ['For Malaysian citizens and permanent residents below 60 on a steady monthly salary. Different EPF and SOCSO rates apply from 60, and to foreign workers.', 'PCB is the regular monthly amount for a salary that stays the same all year. A bonus, a mid-year start or TP1 deductions change it, and your employer\'s payroll has the final figure.', 'PCB is a deduction toward your income tax, not the final bill. Your e-Filing return settles the year.'],
     related: ['image/passport-photo', 'pdf/compress', 'image/compress'],
+  },
+  {
+    slug: 'cgpa', category: 'calc', name: 'CGPA calculator', kind: 'app',
+    seoTitle: 'CGPA calculator Malaysia: GPA, CGPA and target planner | Nhako Tools',
+    blurb: 'Semester GPA, CGPA and the GPA you need next.',
+    description: 'Work out your semester GPA and CGPA on the 4.00 scale Malaysian universities use, and the GPA you need next semester to hit a target. Free.',
+    keywords: ['cgpa', 'gpa', 'pngk', 'png', 'grade point', 'university', 'universiti', 'semester', 'dean list', 'target cgpa', 'kira pngk'],
+    about: 'Enter this semester\'s courses with their credits and grades, and your CGPA and credits so far if you have them. The grade points start from Universiti Malaya\'s published table and can be changed to match your own university. Plan ahead gives the GPA you need next semester to reach a target CGPA.',
+    limits: ['Grade points differ between universities. Check your faculty handbook and edit the points if yours differ.', 'Courses graded pass or fail without points, and repeated courses, follow your university\'s own rules; leave them out here.'],
+    related: ['calc/take-home-pay', 'pdf/n-up', 'pdf/compress'],
   },
 
   // ─── Developer ────────────────────────────────────────────────────────────

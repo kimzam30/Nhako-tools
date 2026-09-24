@@ -12,6 +12,7 @@
 export const APPS: Record<string, () => Promise<unknown>> = {
   'image/passport-photo': () => import('./image/passport-photo'),
   'calc/take-home-pay': () => import('./calc/take-home'),
+  'calc/cgpa': () => import('./calc/cgpa'),
   'pdf/organize': () => import('./pdf/organize'),
   'pdf/sign': () => import('./pdf/sign'),
   'image/crop': () => import('./image/crop'),

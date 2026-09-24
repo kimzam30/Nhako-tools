@@ -103,7 +103,7 @@ export default function TeleprompterRemote({ locale = 'en' }: { locale?: Locale 
         {line}
         {connected && state && (
           <span className="ml-2 font-mono tabular-nums">
-            {state.playing ? t.playing : t.paused} · {state.wpm} {unit} · {t.left(clock(state.remaining))}
+            {state.playing ? t.playing : t.paused}, {state.wpm} {unit}, {t.left(clock(state.remaining))}
           </span>
         )}
       </p>
@@ -119,7 +119,7 @@ export default function TeleprompterRemote({ locale = 'en' }: { locale?: Locale 
       </button>
       <div className="grid grid-cols-3 gap-3">
         <button type="button" onClick={() => cmd('slower')} disabled={!connected} className={big} aria-label={`−10 ${unit}`}>−</button>
-        <span className="flex items-center justify-center font-mono text-lg tabular-nums" data-testid="rc-wpm">{state?.wpm ?? '·'}</span>
+        <span className="flex items-center justify-center font-mono text-lg tabular-nums" data-testid="rc-wpm">{state?.wpm ?? '--'}</span>
         <button type="button" onClick={() => cmd('faster')} disabled={!connected} className={big} aria-label={`+10 ${unit}`} data-testid="rc-faster">+</button>
         <button type="button" onClick={() => cmd('back')} disabled={!connected} className={big}>{t.back}</button>
         <button type="button" onClick={() => cmd('restart')} disabled={!connected} className={big}>{t.restart}</button>

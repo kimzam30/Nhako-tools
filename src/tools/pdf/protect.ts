@@ -55,6 +55,6 @@ export const run: FileRun = async (files, opts, ctx) => {
     blob: bytesToBlob(result.bytes, 'application/pdf'),
     filename: `${stem(file)}-protected.pdf`,
     summary: say('AES-256, password required to open', 'AES-256, kata laluan diperlukan untuk membuka')
-      + (denied.length ? say(` · blocks ${denied.join(', ')}`, ` · menyekat ${denied.join(', ')}`) : ''),
+      + (denied.length ? say(`, blocks ${denied.join(', ')}`, `, menyekat ${denied.join(', ')}`) : ''),
   };
 };

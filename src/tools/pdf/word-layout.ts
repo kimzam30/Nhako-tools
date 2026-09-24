@@ -32,7 +32,7 @@ export interface Block {
   runs: Run[];
 }
 
-interface Line { pieces: TextPiece[]; y: number; left: number; right: number; size: number }
+export interface Line { pieces: TextPiece[]; y: number; left: number; right: number; size: number }
 
 /** Group pieces sharing a baseline into lines, left to right. */
 export function toLines(pieces: TextPiece[]): Line[] {

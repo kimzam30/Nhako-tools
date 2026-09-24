@@ -28,6 +28,12 @@ export const LOADERS: Record<string, () => Promise<ToolModule>> = {
   'pdf/ocr': () => import('./pdf/ocr'),
   'pdf/to-word': () => import('./pdf/to-word'),
   'pdf/office-to-pdf': () => import('./pdf/office-to-pdf'),
+  'pdf/remove-pages': () => import('./pdf/remove-pages'),
+  'pdf/extract-pages': () => import('./pdf/extract-pages'),
+  'pdf/n-up': () => import('./pdf/n-up'),
+  'pdf/grayscale': () => import('./pdf/grayscale'),
+  'pdf/repair': () => import('./pdf/repair'),
+  'pdf/to-powerpoint': () => import('./pdf/to-powerpoint'),
 
   'media/compress-video': () => import('./media/compress-video'),
   'media/extract-audio': () => import('./media/extract-audio'),

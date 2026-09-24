@@ -33,6 +33,11 @@ export const MALAYSIA: readonly CollectionEntry[] = [
     contextMs: 'Gaji bersih selepas KWSP, PERKESO, SIP dan PCB, menggunakan kadar rasmi tahun ini.',
   },
   {
+    tool: 'calc/cgpa',
+    context: 'GPA, CGPA and the GPA you need next, on Universiti Malaya\'s published 4.00 scale.',
+    contextMs: 'PNG, PNGK dan PNG yang anda perlukan seterusnya, pada skala 4.00 terbitan Universiti Malaya.',
+  },
+  {
     tool: 'pdf/compress', variant: '500kb',
     context: 'The 500 KB ceiling that SSM, LHDN, JPA and UPU portals impose on an upload.',
     contextMs: 'Had 500 KB yang dikenakan oleh portal SSM, LHDN, JPA dan UPU pada muat naik.',

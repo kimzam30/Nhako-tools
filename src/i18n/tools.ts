@@ -58,7 +58,8 @@ const GROUP_MS: Record<string, string> = {
   'pdf/convert': 'Tukar ke dan dari PDF',
   'pdf/mark-up': 'Sunting dan tandatangan',
   'pdf/shrink': 'Kecilkan saiz fail',
-  'pdf/secure': 'Kata laluan dan kebenaran',
+  'pdf/print': 'Cetak',
+  'pdf/secure': 'Kata laluan dan pembaikan',
   'image/shrink': 'Kecilkan saiz fail',
   'image/convert': 'Tukar format',
   'image/transform': 'Ubah saiz, potong dan putar',
@@ -141,6 +142,21 @@ export const MS: Record<string, ToolText> = {
     options: {
       format: { label: 'Format', choices: { jpg: 'JPG', png: 'PNG' } },
       scale: { label: 'Resolusi', choices: { '1': '72 dpi, skrin', '2': '144 dpi, lalai', '3': '216 dpi, cetakan' } },
+    },
+  },
+  'pdf/to-powerpoint': {
+    name: 'PDF ke PowerPoint',
+    blurb: 'Tukar halaman PDF menjadi slaid boleh disunting.',
+    description: 'Tukar PDF ke PowerPoint (.pptx) dalam pelayar anda. Setiap halaman menjadi slaid yang kelihatan sama, dengan teks dalam kotak boleh disunting.',
+    keywords: ['pdf ke powerpoint', 'pdf ke pptx', 'pdf ke ppt', 'slaid', 'pembentangan', 'slaid kuliah'],
+    about: 'Setiap halaman dilukis dua kali: sekali seperti asal, dan sekali tanpa perkataannya. Gambar tanpa perkataan menjadi slaid, jadi setiap bentuk, foto dan latar kekal di tempatnya, dan teks diletakkan semula di atas sebagai kotak teks sebenar pada kedudukan, saiz, fon dan warna yang sama.',
+    limits: ['Halaman imbasan tiada teks untuk disunting; ia dikekalkan sebagai gambar. Jalankan PDF melalui OCR PDF dahulu.', 'Carta, bentuk dan foto dikekalkan sebagai sebahagian gambar slaid, bukan objek berasingan yang boleh disunting.', 'Teks mengekalkan kedudukan dan gayanya, tetapi fon yang tiada pada komputer anda diganti dengan fon yang serupa.'],
+    options: {
+      mode: {
+        label: 'Slaid',
+        help: 'Boleh disunting mengekalkan rupa dan membolehkan anda menukar perkataan. Gambar sepadan sepenuhnya tetapi tidak boleh disunting.',
+        choices: { editable: 'Teks boleh disunting di atas halaman', picture: 'Gambar halaman sahaja' },
+      },
     },
   },
   'pdf/to-text': {
@@ -256,6 +272,28 @@ export const MS: Record<string, ToolText> = {
     about: 'Membaca teks setiap halaman bersama kedudukan, saiz dan fonnya, membina semula baris menjadi perenggan dan tajuk seperti anda membacanya, dan menulis .docx sebenar dengan tebal, condong, fon dan pemisah halaman. Hasilnya teks yang boleh disunting, bukan gambar halaman.',
     limits: ['Imej, jadual, lajur dan warna tidak dibawa: ini memberi anda teks dan strukturnya, untuk disunting atau digunakan semula. Untuk salinan visual yang tepat, simpan PDF itu.', 'PDF imbasan tiada teks untuk ditukar. Jalankan melalui OCR PDF dahulu.', 'Susun atur luar biasa, seperti teks dalam beberapa lajur atau di sekeliling gambar, mungkin keluar dalam susunan yang salah.'],
   },
+  'pdf/remove-pages': {
+    name: 'Buang halaman',
+    blurb: 'Padam halaman yang anda senaraikan.',
+    description: 'Padam halaman daripada PDF dalam pelayar anda: taip halaman untuk dibuang, seperti 1, 4-6, dan baki kekal mengikut susunan. Tiada muat naik.',
+    keywords: ['buang halaman', 'padam halaman', 'hapus halaman pdf', 'keluarkan halaman'],
+    about: 'Membuang tepat halaman yang anda senaraikan dan mengekalkan setiap halaman lain mengikut susunan asal. Halaman tidak dilukis semula, jadi kualitinya tidak terjejas. Untuk memilih halaman dengan melihatnya, gunakan Susun PDF.',
+    limits: ['Sekurang-kurangnya satu halaman mesti kekal.', 'PDF yang dilindungi kata laluan perlu dibuka kuncinya dahulu.'],
+    options: {
+      range: { label: 'Halaman untuk dibuang', placeholder: '1, 4-6', help: 'Nombor halaman atau julat, dipisahkan dengan koma.' },
+    },
+  },
+  'pdf/extract-pages': {
+    name: 'Ekstrak halaman',
+    blurb: 'Salin halaman yang anda senaraikan ke PDF baharu.',
+    description: 'Ekstrak halaman PDF ke fail baharu dalam pelayar anda, mengikut susunan yang anda taip, seperti 5, 1-3. Tanpa kehilangan kualiti, tiada muat naik.',
+    keywords: ['ekstrak halaman', 'ambil halaman', 'simpan halaman', 'pilih halaman'],
+    about: 'Menyalin halaman yang anda senaraikan ke PDF baharu tepat mengikut susunan yang anda taip, jadi "5, 1-3" meletakkan halaman 5 dahulu. Fail asal tidak diubah. Untuk menanda halaman daripada grid, atau memisahkan setiap halaman, gunakan Pisah PDF.',
+    limits: ['Halaman yang disenaraikan dua kali muncul sekali, di tempat ia mula-mula disenaraikan.', 'PDF yang dilindungi kata laluan perlu dibuka kuncinya dahulu.'],
+    options: {
+      range: { label: 'Halaman untuk diekstrak', placeholder: '5, 1-3', help: 'Mengikut susunan yang anda mahu. Halaman yang disenaraikan dua kali disimpan sekali.' },
+    },
+  },
   'pdf/office-to-pdf': {
     name: 'Office ke PDF',
     seoTitle: 'Word, Excel, PowerPoint ke PDF dalam talian, percuma, tanpa muat naik | Nhako Tools',
@@ -302,6 +340,43 @@ export const MS: Record<string, ToolText> = {
     options: {
       password: { label: 'Kata laluan', help: 'Biarkan kosong jika fail dibuka tanpa kata laluan dan anda hanya mahu membuang sekatannya.' },
     },
+  },
+
+  'pdf/n-up': {
+    name: 'Cetak nota edaran',
+    blurb: 'Letak 2, 4, 6 atau 9 slaid pada setiap helaian.',
+    description: 'Cetak slaid kuliah beberapa pada satu halaman: 2, 4, 6, 9 atau 16 halaman PDF pada setiap helaian A4 atau Letter, dalam pelayar anda. Percuma.',
+    keywords: ['cetak slaid', 'nota edaran', 'slaid setiap halaman', 'banyak halaman satu helaian', 'nota kuliah'],
+    about: 'Setiap halaman diskalakan untuk memenuhi selnya tanpa mengubah bentuk dan diletakkan seperti yang dipaparkan, jadi slaid yang disimpan menyiring tetap dicetak tegak. Halaman dibenamkan, bukan ditukar menjadi gambar, jadi teks kekal tajam pada sebarang saiz.',
+    limits: ['Setiap helaian menggunakan susun atur yang sesuai dengan halaman pertama. Halaman berbentuk lain tetap dimuatkan dalam selnya.', 'PDF yang dilindungi kata laluan perlu dibuka kuncinya dahulu.'],
+    options: {
+      perSheet: { label: 'Halaman setiap helaian', choices: { '2': '2', '4': '4', '6': '6', '8': '8', '9': '9', '16': '16' } },
+      paper: { label: 'Kertas', choices: { a4: 'A4', letter: 'US Letter' } },
+      orientation: { label: 'Helaian', choices: { auto: 'Mana-mana yang memuatkan lebih besar', portrait: 'Potret', landscape: 'Landskap' } },
+      order: { label: 'Susunan', choices: { across: 'Kiri ke kanan, kemudian ke bawah', down: 'Atas ke bawah, kemudian melintang' } },
+      border: { label: 'Bingkai setiap halaman' },
+      range: { label: 'Halaman', placeholder: 'semua, atau 1-5, 8', help: 'Biarkan kosong untuk memasukkan setiap halaman.' },
+    },
+  },
+  'pdf/grayscale': {
+    name: 'PDF skala kelabu',
+    blurb: 'Jadikan setiap halaman hitam putih untuk dicetak.',
+    description: 'Tukar PDF kepada skala kelabu dalam pelayar anda, untuk cetakan hitam putih yang lebih murah di kedai cetak. Pilih halaman dan kualiti. Tiada muat naik.',
+    keywords: ['skala kelabu', 'hitam putih', 'monokrom', 'buang warna', 'cetak'],
+    about: 'Setiap halaman yang dipilih dilukis, ditukar kepada rona kelabu seperti yang dilihat pencetak monokrom, dan diletakkan semula pada saiz asal. Halaman yang tidak dipilih disalin tanpa diubah.',
+    limits: ['Halaman yang ditukar menjadi imej, jadi teksnya tidak lagi boleh dipilih atau dicari.', 'Untuk mengekalkan teks, kebanyakan pencetak juga boleh mencetak hitam putih daripada dialog cetak.', 'PDF yang dilindungi kata laluan perlu dibuka kuncinya dahulu.'],
+    options: {
+      dpi: { label: 'Kualiti', help: 'Standard sudah memadai untuk nota dan slaid. Tinggi sesuai untuk tulisan kecil dan rajah halus.', choices: { '150': 'Standard (150 dpi)', '300': 'Tinggi (300 dpi)' } },
+      range: { label: 'Halaman', placeholder: 'semua, atau 1-5, 8', help: 'Biarkan kosong untuk menukar setiap halaman. Halaman lain kekal berwarna.' },
+    },
+  },
+  'pdf/repair': {
+    name: 'Baiki PDF',
+    blurb: 'Betulkan PDF yang tidak mahu dibuka.',
+    description: 'Baiki PDF yang rosak dalam pelayar anda: bina semula struktur yang pecah akibat muat turun terputus atau simpanan yang gagal. Percuma, tiada muat naik.',
+    keywords: ['baiki pdf', 'pdf rosak', 'betulkan pdf', 'pulihkan pdf', 'tidak boleh dibuka'],
+    about: 'Membaca fail dengan qpdf, alat PDF sumber terbuka yang standard, yang membina semula jadual rujukan silang yang rosak dan memulihkan setiap objek yang ditemui, kemudian menulis salinan yang bersih. Salinan itu dibuka semula dengan pembaca PDF kedua sebelum diberikan kepada anda.',
+    limits: ['Fail yang kehilangan bahagian (muat turun terputus di tengah jalan) hanya mendapat semula halaman yang sempat tiba.', 'PDF yang dilindungi kata laluan perlu dibuka kuncinya dahulu.', 'Enjin pembaikan (kira-kira 1.3 MB) dimuat turun dari laman ini kali pertama ia berjalan.'],
   },
 
   // ─── Image ────────────────────────────────────────────────────────────────
@@ -464,6 +539,15 @@ export const MS: Record<string, ToolText> = {
     keywords: ['kalkulator gaji', 'gaji bersih', 'potongan gaji', 'kira gaji', 'caruman kwsp', 'caruman perkeso', 'potongan cukai bulanan', 'slip gaji'],
     about: 'Masukkan gaji bulanan dan maklumat isi rumah anda, dan dapatkan setiap potongan berkanun berserta caruman majikan. KWSP daripada Jadual Ketiga, PERKESO dan SIP daripada jadual PERKESO, dan PCB daripada formula yang diterbitkan LHDN, disemak dengan contoh pengiraan LHDN sendiri hingga ke sen.',
     limits: ['Untuk warganegara dan penduduk tetap Malaysia bawah 60 tahun dengan gaji bulanan yang tetap. Kadar KWSP dan PERKESO berbeza dari umur 60 dan untuk pekerja asing.', 'PCB ialah jumlah bulanan biasa untuk gaji yang sama sepanjang tahun. Bonus, mula bekerja pertengahan tahun atau potongan TP1 mengubahnya, dan sistem gaji majikan anda mempunyai angka muktamad.', 'PCB ialah potongan ke arah cukai pendapatan anda, bukan bil akhir. Borang e-Filing anda menyelesaikan tahun tersebut.'],
+  },
+  'calc/cgpa': {
+    name: 'Kalkulator PNGK',
+    seoTitle: 'Kalkulator PNGK: kira PNG, PNGK dan sasaran semester | Nhako Tools',
+    blurb: 'PNG semester, PNGK dan PNG yang anda perlukan seterusnya.',
+    description: 'Kira PNG semester dan PNGK anda pada skala 4.00 yang digunakan universiti Malaysia, serta PNG yang diperlukan untuk mencapai sasaran. Percuma.',
+    keywords: ['pngk', 'png', 'cgpa', 'gpa', 'kira pngk', 'mata gred', 'universiti', 'semester', 'senarai dekan'],
+    about: 'Masukkan kursus semester ini dengan kredit dan gred, serta PNGK dan kredit anda setakat ini jika ada. Mata gred bermula daripada jadual terbitan Universiti Malaya dan boleh diubah mengikut universiti anda. Rancang ke hadapan memberi PNG yang diperlukan semester depan untuk mencapai PNGK sasaran.',
+    limits: ['Mata gred berbeza antara universiti. Semak buku panduan fakulti anda dan ubah mata jika berbeza.', 'Kursus lulus atau gagal tanpa mata, dan kursus yang diulang, mengikut peraturan universiti anda sendiri; tinggalkannya di sini.'],
   },
 
   // ─── Media ────────────────────────────────────────────────────────────────

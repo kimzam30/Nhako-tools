@@ -1,6 +1,6 @@
 # Nhako Tools
 
-36 utilities for PDFs, images, calculations, media and code, all of which run on your device.
+50 utilities for PDFs, images, calculations, media and code, all of which run on your device.
 In English and Bahasa Melayu ([tools.nhako.com/ms](https://tools.nhako.com/ms)).
 
 **Live at [tools.nhako.com](https://tools.nhako.com)**
@@ -52,6 +52,12 @@ your file never appears in it.
 | [Office to PDF](https://tools.nhako.com/pdf/office-to-pdf) | [Word](https://tools.nhako.com/pdf/office-to-pdf/word), [Excel](https://tools.nhako.com/pdf/office-to-pdf/excel) and [PowerPoint](https://tools.nhako.com/pdf/office-to-pdf/powerpoint) to PDF with LibreOffice compiled to WebAssembly |
 | [Scan to PDF](https://tools.nhako.com/pdf/scan) | Phone photos to a PDF: page found, straightened, shadows lifted |
 | [OCR PDF](https://tools.nhako.com/pdf/ocr) | Makes a scanned PDF searchable in English and Malay, laying invisible text over the untouched pages |
+| [Remove pages](https://tools.nhako.com/pdf/remove-pages) | Delete the pages you list, keep the rest in order, losslessly |
+| [Extract pages](https://tools.nhako.com/pdf/extract-pages) | Copy the pages you list into a new PDF, in the order typed |
+| [PDF to PowerPoint](https://tools.nhako.com/pdf/to-powerpoint) | One slide per page: the page's graphics as the picture, its text back on top in editable boxes |
+| [Print handouts](https://tools.nhako.com/pdf/n-up) | 2, 4, 6, 8, 9 or 16 pages per A4 or Letter sheet, upright even for sideways pages |
+| [Grayscale PDF](https://tools.nhako.com/pdf/grayscale) | Black and white for cheaper printing, at 150 or 300 dpi, chosen pages only |
+| [Repair PDF](https://tools.nhako.com/pdf/repair) | Rebuilds a broken cross-reference with qpdf, falls back to an object-by-object rebuild, and checks the result opens |
 
 ### Media `/media/*`
 
@@ -83,6 +89,7 @@ your file never appears in it.
 | Tool | What it does |
 |---|---|
 | [Salary (Malaysia)](https://tools.nhako.com/calc/take-home-pay) | Take-home pay after EPF, SOCSO (with LINDUNG 24 Jam), EIS and PCB, from the official 2026 tables |
+| [CGPA calculator](https://tools.nhako.com/calc/cgpa) | Semester GPA, CGPA and the GPA needed for a target, on Universiti Malaya's published 4.00 scale, editable per university |
 
 ### Developer `/dev/*`
 
@@ -153,8 +160,12 @@ Things this project does **not** do, stated here rather than discovered later:
   if that free project is paused, the remote stops but everything else keeps working.
 - **Voice-follow is only as good as the browser's speech recognition**, and in Chrome and
   Edge it sends your voice to Google while listening. It is opt-in and never remembered as on.
-- **Tool summaries and errors in the older tools are still English on /ms pages.**
-  Everything around them is translated, and the Phase 1 tools are fully bilingual.
+- **Grayscale PDF turns converted pages into pictures**, so their text stops being
+  selectable. Most printers can also print in black and white from the print dialog.
+- **PDF to PowerPoint keeps charts and photos as part of the slide picture**, not as
+  separate objects; only the text becomes editable. Scanned pages have no text to lift.
+- **The CGPA calculator starts from Universiti Malaya's grade points.** Other
+  universities differ slightly (a D+ can be 1.30 or 1.33), so every point is editable.
 - **File size is bounded by your device's memory.** No upload cap, but no server's RAM
   either.
 
@@ -173,7 +184,7 @@ File System, on the device only.
 
 What the browser does request:
 
-- The page, its JavaScript, and the self-hosted fonts, all from this domain.
+- The page and its JavaScript, from this domain. No web fonts: the site uses the system font (San Francisco on Apple devices). Sign PDF alone loads a handwriting face, for typed signatures.
 - For the media tools, the ffmpeg WebAssembly core (~31 MB), also from this domain,
   cached after first use.
 - For `Audio to text`, the ONNX runtime (~10 MB) from this domain, and the Whisper
@@ -313,6 +324,11 @@ stays legible at 16 px. `npm run icons` rasterises every other size from it.
 The visual system and the reasoning behind it live in
 [`.design/nhako-tools-rebuild/`](.design/nhako-tools-rebuild/), covering the brief,
 information architecture, and screenshots.
+
+One typeface, San Francisco, the iOS system font. Apple licenses SF Pro only for
+Apple-platform mock-ups, so it is reached through the system font stack rather than
+served: it is SF on iPhone, iPad and Mac, and each other device's own interface face
+elsewhere. No web font is downloaded; a token test fails the build on any import.
 
 `#FF91E7` is the Nhako brand accent. It is pale, so it cannot carry text on a light
 background (white on it is 2.01:1, well under the 4.5:1 AA threshold). It is kept as

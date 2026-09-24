@@ -2,10 +2,13 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { TOOLS } from '../tools/registry';
 import { localePath, ui, type Locale } from '../i18n';
+import { community } from '../i18n/community';
+import CoffeeButton from '../components/astro/CoffeeButton.astro';
 
 interface Props { locale: Locale }
 const { locale } = Astro.props;
 const t = ui(locale);
+const c = community(locale);
 const privacy = localePath(locale, '/privacy');
 const link = 'text-accent underline underline-offset-2';
 const repo = 'https://github.com/kimzam30/Nhako-tools';
@@ -18,7 +21,7 @@ const repo = 'https://github.com/kimzam30/Nhako-tools';
   path="/about"
   locale={locale}
 >
-  <div class="mx-auto max-w-2xl px-4 py-12 sm:px-6">
+  <div class="mx-auto max-w-3xl px-4 py-12 sm:px-6">
     <h1 class="text-2xl font-bold tracking-tight">{t.about}</h1>
 
     {locale === 'ms' ? (
@@ -75,5 +78,18 @@ const repo = 'https://github.com/kimzam30/Nhako-tools';
         </p>
       </div>
     )}
+
+    <section class="mt-10 grid gap-6 border-t border-border pt-8 sm:grid-cols-2">
+      <div>
+        <h2 class="mb-2 text-sm font-semibold">{c.community}</h2>
+        <p class="mb-4 text-sm leading-relaxed text-muted">{c.communityBody}</p>
+        <a href={localePath(locale, '/feedback')} class="inline-block rounded bg-accent px-4 py-2 text-sm font-semibold text-accent-on transition-colors hover:bg-accent-hover pointer-coarse:min-h-11">{c.giveFeedback}</a>
+      </div>
+      <div>
+        <h2 class="mb-2 text-sm font-semibold">{c.supportTitle}</h2>
+        <p class="mb-4 text-sm leading-relaxed text-muted">{c.supportBody}</p>
+        <CoffeeButton locale={locale} />
+      </div>
+    </section>
   </div>
 </BaseLayout>

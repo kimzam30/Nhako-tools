@@ -3,6 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import FileToolRunner from '../components/react/FileToolRunner';
 import TextToolPane from '../components/react/TextToolPane';
 import SalaryCalculator from '../components/react/SalaryCalculator';
+import CgpaCalculator from '../components/react/CgpaCalculator';
 import PhotoMaker from '../components/react/PhotoMaker';
 import OrganizePdf from '../components/react/OrganizePdf';
 import MergePdf from '../components/react/MergePdf';
@@ -14,7 +15,8 @@ import Teleprompter from '../components/react/Teleprompter';
 import ScanToPdf from '../components/react/ScanToPdf';
 import { TOOLS_BY_ID } from '../tools/registry';
 import { toolId, type ToolMeta, type ToolVariant } from '../tools/types';
-import { SOURCES } from '../tools/calc/payroll-my';
+import { SOURCES as PAYROLL_SOURCES } from '../tools/calc/payroll-my';
+import { SOURCES as GRADE_SOURCES } from '../tools/calc/cgpa';
 import { LANG, categoryLabel, localizeTool, localePath, ui, type Locale } from '../i18n';
 
 interface Props {
@@ -76,7 +78,7 @@ const jsonLd = {
       '@type': 'SoftwareApplication',
       name,
       url: abs(path),
-      applicationCategory: tool.category === 'calc' ? 'FinanceApplication' : 'UtilitiesApplication',
+      applicationCategory: id === 'calc/take-home-pay' ? 'FinanceApplication' : id === 'calc/cgpa' ? 'EducationalApplication' : 'UtilitiesApplication',
       operatingSystem: 'Any browser',
       inLanguage: LANG[locale],
       description,
@@ -120,7 +122,7 @@ const filePane = tool.kind === 'file';
    at a glance, and the teleprompter's script and settings stop fitting side
    by side. Their prose is capped below, because 6xl is far past a comfortable
    line length. */
-const wideApp = isApp && ['media/teleprompter', 'pdf/merge', 'pdf/split', 'pdf/jpg-to-pdf', 'pdf/organize'].includes(id);
+const wideApp = isApp && ['media/teleprompter', 'pdf/merge', 'pdf/split', 'pdf/jpg-to-pdf', 'pdf/organize', 'calc/cgpa'].includes(id);
 /** Full-width shell with the prose capped and placed underneath. */
 const wide = wideApp || filePane;
 ---
@@ -135,7 +137,7 @@ const wide = wideApp || filePane;
   jsonLd={jsonLd}
   category={tool.category}
 >
-  <div class:list={['mx-auto px-4 py-10 sm:px-6', isApp && !wideApp ? 'max-w-3xl' : 'max-w-6xl']}>
+  <div class="mx-auto max-w-6xl px-4 py-10 sm:px-6">
     <nav aria-label={t.breadcrumb} class="mb-6 text-2xs text-muted">
       <a href={href('/')} class="transition-colors hover:text-accent">{t.breadcrumbTools}</a>
       <span aria-hidden="true"> / </span>
@@ -156,7 +158,14 @@ const wide = wideApp || filePane;
     {/* The tool sits above the fold, and on a wide screen the prose sits beside
         it rather than below. Most tool sites invert this and make you scroll
         past marketing to reach the thing. Stacked, the tool still comes first. */}
-    <div class:list={[!isApp && !filePane && 'lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start lg:gap-12']}>
+    {/* Narrow apps (passport photo, salary, sign, crop, scan) used to sit in
+        a centred 3xl column that lined up with nothing above it, prose
+        trailing underneath. They now keep their 46rem working width on the
+        site's left edge, with the prose beside them like every other tool. */}
+    <div class:list={[
+      !isApp && !filePane && 'lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start lg:gap-12',
+      isApp && !wideApp && 'lg:grid lg:grid-cols-[minmax(0,46rem)_minmax(0,1fr)] lg:items-start lg:gap-12',
+    ]}>
     <div>
     {tool.kind === 'file' && (
       <FileToolRunner client:load tool={runnerTool} locale={locale} initialOptions={variant?.defaults} />
@@ -165,6 +174,7 @@ const wide = wideApp || filePane;
       <TextToolPane client:load tool={{ ...runnerTool, kind: tool.kind, generator: tool.generator }} locale={locale} />
     )}
     {id === 'calc/take-home-pay' && <SalaryCalculator client:load locale={locale} />}
+    {id === 'calc/cgpa' && <CgpaCalculator client:load locale={locale} />}
     {id === 'image/passport-photo' && <PhotoMaker client:load locale={locale} accept={tool.accept ?? 'image/*'} />}
     {id === 'pdf/organize' && <OrganizePdf client:load locale={locale} accept={tool.accept ?? '.pdf'} />}
     {id === 'pdf/merge' && <MergePdf client:load locale={locale} accept={tool.accept ?? '.pdf'} />}
@@ -178,13 +188,16 @@ const wide = wideApp || filePane;
 
     <div
       class:list={[
-        'mt-10 space-y-8',
+        'mt-10 [&>section]:mb-8 [&>section:last-child]:mb-0',
         // Stacked, the prose needs clear air above it; beside the tool it needs
         // none, because the column edge already separates them. There used to
         // be a rule here as well, removed with the rest of the section rules.
-        !isApp && !filePane && 'lg:mt-0',
-        // Prose under a 6xl shell would run to ~1100px a line. Cap the measure.
-        wide && 'max-w-3xl',
+        !wide && 'lg:mt-0',
+        // Prose under a 6xl shell would run to ~1100px a line. It used to be
+        // capped at 3xl, which left the right third of every wide page empty
+        // (flagged 2026-09-25). Two balanced columns keep the measure near
+        // 540px and use the width; sections never split across the columns.
+        wide && 'lg:columns-2 lg:gap-12 [&>section]:break-inside-avoid',
       ]}
     >
       {(variant?.about || tool.about) && (
@@ -200,7 +213,7 @@ const wide = wideApp || filePane;
           <h2 class="mb-2 text-sm font-semibold">{t.limits}</h2>
           <ul class="space-y-1.5">
             {tool.limits.map((limit) => (
-              <li class="relative pl-4 text-sm leading-relaxed text-muted before:absolute before:left-0 before:top-[0.6em] before:size-1 before:rounded-full before:bg-border-strong">
+              <li class="relative pl-4 text-sm leading-relaxed text-muted before:absolute before:left-0 before:top-[0.8em] before:h-px before:w-2 before:bg-border-strong">
                 {limit}
               </li>
             ))}
@@ -212,10 +225,10 @@ const wide = wideApp || filePane;
         <section data-reveal>
           <h2 class="mb-2 text-sm font-semibold">{t.sources}</h2>
           <ul class="space-y-1.5">
-            {Object.values(SOURCES).map((s) => (
+            {Object.values(id === 'calc/cgpa' ? GRADE_SOURCES : PAYROLL_SOURCES).map((s) => (
               <li class="text-sm leading-relaxed text-muted">
                 <a class="underline decoration-border underline-offset-2 transition-colors hover:text-accent" href={s.url} rel="noopener noreferrer">{s.title}</a>
-                <span data-numeric class="text-2xs"> · {t.checkedOn(s.checked)}</span>
+                <span data-numeric class="text-2xs">, {t.checkedOn(s.checked)}</span>
               </li>
             ))}
           </ul>

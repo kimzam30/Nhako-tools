@@ -5,6 +5,7 @@ import { openForPreview, renderPage, type RenderedPage } from '../../lib/pdf-ren
 import { bytes } from '../../lib/format';
 import { filesBeforeHydration } from './hydration';
 import type { Locale } from '../../i18n/paths';
+import { BusyLabel } from './NeraLoader';
 
 const TEXT = {
   en: {
@@ -228,7 +229,7 @@ export default function SignPdf({ locale = 'en', accept }: { locale?: Locale; ac
     const c = document.createElement('canvas');
     c.width = 520; c.height = 110;
     const ctx = c.getContext('2d')!;
-    ctx.font = '600 64px system-ui, -apple-system, "Segoe UI", sans-serif';
+    ctx.font = '600 64px -apple-system, BlinkMacSystemFont, system-ui, sans-serif';
     ctx.fillStyle = INK[ink];
     ctx.textBaseline = 'middle';
     ctx.fillText(text, 10, 55);
@@ -396,7 +397,7 @@ export default function SignPdf({ locale = 'en', accept }: { locale?: Locale; ac
             : <span className="text-xs text-muted">{t.nothing}</span>}
           <button type="button" onClick={() => void addDate()} className="rounded border border-border px-2.5 py-1 text-xs text-muted hover:text-text">{t.addDate}</button>
           <span data-numeric className="text-2xs text-muted">{t.placed(placed.length)}</span>
-          <button type="button" disabled={busy || placed.length === 0} onClick={() => void save()} className="ml-auto rounded bg-accent px-3 py-1.5 text-sm font-medium text-accent-on hover:bg-accent-hover disabled:opacity-50">{busy ? t.saving : t.save}</button>
+          <button type="button" disabled={busy || placed.length === 0} onClick={() => void save()} className="ml-auto rounded bg-accent px-3 py-1.5 text-sm font-medium text-accent-on hover:bg-accent-hover disabled:opacity-50">{busy ? <BusyLabel label={t.saving} /> : t.save}</button>
         </div>
       </div>
 
@@ -404,7 +405,7 @@ export default function SignPdf({ locale = 'en', accept }: { locale?: Locale; ac
         {output && (
           <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3">
             <span className="text-ok" aria-hidden="true">✓</span>
-            <span data-numeric className="flex-1 text-sm">{pdf.name.replace(/\.pdf$/i, '')}-signed.pdf · {bytes(output.size)}</span>
+            <span data-numeric className="flex-1 text-sm">{pdf.name.replace(/\.pdf$/i, '')}-signed.pdf, {bytes(output.size)}</span>
             <a href={output.url} download={`${pdf.name.replace(/\.pdf$/i, '')}-signed.pdf`} className="rounded bg-accent px-3 py-1.5 text-sm font-medium text-accent-on hover:bg-accent-hover">{locale === 'ms' ? 'Simpan' : 'Save'}</a>
           </div>
         )}
@@ -442,7 +443,7 @@ export default function SignPdf({ locale = 'en', accept }: { locale?: Locale; ac
                     type="button" tabIndex={-1} aria-hidden="true"
                     onPointerDown={(e) => e.stopPropagation()}
                     onClick={(e) => { e.stopPropagation(); setPlaced((prev) => prev.filter((x) => x.id !== p.id)); }}
-                    className="absolute -top-2.5 -right-2.5 grid size-5 place-items-center rounded-full bg-accent text-2xs text-accent-on opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100"
+                    className="absolute -top-2.5 -right-2.5 grid size-5 place-items-center rounded bg-accent text-2xs text-accent-on opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100"
                   >✕</button>
                 </div>
               ))}

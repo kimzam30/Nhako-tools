@@ -88,8 +88,8 @@ export const run: FileRun = async (files, opts, ctx) => {
   const summary = [
     say(`${read} page${read === 1 ? '' : 's'} read`, `${read} halaman dibaca`),
     skipped ? say(`${skipped} already had text`, `${skipped} sudah ada teks`) : '',
-    say(`${words.toLocaleString()} words · ${accuracy}% confidence`, `${words.toLocaleString()} perkataan · keyakinan ${accuracy}%`),
-  ].filter(Boolean).join(' · ');
+    say(`${words.toLocaleString()} words, ${accuracy}% confidence`, `${words.toLocaleString()} perkataan, keyakinan ${accuracy}%`),
+  ].filter(Boolean).join(', ');
 
   return {
     blob: bytesToBlob(await doc.save(), 'application/pdf'),

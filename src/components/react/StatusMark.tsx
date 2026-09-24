@@ -1,45 +1,52 @@
+import { useMemo } from 'preact/hooks';
+import PixelSprite from './PixelSprite';
+
 /**
- * The done / failed mark, drawn rather than popped.
+ * The done / failed mark, in the NeraOS theme.
  *
- * Geometry follows the tool marks in src/tools/marks.ts: a 24 unit grid and a
- * 1.5 stroke, butt caps, miter joins. It is the same hand, so the confirmation
- * reads as part of the instrument and not as a borrowed icon set.
+ * Done: the butterfly pops in (NeraOS `pop`, the trash-file entrance) and
+ * keeps flapping, and a short fall of square petals from the NeraOS finale
+ * crosses the panel once. Failed: the butterfly shakes its head, which is
+ * exactly what the NeraOS lock screen does on a wrong password.
  *
- * `pathLength={1}` on every drawn element is what lets motion.css animate them
- * with a dash offset of exactly 1, whatever the real arc or line length is.
- * Without it each keyframe would have to carry a number measured off this
- * geometry, and moving a vertex by a unit would silently break the timing.
- *
- * The element is aria-hidden throughout. The live region in the runner already
- * announces the outcome in words, and a screen reader gaining "image" here
- * would be hearing the same fact twice.
+ * aria-hidden throughout. The live region in the runner already announces
+ * the outcome in words, and a screen reader does not need it twice.
  */
 export default function StatusMark({ kind }: { kind: 'done' | 'error' }) {
-  const stroke = kind === 'done' ? 'var(--ok)' : 'var(--err)';
-
+  if (kind === 'error') {
+    return (
+      <span className="nera-shake grid h-8 w-9 shrink-0 place-items-center" aria-hidden="true">
+        <PixelSprite name="butterfly" scale={2} />
+      </span>
+    );
+  }
   return (
-    <svg
-      viewBox="0 0 24 24"
-      className="size-5 shrink-0 overflow-visible"
-      fill="none"
-      stroke={stroke}
-      strokeWidth={1.5}
-      strokeLinecap="butt"
-      strokeLinejoin="miter"
-      aria-hidden="true"
-    >
-      <circle data-status-ring cx="12" cy="12" r="10.25" pathLength={1} />
+    <span className="nera-pop flap grid h-8 w-9 shrink-0 place-items-center" aria-hidden="true">
+      <PixelSprite name="butterfly" scale={2} />
+    </span>
+  );
+}
 
-      {kind === 'done' ? (
-        <path data-status-mark d="M7 12.4l3.4 3.4L17 8.9" pathLength={1} />
-      ) : (
-        <>
-          <path data-status-mark d="M12 6.6v7.1" pathLength={1} />
-          {/* Drawn as a zero-length stroke so it inherits the same cap and
-              colour as the bar instead of needing a separate fill. */}
-          <path data-status-dot d="M12 17.3h0.01" strokeLinecap="round" strokeWidth={2} />
-        </>
-      )}
-    </svg>
+/** The finale's petals, one pass across the finished panel. */
+export function Petals({ count = 14 }: { count?: number }) {
+  const petals = useMemo(
+    () => Array.from({ length: count }, () => ({
+      left: Math.random() * 100,
+      duration: 0.9 + Math.random() * 0.9,
+      delay: Math.random() * 0.5,
+      fall: 90 + Math.random() * 120,
+    })),
+    [count],
+  );
+  return (
+    <span className="nera-petals" aria-hidden="true">
+      {petals.map((p, i) => (
+        <i
+          key={i}
+          className="nera-petal"
+          style={{ left: `${p.left}%`, animationDuration: `${p.duration}s`, animationDelay: `${p.delay}s`, ['--fall' as string]: `${p.fall}px` }}
+        />
+      ))}
+    </span>
   );
 }

@@ -8,13 +8,13 @@
  *
  * This speaks Realtime's Phoenix channel protocol directly over a WebSocket
  * rather than pulling in supabase-js for one feature. The key is Supabase's
- * publishable key, which is meant to be public. The project holds no tables
- * and no data, so the key opens nothing but these channels.
+ * publishable key, which is meant to be public; ./supabase.ts says what else
+ * it can and cannot reach.
  */
 
-const PROJECT = 'iznnnsiojfcbncrdqzyh';
-const KEY = 'sb_publishable_teb6hKc0AaIeyqviEVG8NA_wdItnv4U';
-export const RELAY_HOST = `${PROJECT}.supabase.co`;
+import { SUPABASE_HOST, SUPABASE_KEY as KEY } from './supabase';
+
+export const RELAY_HOST = SUPABASE_HOST;
 const URL_ = `wss://${RELAY_HOST}/realtime/v1/websocket?apikey=${KEY}&vsn=1.0.0`;
 
 export type RelayStatus = 'connecting' | 'open' | 'offline';
