@@ -4,6 +4,7 @@ import Nav from '../components/astro/Nav.astro';
 import Footer from '../components/astro/Footer.astro';
 import ButterflySky from '../components/astro/ButterflySky.astro';
 import { LANG, LOCALES, localePath, ui, type Locale } from '../i18n';
+import { FAVORITES_EVENT, FAVORITES_KEY } from '../lib/favorites';
 
 interface Props {
   title: string;
@@ -124,6 +125,55 @@ const ogImage = new URL(`/og/${category ?? 'default'}.png`, site);
       <slot />
     </main>
     <Footer locale={locale} />
+
+    {/*
+      Favourites: every star on the page and the count beside Favourites in
+      the nav. Inline rather than bundled on purpose. A bundled module is a
+      separate request that holds DOMContentLoaded back, and this runs on
+      every page, including the feedback form whose "typed before the page
+      loaded" test caught exactly that. The storage format itself lives in
+      src/lib/favorites.ts, which the favourites page and the tests use; the
+      key and event names come from there so the two cannot drift.
+    */}
+    <script is:inline define:vars={{ KEY: FAVORITES_KEY, EVENT: FAVORITES_EVENT }}>
+      (() => {
+        const read = () => {
+          try {
+            const v = JSON.parse(localStorage.getItem(KEY) || '[]');
+            return Array.isArray(v) ? v.filter((x) => typeof x === 'string') : [];
+          } catch { return []; }
+        };
+        const sync = () => {
+          const list = read();
+          for (const btn of document.querySelectorAll('[data-fav]')) {
+            const on = list.includes(btn.dataset.fav);
+            btn.hidden = false;
+            btn.setAttribute('aria-pressed', String(on));
+            btn.querySelector('[data-fav-on]')?.toggleAttribute('hidden', !on);
+            btn.querySelector('[data-fav-off]')?.toggleAttribute('hidden', on);
+          }
+          for (const badge of document.querySelectorAll('[data-fav-count]')) {
+            badge.textContent = String(list.length);
+            badge.hidden = list.length === 0;
+          }
+        };
+        document.addEventListener('click', (event) => {
+          const btn = event.target instanceof Element ? event.target.closest('[data-fav]') : null;
+          if (!btn) return;
+          event.preventDefault();
+          const list = read();
+          const on = !list.includes(btn.dataset.fav);
+          const next = on ? [...list, btn.dataset.fav] : list.filter((x) => x !== btn.dataset.fav);
+          try { localStorage.setItem(KEY, JSON.stringify(next)); } catch { /* blocked: this visit still updates */ }
+          dispatchEvent(new CustomEvent(EVENT));
+          btn.classList.remove('fav-pop');
+          if (on) { void btn.offsetWidth; btn.classList.add('fav-pop'); }
+        });
+        addEventListener(EVENT, sync);
+        addEventListener('storage', (e) => { if (e.key === KEY) sync(); });
+        sync();
+      })();
+    </script>
 
     <script is:inline>
       // Offline support. Registered after load so it never competes with the

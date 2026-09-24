@@ -1,5 +1,5 @@
 import { TOOLS } from './registry';
-import { toolId } from './types';
+import { toolId, type ToolMeta } from './types';
 import { localizeTool, localePath, type Locale } from '../i18n';
 
 /**
@@ -17,7 +17,7 @@ export const POPULAR: readonly { tool: string; variant?: string }[] = [
   { tool: 'image/passport-photo' },
 ];
 
-export function popularLinks(locale: Locale): { href: string; name: string }[] {
+export function popularLinks(locale: Locale): { href: string; name: string; blurb: string; tool: ToolMeta }[] {
   return POPULAR.map(({ tool, variant }) => {
     const meta = TOOLS.find((t) => toolId(t) === tool);
     if (!meta) throw new Error(`Popular link to unknown tool ${tool}`);
@@ -27,6 +27,8 @@ export function popularLinks(locale: Locale): { href: string; name: string }[] {
     return {
       href: localePath(locale, `/${tool}${variant ? `/${variant}` : ''}`),
       name: preset?.name ?? local.name,
+      blurb: preset?.blurb ?? local.blurb,
+      tool: local,
     };
   });
 }

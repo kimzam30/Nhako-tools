@@ -91,6 +91,24 @@ const en = {
   malaysiaIntro: 'The tools built around Malaysian forms, portals and payroll. Every rate and every size limit here comes from an official source, stored with the date it was checked, and tested against the worked examples those sources publish.',
   malaysiaSources: 'Rates come from LHDN, KWSP and PERKESO, and photo sizes from the issuing authority. Each is stored in a dated file with its source URL, so a figure can be traced rather than trusted. Nothing you enter or upload here leaves your device.',
   toolsInGroup: (n: number) => `${n} tools`,
+
+  navHome: 'Home',
+  navFeedback: 'Feedback',
+  favorites: 'Favourites',
+  favoritesTitle: 'Your favourite tools',
+  favoritesDocTitle: 'Favourite tools | Nhako Tools',
+  favoritesDescription: 'Keep the tools you use most in one place. Star any tool and it waits here for you, saved in this browser with no account.',
+  favoritesIntro: 'Star the tools you reach for most and they wait here, one tap away. The list lives in this browser only: there is no account, and nothing is sent anywhere.',
+  favoritesEmpty: 'Nothing here yet. Star a tool below, or tap the star on any tool card, and it will appear here.',
+  favoritesCount: (n: number) => (n === 1 ? '1 tool' : `${n} tools`),
+  favoritesPick: 'Choose your tools',
+  favoritesPickHint: 'Tap a tool to add it. Tap again to take it off.',
+  favoritesFilter: 'Filter tools',
+  favoritesClear: 'Clear all',
+  favAdd: (name: string) => `Add ${name} to favourites`,
+  favSave: 'Add to favourites',
+  favSaved: 'In favourites',
+  popularHint: 'The jobs people come here for most.',
 };
 
 export type UiStrings = typeof en;
@@ -170,6 +188,24 @@ const ms: UiStrings = {
   malaysiaIntro: 'Alat yang dibina untuk borang, portal dan gaji di Malaysia. Setiap kadar dan setiap had saiz di sini datang daripada sumber rasmi, disimpan dengan tarikh ia disemak, dan diuji dengan contoh kiraan yang diterbitkan oleh sumber tersebut.',
   malaysiaSources: 'Kadar datang daripada LHDN, KWSP dan PERKESO, dan saiz foto daripada pihak berkuasa yang mengeluarkannya. Setiap satu disimpan dalam fail bertarikh bersama URL sumbernya, jadi sesuatu angka boleh dijejaki dan bukan sekadar dipercayai. Apa-apa yang anda masukkan di sini tidak meninggalkan peranti anda.',
   toolsInGroup: (n) => `${n} alat`,
+
+  navHome: 'Utama',
+  navFeedback: 'Maklum balas',
+  favorites: 'Kegemaran',
+  favoritesTitle: 'Alat kegemaran anda',
+  favoritesDocTitle: 'Alat kegemaran | Nhako Tools',
+  favoritesDescription: 'Simpan alat yang paling kerap anda guna di satu tempat. Tandakan bintang pada mana-mana alat dan ia menunggu di sini, disimpan dalam pelayar ini tanpa akaun.',
+  favoritesIntro: 'Tandakan bintang pada alat yang paling kerap anda guna dan ia menunggu di sini, sekali ketik sahaja. Senarai ini disimpan dalam pelayar ini sahaja: tiada akaun, dan tiada apa-apa dihantar ke mana-mana.',
+  favoritesEmpty: 'Belum ada apa-apa. Tandakan bintang pada alat di bawah, atau ketik bintang pada mana-mana kad alat, dan ia akan muncul di sini.',
+  favoritesCount: (n) => `${n} alat`,
+  favoritesPick: 'Pilih alat anda',
+  favoritesPickHint: 'Ketik alat untuk menambahnya. Ketik sekali lagi untuk membuangnya.',
+  favoritesFilter: 'Tapis alat',
+  favoritesClear: 'Kosongkan',
+  favAdd: (name) => `Tambah ${name} ke kegemaran`,
+  favSave: 'Tambah ke kegemaran',
+  favSaved: 'Dalam kegemaran',
+  popularHint: 'Kerja yang paling kerap dibuat di sini.',
 };
 
 const STRINGS: Record<Locale, UiStrings> = { en, ms };

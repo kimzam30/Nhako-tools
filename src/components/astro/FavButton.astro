@@ -1,0 +1,74 @@
+---
+import { ui, type Locale } from '../../i18n';
+
+/**
+ * The star that adds a tool to favourites. `icon` sits in the corner of a tool
+ * card; `labelled` sits beside a tool page's heading, where there is room to
+ * say what it does.
+ *
+ * The button renders unpressed. The inline script in BaseLayout reads this browser's list and
+ * presses the right ones, so the static HTML is the same for everyone and a
+ * visitor with no JavaScript simply never sees a star (the `hidden` attribute
+ * comes off only once the script runs).
+ */
+interface Props {
+  id: string;
+  name: string;
+  locale: Locale;
+  variant?: 'icon' | 'labelled';
+  class?: string;
+}
+const { id, name, locale, variant = 'icon', class: className = '' } = Astro.props;
+const t = ui(locale);
+---
+{variant === 'icon'
+  ? (
+    <button
+      type="button"
+      hidden
+      data-fav={id}
+      aria-pressed="false"
+      aria-label={t.favAdd(name)}
+      title={t.favSave}
+      class:list={[
+        'fav-btn grid size-8 place-items-center rounded-md text-muted transition-[color,background-color,transform] duration-[120ms] hover:bg-sunken hover:text-accent active:scale-90 aria-pressed:text-accent pointer-coarse:size-11',
+        className,
+      ]}
+    >
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" />
+      </svg>
+    </button>
+  )
+  : (
+    <button
+      type="button"
+      hidden
+      data-fav={id}
+      aria-pressed="false"
+      class:list={[
+        'fav-btn inline-flex h-9 items-center gap-2 rounded-md border border-border bg-surface px-3 text-sm font-semibold text-muted transition-colors duration-[120ms] hover:border-accent hover:text-accent aria-pressed:border-accent aria-pressed:bg-accent-subtle aria-pressed:text-accent pointer-coarse:h-11',
+        className,
+      ]}
+    >
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" />
+      </svg>
+      <span data-fav-off>{t.favSave}</span>
+      <span data-fav-on hidden>{t.favSaved}</span>
+    </button>
+  )}
+
+
+<style is:global>
+  .fav-btn[aria-pressed='true'] svg { fill: currentColor; }
+  @keyframes fav-pop {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+  }
+  .fav-pop svg { animation: fav-pop 260ms cubic-bezier(0.3, 0.7, 0.4, 1.5); }
+  @media (prefers-reduced-motion: reduce) {
+    .fav-pop svg { animation: none; }
+  }
+</style>

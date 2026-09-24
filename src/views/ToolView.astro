@@ -13,6 +13,7 @@ import SignPdf from '../components/react/SignPdf';
 import CropImage from '../components/react/CropImage';
 import Teleprompter from '../components/react/Teleprompter';
 import ScanToPdf from '../components/react/ScanToPdf';
+import FavButton from '../components/astro/FavButton.astro';
 import { TOOLS_BY_ID } from '../tools/registry';
 import { toolId, type ToolMeta, type ToolVariant } from '../tools/types';
 import { SOURCES as PAYROLL_SOURCES } from '../tools/calc/payroll-my';
@@ -150,9 +151,12 @@ const wide = wideApp || filePane;
       )}
     </nav>
 
-    <header class="mb-7">
-      <h1 class="text-2xl font-bold tracking-tight">{name}</h1>
-      <p class="mt-1.5 text-sm text-muted">{variant?.blurb ?? tool.blurb}</p>
+    <header class="mb-7 flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
+      <div class="min-w-0">
+        <h1 class="text-2xl font-bold tracking-tight">{name}</h1>
+        <p class="mt-1.5 text-sm text-muted">{variant?.blurb ?? tool.blurb}</p>
+      </div>
+      <FavButton id={id} name={tool.name} locale={locale} variant="labelled" />
     </header>
 
     {/* The tool sits above the fold, and on a wide screen the prose sits beside

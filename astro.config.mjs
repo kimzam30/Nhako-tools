@@ -30,8 +30,9 @@ export default defineConfig({
     sitemap({
       i18n: { defaultLocale: 'en', locales: { en: 'en', ms: 'ms' } },
       // The teleprompter's phone remote is useless without a room code, and
-      // is marked noindex; keep it out of the sitemap too.
-      filter: (page) => !page.endsWith('/media/teleprompter/remote'),
+      // the favourites page is empty until a browser fills it. Both are
+      // marked noindex; keep them out of the sitemap too.
+      filter: (page) => !page.endsWith('/media/teleprompter/remote') && !page.endsWith('/favourites'),
     }),
   ],
   vite: {

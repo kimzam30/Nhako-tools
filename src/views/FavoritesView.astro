@@ -1,0 +1,156 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ToolTile from '../components/astro/ToolTile.astro';
+import ToolIcon from '../components/astro/ToolIcon.astro';
+import { TOOLS, toolsIn } from '../tools/registry';
+import { CATEGORIES, toolId } from '../tools/types';
+import { categoryLabel, localizeTool, localePath, ui, type Locale } from '../i18n';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const t = ui(locale);
+const star = 'M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z';
+---
+{/*
+  Every tool is in the HTML twice: once as a card in the favourites grid,
+  hidden, and once as a toggle in the picker. The script shows the cards this
+  browser has starred, in the order they were starred. Nothing about the list
+  is known at build time, so the page is noindex: to a crawler it is empty.
+*/}
+<BaseLayout
+  title={t.favorites}
+  documentTitle={t.favoritesDocTitle}
+  description={t.favoritesDescription}
+  path="/favourites"
+  locale={locale}
+  noindex
+>
+  <div class="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+    <header class="mb-8 flex flex-wrap items-end justify-between gap-4">
+      <div class="max-w-2xl">
+        <h1 class="text-2xl font-bold tracking-tight">{t.favoritesTitle}</h1>
+        <p class="mt-3 text-sm leading-relaxed text-muted">{t.favoritesIntro}</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <span data-fav-total class="text-sm font-semibold text-muted tabular-nums" data-one={t.favoritesCount(1)} data-many={t.favoritesCount(2222)}></span>
+        <button
+          type="button"
+          hidden
+          data-fav-clear
+          class="h-9 rounded-md border border-border px-3 text-sm font-semibold text-muted transition-colors duration-[120ms] hover:border-err hover:text-err pointer-coarse:h-11"
+        >
+          {t.favoritesClear}
+        </button>
+      </div>
+    </header>
+
+    <section aria-label={t.favorites}>
+      <div data-fav-grid class="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {TOOLS.map((tool) => (
+          <div data-fav-slot={toolId(tool)} hidden class="contents">
+            <ToolTile tool={localizeTool(tool, locale)} href={localePath(locale, `/${toolId(tool)}`)} />
+          </div>
+        ))}
+      </div>
+      <div data-fav-empty class="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border-strong px-6 py-12 text-center">
+        <span class="grid size-12 place-items-center rounded-full bg-accent-subtle text-accent">
+          <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round" aria-hidden="true"><path d={star} /></svg>
+        </span>
+        <p class="max-w-md text-sm text-muted">{t.favoritesEmpty}</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="pick-heading" class="mt-14 border-t border-border pt-10">
+      <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h2 id="pick-heading" class="text-lg font-bold tracking-tight">{t.favoritesPick}</h2>
+          <p class="mt-1 text-sm text-muted">{t.favoritesPickHint}</p>
+        </div>
+        <div class="relative w-full sm:w-72">
+          <label for="fav-filter" class="sr-only">{t.favoritesFilter}</label>
+          <svg class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" stroke-linecap="round" />
+          </svg>
+          <input
+            id="fav-filter"
+            type="search"
+            autocomplete="off"
+            placeholder={t.favoritesFilter}
+            class="h-10 w-full rounded-lg border border-border-strong bg-surface pl-9 pr-3 text-sm outline-none transition-colors placeholder:text-muted hover:border-accent focus:border-accent pointer-coarse:h-11"
+          />
+        </div>
+      </div>
+
+      {CATEGORIES.map((category) => (
+        <div data-pick-group class="mb-8">
+          <h3 class="mb-3 text-2xs font-semibold uppercase tracking-[0.14em] text-muted">{categoryLabel(category, locale)}</h3>
+          <ul class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {toolsIn(category).map((raw) => {
+              const tool = localizeTool(raw, locale);
+              return (
+                <li data-pick data-name={`${tool.name} ${tool.keywords.join(' ')}`.toLowerCase()}>
+                  {/* `hidden` until the script runs: a toggle that cannot
+                      remember anything should not be offered. */}
+                  <button
+                    type="button"
+                    hidden
+                    data-fav={toolId(tool)}
+                    aria-pressed="false"
+                    class="group/pick flex w-full items-center gap-2.5 rounded-lg border border-border bg-surface px-3 py-2.5 text-left text-sm font-semibold transition-colors duration-[120ms] hover:border-accent aria-pressed:border-accent aria-pressed:bg-accent-subtle pointer-coarse:min-h-11"
+                  >
+                    <ToolIcon tool={tool} />
+                    <span class="min-w-0 flex-1 truncate">{tool.name}</span>
+                    <svg class="size-4 shrink-0 text-border-strong transition-colors group-hover/pick:text-accent group-aria-pressed/pick:fill-current group-aria-pressed/pick:text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round" aria-hidden="true"><path d={star} /></svg>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </section>
+  </div>
+</BaseLayout>
+
+<script>
+  import { FAVORITES_EVENT, FAVORITES_KEY, readFavorites, writeFavorites } from '../lib/favorites';
+
+  const grid = document.querySelector<HTMLElement>('[data-fav-grid]')!;
+  const empty = document.querySelector<HTMLElement>('[data-fav-empty]')!;
+  const total = document.querySelector<HTMLElement>('[data-fav-total]')!;
+  const clear = document.querySelector<HTMLButtonElement>('[data-fav-clear]')!;
+  const slots = new Map(
+    [...grid.querySelectorAll<HTMLElement>('[data-fav-slot]')].map((el) => [el.dataset.favSlot!, el]),
+  );
+
+  function render() {
+    const list = readFavorites().filter((id) => slots.has(id));
+    for (const slot of slots.values()) slot.hidden = true;
+    // Appending in list order moves each card into place.
+    for (const id of list) {
+      const slot = slots.get(id)!;
+      slot.hidden = false;
+      grid.append(slot);
+    }
+    grid.hidden = list.length === 0;
+    empty.hidden = list.length > 0;
+    clear.hidden = list.length === 0;
+    total.textContent = list.length === 0 ? '' : list.length === 1 ? total.dataset.one! : total.dataset.many!.replace('2222', String(list.length));
+  }
+
+  clear.addEventListener('click', () => writeFavorites([]));
+  window.addEventListener(FAVORITES_EVENT, render);
+  window.addEventListener('storage', (e) => { if (e.key === FAVORITES_KEY) render(); });
+  render();
+
+  const filter = document.querySelector<HTMLInputElement>('#fav-filter')!;
+  filter.addEventListener('input', () => {
+    const terms = filter.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    for (const item of document.querySelectorAll<HTMLElement>('[data-pick]')) {
+      item.hidden = !terms.every((term) => (item.dataset.name ?? '').includes(term));
+    }
+    for (const group of document.querySelectorAll<HTMLElement>('[data-pick-group]')) {
+      group.hidden = ![...group.querySelectorAll<HTMLElement>('[data-pick]')].some((i) => !i.hidden);
+    }
+  });
+</script>

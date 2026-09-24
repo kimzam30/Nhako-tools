@@ -1,6 +1,8 @@
 ---
 import type { ToolMeta } from '../../tools/types';
 import ToolIcon from './ToolIcon.astro';
+import FavButton from './FavButton.astro';
+import { localeFromPath } from '../../i18n';
 
 /** Precomputed by the view: localising a variant is the caller's job, exactly
  *  as localising the tool is. */
@@ -22,6 +24,7 @@ interface Props {
 }
 
 const { tool, href, presets = [], context } = Astro.props;
+const locale = localeFromPath(Astro.url.pathname);
 ---
 {/*
   The directory primitive, as a card.
@@ -52,9 +55,9 @@ const { tool, href, presets = [], context } = Astro.props;
   data-name={tool.name.toLowerCase()}
   data-keywords={tool.keywords.join(' ')}
   data-category={tool.category}
-  class="group/card flex flex-col rounded-lg border border-border bg-surface shadow-[inset_0_1px_0_var(--edge)] transition-colors duration-[120ms] hover:border-accent focus-within:border-accent"
+  class="group/card relative flex flex-col rounded-lg border border-border bg-surface shadow-[inset_0_1px_0_var(--edge)] transition-colors duration-[120ms] hover:border-accent focus-within:border-accent"
 >
-  <a href={href} class="flex flex-1 gap-2.5 rounded-lg p-3">
+  <a href={href} class="flex flex-1 gap-2.5 rounded-lg p-3 pr-11">
     {/* Nudged so the mark's optical centre sits on the name's first baseline. */}
     <ToolIcon tool={tool} class="mt-0.5 group-hover/card:text-accent" />
 
@@ -65,6 +68,10 @@ const { tool, href, presets = [], context } = Astro.props;
       <span class="text-xs leading-snug text-muted">{context ?? tool.blurb}</span>
     </span>
   </a>
+
+  {/* A sibling of the link, never inside it: a button in a link is invalid
+      and would navigate on every star. */}
+  <FavButton id={`${tool.category}/${tool.slug}`} name={tool.name} locale={locale} class="absolute right-1.5 top-1.5" />
 
   {presets.length > 0 && (
     /* Indented to the blurb, so the chips read as belonging to the name above

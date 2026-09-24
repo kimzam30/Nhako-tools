@@ -15,6 +15,14 @@ const home = localePath(locale, '/');
 // The active item, so the row says where you are. A tool page marks its own
 // category: /pdf/merge is still somewhere inside PDF.
 const active = (segment: string) => path === `/${segment}` || path.startsWith(`/${segment}/`);
+
+const items: { href: string; label: string; current: boolean; star?: boolean }[] = [
+  { href: home, label: t.navHome, current: path === '/' },
+  ...NAV_CATEGORIES.map((c) => ({ href: localePath(locale, `/${c}`), label: categoryLabel(c, locale), current: active(c) })),
+  { href: localePath(locale, '/malaysia'), label: t.malaysia, current: path === '/malaysia' },
+  { href: localePath(locale, '/favourites'), label: t.favorites, current: path === '/favourites', star: true },
+  { href: localePath(locale, '/feedback'), label: t.navFeedback, current: path === '/feedback' },
+];
 ---
 
 <header class="vt-nav sticky top-0 z-40 border-b border-border bg-bg/85 backdrop-blur-sm">
@@ -41,35 +49,44 @@ const active = (segment: string) => path === `/${segment}` || path.startsWith(`/
       there is room the two look identical, because the items are left aligned
       and `ml-auto` still holds the controls to the right.
     */}
-    <ul class="-mx-1 flex min-w-0 flex-1 items-center gap-1 overflow-x-auto px-1 [scrollbar-width:none] pointer-coarse:gap-2 [&::-webkit-scrollbar]:hidden">
-      {NAV_CATEGORIES.map((c) => (
-        <li class="shrink-0">
+    <ul data-nav-list class="-mx-1 flex min-w-0 flex-1 items-stretch gap-0.5 self-stretch overflow-x-auto px-1 [scrollbar-width:none] pointer-coarse:gap-1 [&::-webkit-scrollbar]:hidden">
+      {items.map((item) => (
+        <li class="relative flex shrink-0 items-center">
+          {/*
+            Where you are, said three ways so no one of them has to carry it:
+            the label turns accent, a tinted pill sits behind it, and a bar
+            sits on the header's bottom edge like a tab. aria-current says it
+            to a screen reader. The bar is drawn inside the <li> because the
+            list scrolls, and anything outside a scroll box gets clipped.
+          */}
           <a
-            href={localePath(locale, `/${c}`)}
-            aria-current={active(c) ? 'page' : undefined}
+            href={item.href}
+            aria-current={item.current ? 'page' : undefined}
             class:list={[
-              'block scroll-mx-4 rounded px-2.5 py-1.5 text-sm transition-colors duration-[120ms] hover:bg-sunken hover:text-text',
-              'pointer-coarse:flex pointer-coarse:min-h-11 pointer-coarse:items-center pointer-coarse:px-3',
-              active(c) ? 'text-text' : 'text-muted',
+              'nav-link flex scroll-mx-4 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-semibold transition-colors duration-[120ms]',
+              'pointer-coarse:min-h-11 pointer-coarse:px-3',
+              item.current ? 'bg-accent-subtle text-accent' : 'text-muted hover:bg-sunken hover:text-text',
             ]}
           >
-            {categoryLabel(c, locale)}
+            {item.star && (
+              <svg class="size-3.5" viewBox="0 0 24 24" fill={item.current ? 'currentColor' : 'none'} stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" />
+              </svg>
+            )}
+            {item.label}
+            {item.star && (
+              <span data-fav-count hidden class="min-w-4 rounded-full bg-accent px-1 text-center text-2xs leading-4 font-semibold text-accent-on tabular-nums"></span>
+            )}
           </a>
+          <span
+            aria-hidden="true"
+            class:list={[
+              'pointer-events-none absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-accent transition-transform duration-200',
+              item.current ? 'scale-x-100' : 'scale-x-0',
+            ]}
+          ></span>
         </li>
       ))}
-      <li class="shrink-0">
-        <a
-          href={localePath(locale, '/malaysia')}
-          aria-current={path === '/malaysia' ? 'page' : undefined}
-          class:list={[
-            'block scroll-mx-4 rounded px-2.5 py-1.5 text-sm transition-colors duration-[120ms] hover:bg-sunken hover:text-text',
-            'pointer-coarse:flex pointer-coarse:min-h-11 pointer-coarse:items-center pointer-coarse:px-3',
-            path === '/malaysia' ? 'text-text' : 'text-muted',
-          ]}
-        >
-          {t.malaysia}
-        </a>
-      </li>
     </ul>
 
     <div class="ml-auto flex shrink-0 items-center gap-2">
@@ -91,3 +108,15 @@ const active = (segment: string) => path === `/${segment}` || path.startsWith(`/
     </div>
   </nav>
 </header>
+
+<script is:inline>
+  // On a phone the row scrolls, and the current page can sit off the right
+  // edge. Bring it into view without scrolling the page itself.
+  (() => {
+    const list = document.querySelector('[data-nav-list]');
+    const current = list?.querySelector('[aria-current="page"]');
+    if (list && current && list.scrollWidth > list.clientWidth) {
+      list.scrollLeft = Math.max(0, current.offsetLeft - (list.clientWidth - current.offsetWidth) / 2);
+    }
+  })();
+</script>

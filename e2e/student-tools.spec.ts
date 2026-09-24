@@ -230,11 +230,21 @@ test.describe('homepage layout', () => {
     await expect(page).toHaveURL(/\/pdf\/compress\/500kb$/);
   });
 
-  test('the category jump bar stays pinned and lands on its section', async ({ page }) => {
+  test('has no category jump bar, and the popular cards carry a mark and a way to every tool', async ({ page }) => {
     await page.goto('/');
-    await page.mouse.wheel(0, 1600);
-    await expect(page.locator('[data-jump]')).toBeInViewport();
-    await page.locator('[data-jump] a[href="#dev"]').click();
-    await expect(page.locator('#dev')).toBeInViewport();
+    await expect(page.locator('[data-jump]')).toHaveCount(0);
+    const cards = page.locator('[data-popular] li');
+    await expect(cards).toHaveCount(8);
+    await expect(page.locator('[data-popular] a svg').first()).toBeVisible();
+    await page.locator('[data-popular] a[href="#pdf"]').click();
+    await expect(page.locator('#pdf')).toBeInViewport();
+  });
+
+  test('hides the popular cards while a search is live', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('#tool-search').fill('merge');
+    await expect(page.locator('[data-popular]')).toBeHidden();
+    await page.locator('#tool-search').fill('');
+    await expect(page.locator('[data-popular]')).toBeVisible();
   });
 });

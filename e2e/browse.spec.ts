@@ -116,6 +116,16 @@ test.describe('navigation', () => {
     await expect(current).toHaveText('PDF');
   });
 
+  test('home, favourites and feedback are in the nav, bold, and marked when current', async ({ page }) => {
+    for (const [url, name] of [['/', 'Home'], ['/favourites', 'Favourites'], ['/feedback', 'Feedback'], ['/ms/favourites', 'Kegemaran']] as const) {
+      await page.goto(url);
+      const current = page.locator('header [aria-current="page"]');
+      await expect(current).toHaveCount(1);
+      await expect(current).toContainText(name);
+      expect(Number(await current.evaluate((el) => getComputedStyle(el).fontWeight))).toBeGreaterThanOrEqual(600);
+    }
+  });
+
   test('the nav is reachable on a phone', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto('/');
@@ -126,7 +136,7 @@ test.describe('navigation', () => {
       scrollable: el.scrollWidth > el.clientWidth,
       count: el.querySelectorAll('a').length,
     }));
-    expect(count).toBe(5);
+    expect(count).toBe(8);
     expect(scrollable).toBe(true);
     // And the page itself must not scroll sideways because of it.
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);

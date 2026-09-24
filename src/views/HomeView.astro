@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ToolTile from '../components/astro/ToolTile.astro';
+import ToolIcon from '../components/astro/ToolIcon.astro';
 import { TOOLS, toolsIn } from '../tools/registry';
 import { popularLinks } from '../tools/popular';
 import { CATEGORIES, toolId } from '../tools/types';
@@ -43,7 +44,7 @@ const jsonLd = {
       terminal readout; with that gone (2026-09-25) the hero is one column, and
       the space goes to getting someone to their tool, not to decoration.
     */}
-    <section class="pt-10 pb-6 sm:pt-14 sm:pb-8">
+    <section class="pt-10 pb-4 sm:pt-14 sm:pb-6">
       <h1 class="max-w-3xl text-3xl font-bold leading-[1.12] tracking-tight sm:text-4xl">
         {/* The wedge leads and carries full strength. The mechanism, which is
             what the tool count describes, supports it. The brief is explicit
@@ -70,45 +71,53 @@ const jsonLd = {
         </div>
         <p id="search-status" role="status" class="mt-2 h-4 text-2xs text-muted" data-template={t.searchCount(1111, 2222)}></p>
       </div>
-
-      <div class="mt-2 flex flex-wrap items-center gap-2" data-popular>
-        <span class="mr-1 text-2xs font-semibold uppercase tracking-wider text-muted">{t.popular}</span>
-        {popularLinks(locale).map((p) => (
-          <a
-            href={p.href}
-            class="inline-flex items-center rounded border border-border bg-surface px-3 py-1.5 text-xs text-text transition-colors duration-[120ms] hover:border-accent hover:text-accent pointer-coarse:min-h-11 pointer-coarse:px-4"
-          >
-            {p.name}
-          </a>
-        ))}
-      </div>
     </section>
 
     {/*
-      The catalogue's table of contents, pinned under the nav while the page
-      scrolls. At 50 tools a visitor can scroll to what they want; at 80 they
-      should not have to. Each chip carries its live count, and the anchors
-      work with no JavaScript. Sections set scroll-margin to clear both bars.
+      The jobs students arrive for most, as real cards rather than a row of
+      grey pills. Each carries its tool's mark in the category hue, so the
+      eye can find "the PDF ones" without reading, and a one-line blurb from a
+      tablet up. Seven tools plus a way into the full list make an even 4 x 2
+      on a desktop and 2 x 4 on a phone, so no row ends ragged.
     */}
-  </div>
-  <nav aria-label={t.jumpTo} class="sticky top-14 z-30 border-y border-border bg-bg/90 backdrop-blur-sm" data-jump>
-    <div class="mx-auto max-w-6xl px-4 sm:px-6">
-      <ul class="-mx-3 flex gap-1 overflow-x-auto py-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {CATEGORIES.map((category) => (
-          <li class="shrink-0">
+    <section aria-labelledby="popular-heading" class="pb-6" data-popular>
+      <div class="mb-4">
+        <h2 id="popular-heading" class="text-base font-bold tracking-tight">{t.popular}</h2>
+        <p class="mt-0.5 text-sm text-muted">{t.popularHint}</p>
+      </div>
+      <ul class="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">
+        {popularLinks(locale).map((p) => (
+          <li class="flex">
             <a
-              href={`#${category}`}
-              class="inline-flex items-center gap-2 rounded px-3 py-1.5 text-sm text-muted transition-colors duration-[120ms] hover:bg-sunken hover:text-text pointer-coarse:min-h-11"
+              href={p.href}
+              class="popular-card group/pop relative flex w-full items-start gap-3 rounded-xl border border-border bg-surface p-3 shadow-[inset_0_1px_0_var(--edge)] transition-[border-color,transform,background-color] duration-150 hover:-translate-y-0.5 hover:border-accent hover:bg-bg focus-visible:border-accent sm:p-3.5"
             >
-              {categoryLabel(category, locale)}
-              <span data-numeric class="text-2xs text-muted">{toolsIn(category).length}</span>
+              <span class="grid size-10 shrink-0 place-items-center rounded-lg border border-border bg-bg transition-colors duration-150 group-hover/pop:border-accent/30 group-hover/pop:bg-accent-subtle sm:size-11">
+                <ToolIcon tool={p.tool} />
+              </span>
+              <span class="flex min-w-0 flex-1 flex-col">
+                <span class="pr-4 text-sm font-semibold leading-snug transition-colors group-hover/pop:text-accent">{p.name}</span>
+                <span class="mt-0.5 text-xs leading-snug text-muted line-clamp-2 max-sm:hidden">{p.blurb}</span>
+              </span>
+              <svg class="absolute right-3 top-3.5 hidden size-4 -translate-x-1 text-accent opacity-0 transition-[opacity,transform] duration-150 group-hover/pop:translate-x-0 group-hover/pop:opacity-100 sm:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M5 12h14M13 6l6 6-6 6" />
+              </svg>
             </a>
           </li>
         ))}
+        <li class="flex">
+          <a
+            href={`#${CATEGORIES[0]}`}
+            class="group/pop flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border-strong p-3 text-sm font-semibold text-muted transition-colors duration-150 hover:border-accent hover:bg-accent-subtle hover:text-accent sm:p-3.5"
+          >
+            {t.allTools(TOOLS.length)}
+            <svg class="size-4 transition-transform duration-150 group-hover/pop:translate-y-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 5v14M6 13l6 6 6-6" />
+            </svg>
+          </a>
+        </li>
       </ul>
-    </div>
-  </nav>
-  <div class="mx-auto max-w-6xl px-4 sm:px-6">
+    </section>
 
     {/*
       Every tool is here exactly once. Cross-listings (a tool shown in a second
@@ -117,7 +126,7 @@ const jsonLd = {
       read as a bug.
     */}
     {CATEGORIES.map((category) => (
-      <section id={category} class="scroll-mt-32 pb-4 pt-8" data-category-section={category}>
+      <section id={category} class="scroll-mt-20 pb-4 pt-8" data-category-section={category}>
         <div class="mb-4 flex items-baseline gap-2.5">
           <h2 class="text-2xs font-semibold uppercase tracking-[0.14em] text-muted">
             <a href={localePath(locale, `/${category}`)} class="transition-colors hover:text-accent">
@@ -171,6 +180,7 @@ const jsonLd = {
   const input = document.querySelector<HTMLInputElement>('#tool-search');
   const status = document.querySelector<HTMLElement>('#search-status');
   const empty = document.querySelector<HTMLElement>('[data-search-empty]');
+  const popular = document.querySelector<HTMLElement>('[data-popular]');
   const cards = [...document.querySelectorAll<HTMLElement>('[data-tool-card]')];
   const groups = [...document.querySelectorAll<HTMLElement>('[data-group]')];
   const sections = [...document.querySelectorAll<HTMLElement>('[data-category-section]')];
@@ -195,6 +205,9 @@ const jsonLd = {
     for (const section of sections) section.hidden = !anyVisible(section);
 
     if (empty) empty.hidden = visible > 0;
+    // While a search is live the shortcuts are noise between the box and
+    // its results; they come back when the box is cleared.
+    if (popular) popular.hidden = query !== '';
     // The sentence comes from the server in the page's language, with
     // placeholder numbers to swap in.
     const template = status?.dataset.template ?? '1111 / 2222';
