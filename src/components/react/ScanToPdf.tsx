@@ -219,7 +219,7 @@ export default function ScanToPdf({ locale = 'en' }: { locale?: Locale }) {
         <p className="max-w-md text-xs leading-snug text-muted">{t.help}</p>
       </div>
 
-      {error && <p role="alert" className="rounded-lg border border-err bg-err-subtle px-4 py-3 text-sm text-err">{error}</p>}
+      {error && <p role="alert" data-status-message className="rounded-lg border border-err bg-err-subtle px-4 py-3 text-sm text-err">{error}</p>}
       <p aria-live="polite" className="sr-only">{busy ?? ''}</p>
 
       {pages.length > 0 && (

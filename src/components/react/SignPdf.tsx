@@ -339,7 +339,7 @@ export default function SignPdf({ locale = 'en', accept }: { locale?: Locale; ac
           <span className="text-sm font-medium">{t.drop}</span>
           <span className="text-xs text-muted">{t.dropSub}</span>
         </button>
-        {error && <p className="mt-4 rounded-lg border border-err bg-err-subtle px-4 py-3 text-sm text-err">{error}</p>}
+        {error && <p data-status-message className="mt-4 rounded-lg border border-err bg-err-subtle px-4 py-3 text-sm text-err">{error}</p>}
       </section>
     );
   }
@@ -409,7 +409,7 @@ export default function SignPdf({ locale = 'en', accept }: { locale?: Locale; ac
           </div>
         )}
       </div>
-      {error && <p className="rounded-lg border border-err bg-err-subtle px-4 py-3 text-sm text-err">{error}</p>}
+      {error && <p data-status-message className="rounded-lg border border-err bg-err-subtle px-4 py-3 text-sm text-err">{error}</p>}
 
       <div className="flex flex-col items-center gap-6">
         {pages.map((pg, i) => (

@@ -33,11 +33,15 @@ async function resultPixel(page: Page, x: number, y: number) {
 test.describe('file tools', () => {
   test('merges two PDFs into one with the summed page count', async ({ page }) => {
     await page.goto('/pdf/merge');
-    // No Run button: selecting the files is what starts the work.
+    // Merge stages its files now: dropping them queues them in an order the
+    // user can change, and nothing runs until Combine is pressed.
     await page.locator('input[type=file]').setInputFiles([fixture('two-pages.pdf'), fixture('three-pages.pdf')]);
+    await page.getByRole('button', { name: 'Combine into one PDF' }).click();
 
-    const result = page.getByText('merged.pdf');
-    await expect(result).toBeVisible({ timeout: 20_000 });
+    // The output name lives in the rename field, split from its extension so
+    // the extension cannot be edited away. The Save link below carries the
+    // reassembled name, which is the part that actually reaches the disk.
+    await expect(page.getByLabel('File name')).toHaveValue('merged', { timeout: 20_000 });
     await expect(page.getByText(/2 files · 5 pages/)).toBeVisible();
 
     const download = await Promise.all([
@@ -50,27 +54,42 @@ test.describe('file tools', () => {
   test('reports elapsed time: the positioning, proven in the UI', async ({ page }) => {
     await page.goto('/pdf/merge');
     await page.locator('input[type=file]').setInputFiles([fixture('two-pages.pdf'), fixture('three-pages.pdf')]);
+    await page.getByRole('button', { name: 'Combine into one PDF' }).click();
     await expect(page.getByText(/\d+ms|\d+\.\d+s/)).toBeVisible({ timeout: 20_000 });
   });
 
-  test('rejects a single file for merge with an actionable message', async ({ page }) => {
+  test('a single file for merge cannot be combined, and says why', async ({ page }) => {
     await page.goto('/pdf/merge');
     await page.locator('input[type=file]').setInputFiles([fixture('two-pages.pdf')]);
-    await expect(page.getByText(/at least two PDFs/)).toBeVisible({ timeout: 20_000 });
+
+    // The staging area answers before the engine has to: the file is queued
+    // and visible, and the action that cannot succeed is not offered. The
+    // engine's own "at least two PDFs" guard is still there behind it, and is
+    // covered by the unit tests.
+    await expect(page.getByRole('button', { name: 'Combine into one PDF' })).toBeDisabled();
+    await expect(page.getByText('two-pages.pdf')).toBeVisible();
   });
 
-  test('splits a PDF and honours a page range', async ({ page }) => {
+  test('splits a PDF, and the ticks decide which pages', async ({ page }) => {
     await page.goto('/pdf/split');
     await page.locator('input[type=file]').setInputFiles([fixture('three-pages.pdf')]);
+    // Everything starts ticked, which is what an empty range used to mean.
+    await expect(page.getByText('3 of 3 pages selected')).toBeVisible({ timeout: 20_000 });
+    await page.getByRole('button', { name: 'Split', exact: true }).click();
     await expect(page.getByText(/3 pages extracted/)).toBeVisible({ timeout: 20_000 });
 
-    // Changing an option re-runs automatically against the same file.
-    await page.getByLabel('Pages').fill('1-2');
+    // Untick the last page: the selection is compiled back into the range the
+    // engine already understood, so this is the same code path as typing 1-2.
+    await page.getByRole('checkbox', { name: 'Page 3' }).uncheck();
+    await expect(page.getByText('2 of 3 pages selected')).toBeVisible();
+    await page.getByRole('button', { name: 'Split', exact: true }).click();
     await expect(page.getByText(/2 pages extracted/)).toBeVisible({ timeout: 20_000 });
   });
 
   test('explains an out-of-range page selection', async ({ page }) => {
-    await page.goto('/pdf/split');
+    // Split no longer takes a typed range, so this now covers the shared
+    // parser where it is still reachable: Rotate PDF's Pages field.
+    await page.goto('/pdf/rotate');
     await page.locator('input[type=file]').setInputFiles([fixture('two-pages.pdf')]);
     await page.getByLabel('Pages').fill('1-99');
     await expect(page.getByText(/has 2 pages/)).toBeVisible({ timeout: 20_000 });
@@ -79,9 +98,11 @@ test.describe('file tools', () => {
 
 test.describe('options while a file is loaded', () => {
   test('typing a page range keeps focus and uses the whole value', async ({ page }) => {
-    await page.goto('/pdf/split');
+    // Rotate rather than Split: Split has its own page grid now, and this is
+    // about the shared Pages field, which Rotate still renders.
+    await page.goto('/pdf/rotate');
     await page.locator('input[type=file]').setInputFiles([fixture('three-pages.pdf')]);
-    await expect(page.getByText(/3 pages extracted/)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(/3 pages rotated/)).toBeVisible({ timeout: 20_000 });
 
     // Real keystrokes, not fill(): a run started by the first key used to
     // disable the field and drop every key after it.
@@ -90,7 +111,7 @@ test.describe('options while a file is loaded', () => {
     await page.keyboard.type('1-2', { delay: 120 });
     await expect(pages).toHaveValue('1-2');
     await expect(pages).toBeFocused();
-    await expect(page.getByText(/2 pages extracted/)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(/2 pages rotated/)).toBeVisible({ timeout: 20_000 });
   });
 
   test('typing a width is not run digit by digit', async ({ page }) => {
@@ -103,7 +124,10 @@ test.describe('options while a file is loaded', () => {
     await width.press('ControlOrMeta+a');
     await page.keyboard.type('200', { delay: 120 });
     await expect(width).toHaveValue('200');
-    await expect(page.getByText(/200 × 150/)).toBeVisible({ timeout: 20_000 });
+    // Scoped to the result row: the output preview states the same dimensions
+    // under the picture, and an unscoped match now finds both.
+    await expect(page.locator('[data-status="done"]').getByText(/200 × 150/))
+      .toBeVisible({ timeout: 20_000 });
   });
 
   test('clearing a number field does not snap it to the minimum', async ({ page }) => {
@@ -117,7 +141,9 @@ test.describe('options while a file is loaded', () => {
   });
 
   test('a drop on the zone during a run never falls through to the browser', async ({ page }) => {
-    await page.goto('/pdf/merge');
+    // Watermark rather than Merge: Merge stages its files now and its empty
+    // state is the shared DropZone, which is covered in preview.spec.ts.
+    await page.goto('/image/compress');
     // The handler is the island's: wait for it, or a busy machine dispatches first.
     await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
     const zone = page.locator('button:has-text("Drop files here")');
@@ -160,9 +186,21 @@ test.describe('input given before the page is interactive', () => {
 
   test('a file picked before hydration is processed', async ({ page }) => {
     const release = await delayIsland(page, 'FileToolRunner');
+    await page.goto('/pdf/rotate', { waitUntil: 'domcontentloaded' });
+    await page.locator('input[type=file]').setInputFiles([fixture('three-pages.pdf')]);
+    release();
+    await expect(page.getByText(/3 pages rotated/)).toBeVisible({ timeout: 20_000 });
+  });
+
+  test('files staged before hydration are still queued, in order', async ({ page }) => {
+    // The same defect, on the staging islands: a multi-select made before
+    // MergePdf hydrated fired its change event with no listener attached.
+    const release = await delayIsland(page, 'MergePdf');
     await page.goto('/pdf/merge', { waitUntil: 'domcontentloaded' });
     await page.locator('input[type=file]').setInputFiles([fixture('two-pages.pdf'), fixture('three-pages.pdf')]);
     release();
+    await expect(page.locator('[data-stage-card]')).toHaveCount(2, { timeout: 20_000 });
+    await page.getByRole('button', { name: 'Combine into one PDF' }).click();
     await expect(page.getByText(/2 files · 5 pages/)).toBeVisible({ timeout: 20_000 });
   });
 });

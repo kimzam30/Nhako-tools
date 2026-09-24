@@ -40,8 +40,18 @@ export const GROUP_THRESHOLD = 6;
 export const GROUPS: Partial<Record<Category, readonly ToolGroup[]>> = {
   pdf: [
     { id: 'organise', label: 'Organise pages' },
-    { id: 'create', label: 'Create a PDF' },
-    { id: 'extract', label: 'Convert and extract' },
+    /*
+     * One conversion group, not the 'create' and 'extract' pair this replaced.
+     *
+     * Splitting by DIRECTION put JPG to PDF under "Create a PDF" and PDF to JPG
+     * under "Convert and extract", two headings apart, and did the same to
+     * Office to PDF and PDF to Word. Nobody converting a file thinks in
+     * directions: they arrive holding one format, wanting the other, and the
+     * tool they want is the one next to the tool they found. The registry
+     * orders this group in round-trip pairs, each format in then straight back
+     * out, and the adjacency test in registry.test.ts holds them together.
+     */
+    { id: 'convert', label: 'Convert to and from PDF' },
     { id: 'mark-up', label: 'Edit and sign' },
     { id: 'shrink', label: 'Reduce file size' },
     { id: 'secure', label: 'Password and permissions' },

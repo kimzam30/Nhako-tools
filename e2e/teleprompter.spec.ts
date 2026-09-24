@@ -30,6 +30,16 @@ async function writeScript(page: Page, text: string) {
   await page.getByTestId('script').fill(text);
 }
 
+/**
+ * Open the stage and press play. The stage opens idle by design, so every test
+ * that wants movement asks for it, exactly as a presenter does.
+ */
+async function startPlaying(page: Page, which: 'start' | 'start-record' = 'start') {
+  await page.getByTestId(which).click();
+  await expect(page.getByTestId('ready-hint')).toBeVisible();
+  await page.getByTestId('play').click();
+}
+
 /** The text's offset under the reading line, in pixels scrolled. */
 const scrolled = (page: Page) => page.getByTestId('prompter-text').evaluate((el) => {
   const m = /translate3d\(0px, (-?[\d.]+)px/.exec((el as HTMLElement).style.transform);
@@ -46,7 +56,7 @@ test.describe('teleprompter', () => {
     await page.goto('/media/teleprompter');
     await writeScript(page, Array.from({ length: 30 }, () => lorem(12)).join('\n\n'));
     await expect(page.getByTestId('stats')).toContainText('360 words');
-    await page.getByTestId('start').click();
+    await startPlaying(page);
     await expect(page.getByTestId('play')).toHaveText('Pause');
 
     const a = await scrolled(page);
@@ -63,7 +73,7 @@ test.describe('teleprompter', () => {
     await fresh(page, { wpm: 260, fontSize: 24 });
     await page.goto('/media/teleprompter');
     await writeScript(page, `${lorem(20)} [PAUSE] ${lorem(400, 'after')}`);
-    await page.getByTestId('start').click();
+    await startPlaying(page);
     await expect(page.getByText('Paused at a cue. Tap to continue.')).toBeVisible({ timeout: 15_000 });
     await expect(page.getByTestId('play')).toHaveText('Play');
     const at = (await scrolled(page)).offset;
@@ -76,10 +86,39 @@ test.describe('teleprompter', () => {
     expect((await scrolled(page)).offset).toBeLessThan(at);
   });
 
+  test('opens the stage idle, so there is time to set up before anything moves', async ({ page }) => {
+    await fresh(page, { wpm: 200 });
+    await page.goto('/media/teleprompter');
+    await writeScript(page, Array.from({ length: 30 }, () => lorem(12)).join('\n\n'));
+    await page.getByTestId('start').click();
+
+    await expect(page.getByTestId('prompter-view')).toBeVisible();
+    await expect(page.getByTestId('ready-hint')).toBeVisible();
+    await expect(page.getByTestId('play')).toHaveText('Play');
+    // The first frame is what puts the text under the reading line; in WebKit
+    // that can land after the stage is already on screen.
+    await expect.poll(async () => Number.isFinite((await scrolled(page)).offset), { timeout: 3000 }).toBe(true);
+    // Long enough that an auto-start at 200 wpm would have moved hundreds of px.
+    const at = (await scrolled(page)).offset;
+    await page.waitForTimeout(1500);
+    expect((await scrolled(page)).offset).toBe(at);
+
+    // The phone remote is reachable while it waits, which is the point.
+    await page.getByTestId('remote').click();
+    await expect(page.getByTestId('room-code')).toBeVisible();
+    await page.getByRole('button', { name: 'Done' }).click();
+    expect((await scrolled(page)).offset).toBe(at);
+
+    await page.getByTestId('play').click();
+    await expect(page.getByTestId('play')).toHaveText('Pause');
+    await expect(page.getByTestId('ready-hint')).toBeHidden();
+    await expect.poll(async () => (await scrolled(page)).offset, { timeout: 3000 }).toBeLessThan(at);
+  });
+
   test('counts down before it starts', async ({ page }) => {
     await fresh(page, { countdown: 3 });
     await page.goto('/media/teleprompter');
-    await page.getByTestId('start').click();
+    await startPlaying(page);
     await expect(page.getByTestId('countdown')).toHaveText('3');
     await expect(page.getByTestId('countdown')).toHaveText('2');
     await expect(page.getByTestId('countdown')).toBeHidden({ timeout: 4000 });
@@ -90,7 +129,7 @@ test.describe('teleprompter', () => {
     await fresh(page, { wpm: 140 });
     await page.goto('/media/teleprompter');
     await writeScript(page, `# One\n${lorem(60)}\n# Two\n${lorem(60)}\n# Three\n${lorem(60)}`);
-    await page.getByTestId('start').click();
+    await startPlaying(page);
     await expect(page.getByTestId('play')).toHaveText('Pause');
     await page.keyboard.press('Space');
     await expect(page.getByTestId('play')).toHaveText('Play');
@@ -166,7 +205,7 @@ test.describe('teleprompter', () => {
     words.splice(80, 3, 'purple', 'elephant', 'dancing');
     await writeScript(page, words.join(' '));
     await page.getByTestId('voice').check();
-    await page.getByTestId('start').click();
+    await startPlaying(page);
     await expect(page.getByText('Listening')).toBeVisible();
 
     const before = await scrolled(page);
@@ -257,7 +296,12 @@ test.describe('recording', () => {
   test('records camera and mic to a real video file that survives a reload', async ({ page }) => {
     await fresh(page);
     await page.goto('/media/teleprompter');
+    // Start and record brings the camera up but does not record: that is the
+    // presenter's call, once they have framed the shot.
     await page.getByTestId('start-record').click();
+    await expect(page.getByTestId('ready-hint')).toBeVisible();
+    await expect(page.getByTestId('rec-badge')).toBeHidden();
+    await page.getByTestId('record').click();
     await expect(page.getByTestId('rec-badge')).toBeVisible();
     await page.waitForTimeout(3000);
     await page.getByTestId('record').click();
@@ -303,7 +347,7 @@ test.describe('phone remote (live relay)', () => {
     await fresh(tablet, { wpm: 140 });
     await tablet.goto('/media/teleprompter');
     await writeScript(tablet, `# Part one\n${lorem(200)}\n# Part two\n${lorem(200)}`);
-    await tablet.getByTestId('start').click();
+    await startPlaying(tablet);
     await expect(tablet.getByTestId('play')).toHaveText('Pause');
     await tablet.keyboard.press('Space');
     await expect(tablet.getByTestId('play')).toHaveText('Play');

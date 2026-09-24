@@ -71,19 +71,20 @@ const jsonLd = {
       read as a bug.
     */}
     {CATEGORIES.map((category) => (
-      <section id={category} class="scroll-mt-20 border-t border-border py-8" data-category-section={category}>
-        <div class="mb-4 flex items-baseline gap-3">
+      <section id={category} class="scroll-mt-20 pb-8 pt-10" data-category-section={category}>
+        <div class="mb-4 flex items-baseline gap-2.5">
           <h2 class="text-2xs font-semibold uppercase tracking-[0.14em] text-muted">
             <a href={localePath(locale, `/${category}`)} class="transition-colors hover:text-accent">
               {categoryLabel(category, locale)}
             </a>
           </h2>
-          {/* The hue identifies the category and nothing more: a fixed segment
-              at the head of the rule, never a fill and never interactive. It
-              is redundant with the heading it sits beside, by design. */}
-          <span class="h-px w-6 shrink-0" style={`background:var(--cat-${category})`} aria-hidden="true"></span>
-          <span data-reveal-rule class="h-px flex-1 bg-border" aria-hidden="true"></span>
-          <span data-numeric class="font-mono text-2xs text-muted">{toolsIn(category).length}</span>
+          {/* The hue identifies the category and nothing more. It used to be a
+              segment at the head of a full-width rule; with the rule gone it is
+              drawn as a dot, so it reads as a marker rather than as the stub of
+              a line that is no longer there. It stays redundant with the
+              heading beside it by design: colour is never the only encoding. */}
+          <span class="size-1.5 shrink-0 rounded-full" style={`background:var(--cat-${category})`} aria-hidden="true"></span>
+          <span data-numeric class="ml-auto font-mono text-2xs text-muted">{toolsIn(category).length}</span>
         </div>
 
         {hasGroups(category)

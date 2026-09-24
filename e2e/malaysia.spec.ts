@@ -61,19 +61,27 @@ test.describe('Bahasa Melayu', () => {
       for (let i = 0; i < pages; i++) doc.addPage([595.28, 841.89]);
       return { name: 'dokumen.pdf', mimeType: 'application/pdf', buffer: Buffer.from(await doc.save()) };
     }
-    const error = (page: Page) => page.locator('p[class*="text-err"]').first();
+    const error = (page: Page) => page.locator('[data-status-message]').first();
 
-    test('merge refuses one file in Malay, and sums two in Malay', async ({ page }) => {
+    test('merge stages and combines in Malay', async ({ page }) => {
       await page.goto('/ms/pdf/merge');
       await page.locator('input[type=file]').setInputFiles(await pdf());
-      await expect(error(page)).toHaveText('Penggabungan memerlukan sekurang-kurangnya dua PDF. Lepaskan satu lagi.');
+      // One file is queued but cannot be combined, and the button says so in
+      // Malay. The engine's own refusal is unreachable from here by design.
+      await expect(page.getByRole('button', { name: 'Gabungkan menjadi satu PDF' })).toBeDisabled();
 
+      // Emptied first: a staging area APPENDS what is dropped on it, so
+      // without this the queue would be the one file above plus these two.
+      await page.getByRole('button', { name: 'Kosongkan' }).click();
       await page.locator('input[type=file]').setInputFiles([await pdf(), await pdf()]);
+      await page.getByRole('button', { name: 'Gabungkan menjadi satu PDF' }).click();
       await expect(page.getByText('2 fail · 6 halaman')).toBeVisible({ timeout: 30_000 });
     });
 
     test('the shared Pages field complains in Malay', async ({ page }) => {
-      await page.goto('/ms/pdf/split');
+      // Rotate rather than Split: Split picks its pages with tick boxes now,
+      // so the typed field lives on the tools that still offer one.
+      await page.goto('/ms/pdf/rotate');
       await page.getByLabel('Halaman').fill('99');
       await page.locator('input[type=file]').setInputFiles(await pdf());
       await expect(error(page)).toHaveText('Dokumen ini mempunyai 3 halaman, jadi "99" di luar julat.');
@@ -137,9 +145,10 @@ test.describe('Bahasa Melayu', () => {
     });
 
     test('the English pages still read in English', async ({ page }) => {
-      await page.goto('/pdf/merge');
+      await page.goto('/pdf/rotate');
       await page.locator('input[type=file]').setInputFiles(await pdf());
-      await expect(error(page)).toHaveText('Merging needs at least two PDFs. Drop another one in.');
+      await page.getByLabel('Pages').fill('99');
+      await expect(error(page)).toHaveText('This document has 3 pages, so "99" is out of range.');
     });
   });
 

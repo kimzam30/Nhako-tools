@@ -17,7 +17,8 @@
     "prebuild": "node scripts/vendor.mjs",
     "predev": "node scripts/vendor.mjs",
     "icons": "node scripts/icons.mjs",
-    "og": "node scripts/og-images.mjs"
+    "og": "node scripts/og-images.mjs",
+    "test:e2e:mobile": "playwright test --project=android --project=ios --project=ios-landscape --project=ipados --project=ipados-landscape"
   },
   "dependencies": {
     "@astrojs/preact": "^4.1.3",

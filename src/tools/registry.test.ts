@@ -224,6 +224,38 @@ describe('browse taxonomy', () => {
     }
   });
 
+  /**
+   * Round trips, kept side by side.
+   *
+   * Someone who has just converted a JPG into a PDF is the likeliest person in
+   * the catalogue to want the opposite next, and vice versa. The browse layer
+   * renders a group in registry order, so adjacency here is what puts the two
+   * tiles next to each other, and nothing else enforces it: reordering the
+   * registry for any other reason would quietly pull them apart.
+   */
+  describe('conversion pairs sit next to each other', () => {
+    const PAIRS: [string, string][] = [
+      ['pdf/jpg-to-pdf', 'pdf/to-image'],
+      ['pdf/office-to-pdf', 'pdf/to-word'],
+    ];
+
+    it.each(PAIRS)('%s is beside %s', (a, b) => {
+      const order = TOOLS.map(toolId);
+      const i = order.indexOf(a);
+      const j = order.indexOf(b);
+      expect(i, `${a} is not in the registry`).toBeGreaterThanOrEqual(0);
+      expect(j, `${b} is not in the registry`).toBeGreaterThanOrEqual(0);
+      expect(Math.abs(i - j), `${a} and ${b} are ${Math.abs(i - j)} apart`).toBe(1);
+    });
+
+    it.each(PAIRS)('%s and %s are shown under one heading', (a, b) => {
+      const first = TOOLS.find((t) => toolId(t) === a)!;
+      const second = TOOLS.find((t) => toolId(t) === b)!;
+      expect(first.category).toBe(second.category);
+      expect(first.group, `${a} and ${b} are under different headings`).toBe(second.group);
+    });
+  });
+
   it('leaves no group empty', () => {
     // An empty heading on a category page is a dead end for whoever reads it.
     for (const c of CATEGORIES) {

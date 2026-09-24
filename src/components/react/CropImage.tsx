@@ -160,7 +160,7 @@ export default function CropImage({ locale = 'en', accept }: { locale?: Locale; 
           <span className="text-sm font-medium">{t.drop}</span>
           <span className="text-xs text-muted">{t.dropSub}</span>
         </button>
-        {error && <p className="mt-4 rounded-lg border border-err bg-err-subtle px-4 py-3 text-sm text-err">{error}</p>}
+        {error && <p data-status-message className="mt-4 rounded-lg border border-err bg-err-subtle px-4 py-3 text-sm text-err">{error}</p>}
       </section>
     );
   }
@@ -205,7 +205,7 @@ export default function CropImage({ locale = 'en', accept }: { locale?: Locale; 
 
       {/* The error lived only in the empty state, so anything that went wrong
           after an image was loaded had nowhere to appear. */}
-      {error && <p className="rounded-lg border border-err bg-err-subtle px-4 py-3 text-sm text-err">{error}</p>}
+      {error && <p data-status-message className="rounded-lg border border-err bg-err-subtle px-4 py-3 text-sm text-err">{error}</p>}
 
       <div aria-live="polite" className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3">
         <span data-numeric className="flex-1 text-sm">{t.size(rect.w, rect.h)}{output ? ` · ${bytes(output.size)}` : ''}</span>

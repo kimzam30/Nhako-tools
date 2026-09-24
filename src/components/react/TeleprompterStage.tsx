@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  clampWpm, clock, followMatch, normalizeWord, pixelsPerSecond, readingSeconds, WPM,
+  clock, followMatch, normalizeWord, pixelsPerSecond, readingSeconds, snapWpm, WPM,
   type Action, type PrompterState, type RemoteMessage, type Script,
 } from '../../tools/media/teleprompter';
 import { startRecording, type Recording, type Take } from '../../lib/takes';
@@ -12,7 +12,7 @@ interface Props {
   settings: Settings;
   onSettings: (s: Settings) => void;
   t: StageText;
-  /** Record from the start, rather than only scroll. */
+  /** Opened from "Start and record": bring the camera up, ready to record. */
   record: boolean;
   onClose: () => void;
   onTake: (take: Take) => void;
@@ -74,6 +74,19 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
   const [showRemote, setShowRemote] = useState(false);
   const [qr, setQr] = useState<string | null>(null);
   const [preview, setPreview] = useState(true);
+  // Nothing scrolls or records until asked, so the first screen says what to do.
+  const [started, setStarted] = useState(false);
+  // A phone has room for a few big controls, not eleven. On a narrow or short
+  // screen the secondary ones move behind More, so the script keeps the screen.
+  const [compact, setCompact] = useState(false);
+  const [showMore, setShowMore] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 700px), (max-height: 520px)');
+    const apply = () => setCompact(mq.matches);
+    apply();
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
+  }, []);
 
   const normWords = useMemo(() => script.words.map(normalizeWord), [script]);
   const canRecord = typeof MediaRecorder !== 'undefined' && Boolean(navigator.mediaDevices?.getUserMedia);
@@ -176,6 +189,7 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
 
   function play() {
     if (playing.current || countdown) return;
+    setStarted(true);
     setPausedAtCue(false);
     const L = layout.current;
     if (y.current >= L.height - 2) { y.current = 0; armed.current.clear(); }
@@ -209,7 +223,9 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
     jumpTo(next ?? (dir > 0 ? layout.current.height - 1 : 0));
   };
   const restart = () => { stop(false); armed.current.clear(); jumpTo(0); };
-  const speed = (delta: number) => onSettings({ ...settingsRef.current, wpm: clampWpm(settingsRef.current.wpm + delta) });
+  // Nudging from an exact speed set by a target length (143) lands back on the
+  // step grid (150), rather than carrying the odd number along.
+  const speed = (delta: number) => onSettings({ ...settingsRef.current, wpm: snapWpm(settingsRef.current.wpm + delta) });
 
   // ─── Camera, meter, recording ────────────────────────────────────────
   async function ensureCamera(): Promise<MediaStream | null> {
@@ -423,16 +439,38 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
       document.removeEventListener('visibilitychange', onVisible);
       void lock?.release().catch(() => undefined);
       document.documentElement.style.overflow = prevOverflow;
-      if (document.fullscreenElement) void document.exitFullscreen().catch(() => undefined);
+      // Whichever API took us in has to take us out. A Safari old enough to
+      // have only the prefixed one would otherwise stay full screen after
+      // Close, with the page behind it and no way back but the Esc key.
+      const doc = document as Document & { webkitFullscreenElement?: Element | null; webkitExitFullscreen?: () => void };
+      if (doc.fullscreenElement) void doc.exitFullscreen().catch(() => undefined);
+      else if (doc.webkitFullscreenElement) doc.webkitExitFullscreen?.();
     };
   }, []);
 
-  // Start button pressed: count down and go, recording first if asked.
+  // Opened from "Start and record": bring the camera up so the shot can be
+  // framed and the mic checked. Nothing scrolls and nothing records until the
+  // presenter says so: they may still be setting up the phone remote.
   useEffect(() => {
-    // Wait a frame so the text has been measured.
-    const id = requestAnimationFrame(() => { if (record) void toggleRecord(); else play(); });
-    return () => cancelAnimationFrame(id);
+    if (record) void ensureCamera();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Android's Back (and a browser's back gesture) landed on the page behind the
+  // stage, so backing out of a take dropped you off the tool entirely. An extra
+  // history entry turns that gesture into Close.
+  const closeRef = useRef<() => void>(() => undefined);
+  closeRef.current = () => void close();
+  useEffect(() => {
+    history.pushState({ nhakoStage: true }, '');
+    const onPop = () => closeRef.current();
+    window.addEventListener('popstate', onPop);
+    return () => {
+      window.removeEventListener('popstate', onPop);
+      // Closed some other way: take our entry back out, so one Back press does
+      // not land the presenter on the page they were on before opening it.
+      if ((history.state as { nhakoStage?: boolean } | null)?.nhakoStage) history.back();
+    };
   }, []);
 
   async function close() {
@@ -479,7 +517,7 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
       aria-modal="true"
       aria-label={t.stageLabel}
       tabIndex={-1}
-      className="fixed inset-0 z-[100] flex flex-col outline-none"
+      className="fixed inset-0 z-[100] flex h-[100dvh] flex-col outline-none"
       style={{ background: theme.bg, color: theme.fg }}
     >
       {/* Text area. Mirroring flips this and the reading line together. */}
@@ -544,42 +582,80 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
       )}
 
       {/* Controls: never mirrored, big enough for a thumb on a tablet. */}
-      <div className={`z-40 border-t border-white/10 bg-black/85 px-3 py-2 text-white transition-opacity duration-300 ${isPlaying ? 'opacity-40 hover:opacity-100 focus-within:opacity-100' : 'opacity-100'}`}>
-        <div className="mb-2 h-1 overflow-hidden rounded bg-white/10" aria-hidden="true">
+      <div className={`relative z-40 border-t border-white/10 bg-black/85 px-3 py-2 text-white transition-opacity duration-300 ${isPlaying ? 'opacity-40 hover:opacity-100 focus-within:opacity-100' : 'opacity-100'}`}>
+        {/* Floated above the bar rather than placed in it: taking a line of the
+            bar and giving it back on play would resize the text area, and the
+            reading line sits at a percentage of that, so the script would jump
+            a few pixels exactly as it started. */}
+        {!started && (
+          <p className="pointer-events-none absolute inset-x-0 bottom-full mb-3 px-3 text-center" data-testid="ready-hint">
+            <span className="inline-block rounded-full bg-black/75 px-4 py-2 text-sm text-white">
+              {record && stream ? t.readyRecord : t.readyPlay}
+            </span>
+          </p>
+        )}
+        <div className="mb-1.5 h-1 overflow-hidden rounded bg-white/10" aria-hidden="true">
           <div className="h-full bg-white/60" style={{ width: `${progress.fraction * 100}%` }} />
         </div>
+        {/* One line of its own, always. Sharing the button row meant it took a
+            whole row anyway below lg, and a line that comes and goes resizes
+            the text area under it. */}
+        <span className="mb-1.5 block truncate px-1 text-xs text-white/70" aria-live="polite" data-testid="status">
+          {pausedAtCue ? t.pausedAtCue : progress.section >= 0 ? script.sections[progress.section] : ''}
+          {' '}<span className="font-mono tabular-nums">{t.left(clock(remainingSeconds))}</span>
+          {voiceState === 'listening' && <span className="ml-2 text-emerald-300">{t.listening}</span>}
+          {voiceState === 'unsupported' && <span className="ml-2 text-amber-300">{t.voiceUnsupported}</span>}
+          {voiceState === 'blocked' && <span className="ml-2 text-amber-300">{t.voiceBlocked}</span>}
+        </span>
+        {compact && showMore && (
+          <div className="mb-2 flex flex-wrap items-center gap-2 border-b border-white/10 pb-2" data-testid="more-tray">
+            {script.sections.length > 0 && (
+              <>
+                <button type="button" onClick={() => section(-1)} className={quiet} aria-label={t.prevSection}>⇤</button>
+                <button type="button" onClick={() => section(1)} className={quiet} aria-label={t.nextSection}>⇥</button>
+              </>
+            )}
+            <button type="button" onClick={restart} className={quiet}>{t.restart}</button>
+            {stream && (
+              <button type="button" onClick={() => setPreview((p) => !p)} className={quiet} aria-pressed={preview}>{t.preview}</button>
+            )}
+            <button type="button" onClick={() => void openRemote()} className={quiet} data-testid="remote">
+              {t.remote}{remote.phoneSeen ? ' ●' : ''}
+            </button>
+          </div>
+        )}
         <div className="flex flex-wrap items-center gap-2">
-          <button type="button" onClick={toggle} className={`${btn} min-w-24 bg-white text-black hover:bg-white/90`} data-testid="play">
+          <button type="button" onClick={toggle} className={`${btn} ${compact ? '' : 'min-w-24'} bg-white text-black hover:bg-white/90`} data-testid="play">
             {isPlaying || countdown ? t.pause : t.play}
           </button>
           <button type="button" onClick={() => speed(-WPM.step)} className={quiet} aria-label={t.slower}>−</button>
-          <span data-testid="wpm" className="min-w-20 text-center font-mono text-sm tabular-nums" aria-live="polite">{settings.wpm} {t.wpmUnit}</span>
+          <span data-testid="wpm" className={`${compact ? 'min-w-16 text-xs' : 'min-w-20 text-sm'} text-center font-mono tabular-nums`} aria-live="polite">{settings.wpm} {t.wpmUnit}</span>
           <button type="button" onClick={() => speed(WPM.step)} className={quiet} aria-label={t.faster}>+</button>
-          {script.sections.length > 0 && (
+          {!compact && script.sections.length > 0 && (
             <>
               <button type="button" onClick={() => section(-1)} className={quiet} aria-label={t.prevSection}>⇤</button>
               <button type="button" onClick={() => section(1)} className={quiet} aria-label={t.nextSection}>⇥</button>
             </>
           )}
-          <button type="button" onClick={restart} className={quiet}>{t.restart}</button>
-          <span className="order-last basis-full truncate px-1 text-xs text-white/70 lg:order-none lg:basis-auto lg:flex-1" aria-live="polite">
-            {pausedAtCue ? t.pausedAtCue : progress.section >= 0 ? script.sections[progress.section] : ''}
-            {' '}<span className="font-mono tabular-nums">{t.left(clock(remainingSeconds))}</span>
-            {voiceState === 'listening' && <span className="ml-2 text-emerald-300">{t.listening}</span>}
-            {voiceState === 'unsupported' && <span className="ml-2 text-amber-300">{t.voiceUnsupported}</span>}
-            {voiceState === 'blocked' && <span className="ml-2 text-amber-300">{t.voiceBlocked}</span>}
-          </span>
+          {!compact && <button type="button" onClick={restart} className={quiet}>{t.restart}</button>}
           {canRecord && (
             <button type="button" onClick={() => void toggleRecord()} className={`${btn} ${recording ? 'bg-red-600 hover:bg-red-500' : 'bg-white/10 hover:bg-white/20'} text-white`} data-testid="record">
               {recording ? t.stopRecording : t.record}
             </button>
           )}
-          {stream && (
+          {!compact && stream && (
             <button type="button" onClick={() => setPreview((p) => !p)} className={quiet} aria-pressed={preview}>{t.preview}</button>
           )}
-          <button type="button" onClick={() => void openRemote()} className={quiet} data-testid="remote">
-            {t.remote}{remote.phoneSeen ? ' ●' : ''}
-          </button>
+          {!compact && (
+            <button type="button" onClick={() => void openRemote()} className={quiet} data-testid="remote">
+              {t.remote}{remote.phoneSeen ? ' ●' : ''}
+            </button>
+          )}
+          {compact && (
+            <button type="button" onClick={() => setShowMore((m) => !m)} className={quiet} aria-expanded={showMore} data-testid="more">
+              {t.more}
+            </button>
+          )}
           <button type="button" onClick={() => void close()} className={quiet} data-testid="close">{t.close}</button>
         </div>
         {message && (

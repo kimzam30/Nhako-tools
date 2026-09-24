@@ -59,6 +59,7 @@
   --accent-subtle: var(--pink-50);
   --accent-ring: var(--pink-500);
   --ok: #0f7a3d;
+  --ok-subtle: #f0fdf4;
   --warn: #8a5300;
   --err: #b4231e;
   --err-subtle: #fef2f2;
@@ -111,6 +112,7 @@
   --accent-subtle: #2a0f24;
   --accent-ring: var(--pink-300);
   --ok: #4ade80;
+  --ok-subtle: #0c2417;
   --warn: #fbbf24;
   --err: #ff7a75;
   --err-subtle: #2a1210;
@@ -140,6 +142,7 @@
   --color-accent-subtle: var(--accent-subtle);
   --color-ring: var(--accent-ring);
   --color-ok: var(--ok);
+  --color-ok-subtle: var(--ok-subtle);
   --color-warn: var(--warn);
   --color-err: var(--err);
   --color-err-subtle: var(--err-subtle);

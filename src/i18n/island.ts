@@ -28,6 +28,17 @@ const en = {
   save: 'Save',
   clear: 'Clear',
   genericError: 'Something went wrong running this tool.',
+  /* The outcome, said in words. The drawn mark beside it is decoration for
+     anyone who can see it; this is what the live region actually announces. */
+  doneLabel: 'Done',
+  errorLabel: 'Could not finish',
+  fileName: 'File name',
+  fileNameHelp: 'Rename it before you save.',
+  /* Said outright rather than implied by the plural in "Drop files here".
+     Whether a tool takes a batch is the first thing someone with forty photos
+     needs to know, and it was only ever inferable from an "s". */
+  multiYes: 'Takes several files at once.',
+  multiNo: 'One file at a time.',
   original: 'Original',
   input: 'Input',
   changed: 'Changed',
@@ -78,6 +89,12 @@ const ms: IslandStrings = {
   save: 'Simpan',
   clear: 'Kosongkan',
   genericError: 'Berlaku ralat semasa menjalankan alat ini.',
+  doneLabel: 'Selesai',
+  errorLabel: 'Tidak dapat diselesaikan',
+  fileName: 'Nama fail',
+  fileNameHelp: 'Namakan semula sebelum anda simpan.',
+  multiYes: 'Menerima beberapa fail serentak.',
+  multiNo: 'Satu fail pada satu masa.',
   original: 'Asal',
   input: 'Input',
   changed: 'Diubah',

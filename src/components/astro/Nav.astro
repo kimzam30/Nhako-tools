@@ -36,8 +36,16 @@ const active = (segment: string) => path === `/${segment}` || path.startsWith(`/
       JavaScript. Below 768px this row used to be `hidden md:flex`, which left
       a phone with no category navigation at all, only the search button.
       Scrolling is the whole adaptation.
+
+      It stays `flex-1 min-w-0` at every width. It used to become `md:flex-none`
+      from 768px, which stopped it shrinking, and on a touch screen, where
+      `pointer-coarse` pads every item, the row then outgrew the bar between
+      768px and about 850px and pushed search, language and theme off the right
+      edge, so every page scrolled sideways on an iPad held upright. Where
+      there is room the two look identical, because the items are left aligned
+      and `ml-auto` still holds the controls to the right.
     */}
-    <ul class="-mx-1 flex min-w-0 flex-1 items-center gap-1 overflow-x-auto px-1 [scrollbar-width:none] pointer-coarse:gap-2 md:flex-none [&::-webkit-scrollbar]:hidden">
+    <ul class="-mx-1 flex min-w-0 flex-1 items-center gap-1 overflow-x-auto px-1 [scrollbar-width:none] pointer-coarse:gap-2 [&::-webkit-scrollbar]:hidden">
       {NAV_CATEGORIES.map((c) => (
         <li class="shrink-0">
           <a

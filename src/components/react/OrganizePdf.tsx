@@ -3,6 +3,7 @@ import { assemble, type PagePick } from '../../tools/pdf/organize';
 import { openForPreview, renderPage } from '../../lib/pdf-render';
 import { bytes } from '../../lib/format';
 import { filesBeforeHydration } from './hydration';
+import { useDragOrder, dragClass, DROP_GAP } from './drag-order';
 import type { Locale } from '../../i18n/paths';
 
 const TEXT = {
@@ -15,11 +16,21 @@ const TEXT = {
     earlier: 'Move earlier', later: 'Move later',
     left: 'Rotate anticlockwise', right: 'Rotate clockwise', remove: 'Remove page',
     save: 'Save PDF', saving: 'Building the PDF…', reset: 'Start over',
+    /* Two different retreats. "Undo my edits" and "give me back my file
+       picker" were one button, so undoing a reorder threw the document away
+       and the PDF had to be found and dropped in again. */
+    restore: 'Reset order',
+    restoreHint: 'Put every page back as it came in. Your file stays loaded.',
+    restored: 'Order reset. Every page is back where it started.',
     hint: 'Drag pages to reorder, or use the buttons on each page.',
     empty: 'Every page has been removed. Add a PDF or start over.',
     locked: (f: string) => `"${f}" is password-protected. Unlock it first.`,
     bad: (f: string) => `"${f}" could not be read as a PDF.`,
     moved: (n: number, at: number) => `Page moved to position ${at} of ${n}.`,
+    lifted: (label: string) => `${label} lifted. Drop it on another page to place it there.`,
+    dropped: (label: string, at: number, n: number) => `${label} dropped at position ${at} of ${n}.`,
+    cancelled: 'Move cancelled. Nothing changed.',
+    position: (n: number) => `Position ${n}`,
   },
   ms: {
     drop: 'Lepaskan PDF di sini, atau semak imbas',
@@ -30,15 +41,22 @@ const TEXT = {
     earlier: 'Alih ke depan', later: 'Alih ke belakang',
     left: 'Putar lawan jam', right: 'Putar ikut jam', remove: 'Buang halaman',
     save: 'Simpan PDF', saving: 'Membina PDF…', reset: 'Mula semula',
+    restore: 'Set semula susunan',
+    restoreHint: 'Kembalikan setiap halaman seperti asal. Fail anda kekal dimuatkan.',
+    restored: 'Susunan ditetapkan semula. Setiap halaman kembali ke tempat asalnya.',
     hint: 'Seret halaman untuk menyusun semula, atau guna butang pada setiap halaman.',
     empty: 'Semua halaman telah dibuang. Tambah PDF atau mula semula.',
     locked: (f: string) => `"${f}" dilindungi kata laluan. Buka kuncinya dahulu.`,
     bad: (f: string) => `"${f}" tidak dapat dibaca sebagai PDF.`,
     moved: (n: number, at: number) => `Halaman dialih ke kedudukan ${at} daripada ${n}.`,
+    lifted: (label: string) => `${label} diangkat. Lepaskan pada halaman lain untuk meletakkannya di situ.`,
+    dropped: (label: string, at: number, n: number) => `${label} dilepaskan di kedudukan ${at} daripada ${n}.`,
+    cancelled: 'Pergerakan dibatalkan. Tiada apa-apa berubah.',
+    position: (n: number) => `Kedudukan ${n}`,
   },
 } satisfies Record<Locale, unknown>;
 
-interface Item extends PagePick { id: string; thumb?: string; label: string }
+interface Item extends PagePick { id: string; label: string }
 interface Source { name: string; bytes: Uint8Array }
 
 const THUMB_W = 132;
@@ -51,13 +69,25 @@ export default function OrganizePdf({ locale = 'en', accept }: { locale?: Locale
   const [busy, setBusy] = useState(false);
   const [output, setOutput] = useState<{ url: string; size: number } | null>(null);
   const [announce, setAnnounce] = useState('');
-  const [dragId, setDragId] = useState<string | null>(null);
   const [dropZone, setDropZone] = useState(false);
+  /**
+   * The pages exactly as they were read out of the files, so "Reset order" can
+   * rebuild them without opening anything again. Thumbnails are kept beside it
+   * rather than inside it: they arrive one by one, and an entry that carried
+   * its own would go stale the moment it was copied into the working list.
+   */
+  const [baseline, setBaseline] = useState<Item[]>([]);
+  const [thumbs, setThumbs] = useState<Record<string, string>>({});
   const inputRef = useRef<HTMLInputElement>(null);
   const [early] = useState(() => filesBeforeHydration('organize-file'));
   const urls = useRef<string[]>([]);
 
-  useEffect(() => () => { for (const u of urls.current) URL.revokeObjectURL(u); }, []);
+  useEffect(() => () => {
+    for (const u of urls.current) URL.revokeObjectURL(u);
+    drag.dispose();
+    // The hook owns only a timer; it is stable for the island's lifetime.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Any edit makes a previous save stale.
   const edit = (next: Item[]) => { setItems(next); setOutput(null); };
@@ -83,12 +113,13 @@ export default function OrganizePdf({ locale = 'en', accept }: { locale?: Locale
         id: `${sourceIndex}-${i}`, source: sourceIndex, index: i, turn: 0, label: t.page(i + 1, file.name),
       }));
       setItems((prev) => [...prev, ...fresh]);
+      setBaseline((prev) => [...prev, ...fresh]);
       setOutput(null);
       // Thumbnails fill in one by one; the grid is usable before they finish.
       for (let i = 0; i < doc.numPages; i++) {
         const r = await renderPage(doc, i + 1, THUMB_W);
         urls.current.push(r.url);
-        setItems((prev) => prev.map((it) => (it.id === `${sourceIndex}-${i}` ? { ...it, thumb: r.url } : it)));
+        setThumbs((prev) => ({ ...prev, [`${sourceIndex}-${i}`]: r.url }));
       }
       void doc.destroy();
     }
@@ -108,14 +139,14 @@ export default function OrganizePdf({ locale = 'en', accept }: { locale?: Locale
     requestAnimationFrame(() => document.querySelector<HTMLButtonElement>(`[data-card="${id}"] [data-move="${delta < 0 ? 'earlier' : 'later'}"]`)?.focus());
   }
 
-  function dropOn(targetId: string) {
-    if (!dragId || dragId === targetId) return;
-    const next = items.filter((it) => it.id !== dragId);
-    const at = next.findIndex((it) => it.id === targetId);
-    next.splice(at, 0, items.find((it) => it.id === dragId)!);
-    edit(next);
-    setDragId(null);
-  }
+  const drag = useDragOrder(items, {
+    onDrop: (next, moved, at) => {
+      edit(next);
+      setAnnounce(t.dropped(moved.label, at + 1, next.length));
+    },
+    onLift: (it) => setAnnounce(t.lifted(it.label)),
+    onCancel: () => setAnnounce(t.cancelled),
+  });
 
   async function save() {
     setBusy(true);
@@ -132,9 +163,32 @@ export default function OrganizePdf({ locale = 'en', accept }: { locale?: Locale
     }
   }
 
+  /** Everything goes: the file picker comes back. */
   function reset() {
-    setSources([]); setItems([]); setOutput(null); setError(null);
+    setSources([]); setItems([]); setBaseline([]); setThumbs({});
+    setOutput(null); setError(null);
+    drag.reset();
   }
+
+  /**
+   * Undo the editing, keep the document.
+   *
+   * Rebuilt from `baseline`, so a page that was removed comes back and every
+   * rotation is cleared, without reopening or re-rendering anything: the
+   * thumbnails are already drawn and keyed by page id.
+   */
+  function restore() {
+    setItems(baseline.map((it) => ({ ...it, turn: 0 })));
+    setOutput(null); setError(null);
+    drag.reset();
+    setAnnounce(t.restored);
+  }
+
+  /** Nothing has been reordered, rotated or removed, so there is nothing to
+   *  put back and the Reset order button has no work to offer. */
+  const untouched =
+    items.length === baseline.length &&
+    items.every((it, i) => it.id === baseline[i]?.id && it.turn === 0);
 
   const icon = 'grid size-6 place-items-center rounded border border-border bg-bg text-xs text-muted transition-colors hover:border-border-strong hover:text-text disabled:opacity-30';
   const fileInput = (
@@ -163,7 +217,7 @@ export default function OrganizePdf({ locale = 'en', accept }: { locale?: Locale
           <span className="text-sm font-medium">{t.drop}</span>
           <span className="text-xs text-muted">{t.dropSub}</span>
         </button>
-        {error && <p className="mt-4 rounded-lg border border-err bg-err-subtle px-4 py-3 text-sm text-err">{error}</p>}
+        {error && <p data-status-message className="mt-4 rounded-lg border border-err bg-err-subtle px-4 py-3 text-sm text-err">{error}</p>}
       </section>
     );
   }
@@ -178,6 +232,14 @@ export default function OrganizePdf({ locale = 'en', accept }: { locale?: Locale
         <span className="hidden text-xs text-muted sm:inline">{t.hint}</span>
         <div className="ml-auto flex flex-wrap gap-2">
           <button type="button" onClick={() => inputRef.current?.click()} className="rounded border border-border px-3 py-1.5 text-sm text-muted hover:text-text">{t.add}</button>
+          {/* Only offered once there is something to undo. */}
+          <button
+            type="button" onClick={restore} title={t.restoreHint}
+            disabled={untouched}
+            className="rounded border border-border px-3 py-1.5 text-sm text-muted transition-colors hover:border-border-strong hover:text-text disabled:opacity-40"
+          >
+            {t.restore}
+          </button>
           <button type="button" onClick={reset} className="rounded border border-border px-3 py-1.5 text-sm text-muted hover:text-text">{t.reset}</button>
           <button type="button" disabled={busy || items.length === 0} onClick={() => void save()} className="rounded bg-accent px-3 py-1.5 text-sm font-medium text-accent-on hover:bg-accent-hover disabled:opacity-50">{busy ? t.saving : t.save}</button>
         </div>
@@ -193,7 +255,7 @@ export default function OrganizePdf({ locale = 'en', accept }: { locale?: Locale
         )}
       </div>
 
-      {error && <p className="rounded-lg border border-err bg-err-subtle px-4 py-3 text-sm text-err">{error}</p>}
+      {error && <p data-status-message className="rounded-lg border border-err bg-err-subtle px-4 py-3 text-sm text-err">{error}</p>}
       {items.length === 0 && <p className="text-sm text-muted">{t.empty}</p>}
 
       <ol className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4" aria-label={t.pages(items.length)}>
@@ -201,19 +263,47 @@ export default function OrganizePdf({ locale = 'en', accept }: { locale?: Locale
           <li
             key={it.id}
             data-card={it.id}
-            draggable
-            onDragStart={(e) => { setDragId(it.id); e.dataTransfer.effectAllowed = 'move'; }}
-            onDragOver={(e) => { if (dragId) e.preventDefault(); }}
-            onDrop={(e) => { e.preventDefault(); dropOn(it.id); }}
-            onDragEnd={() => setDragId(null)}
-            className={`flex flex-col gap-2 rounded-lg border bg-surface p-2 transition-colors ${dragId === it.id ? 'border-accent opacity-60' : 'border-border'}`}
+            {...drag.props(it)}
+            className={`relative flex cursor-grab flex-col gap-2 rounded-lg border bg-surface p-2 transition-[border-color,opacity,box-shadow] duration-150 active:cursor-grabbing ${dragClass(drag.dragId === it.id, drag.landed === it.id)}`}
           >
-            <div className="grid aspect-[3/4] place-items-center overflow-hidden rounded bg-sunken">
-              {it.thumb
-                ? <img src={it.thumb} alt={it.label} className="max-h-full max-w-full shadow-sm transition-transform duration-150" style={{ transform: `rotate(${it.turn}deg)${it.turn % 180 ? ' scale(0.75)' : ''}` }} draggable={false} />
+            {/*
+              The gap the page will drop into, drawn on the edge the pointer is
+              nearest. It is the answer to "did that drag register?", which the
+              grid previously never gave: the only way to find out was to let
+              go and read the numbers.
+            */}
+            {drag.over?.id === it.id && drag.dragId !== null && drag.dragId !== it.id && (
+              <span aria-hidden="true" className={`${DROP_GAP} ${drag.over.after ? '-right-1.5' : '-left-1.5'}`} />
+            )}
+
+            <div className="relative grid aspect-[3/4] place-items-center overflow-hidden rounded bg-sunken">
+              {thumbs[it.id]
+                ? <img src={thumbs[it.id]} alt={it.label} className="max-h-full max-w-full shadow-sm transition-transform duration-150" style={{ transform: `rotate(${it.turn}deg)${it.turn % 180 ? ' scale(0.75)' : ''}` }} draggable={false} />
                 : <span className="text-2xs text-muted">…</span>}
+
+              {/*
+                THE POSITION, ON THE PAGE IT DESCRIBES.
+
+                It used to be one number at the head of a truncated grey line of
+                8px text, the same weight as the file name beside it, so the one
+                thing that changes when you reorder was the least visible thing
+                on the card. Now it is a filled chip on the thumbnail: the
+                brightest element in the tile, in the only place the eye is
+                already looking.
+              */}
+              <span
+                data-position
+                data-numeric
+                className="absolute left-1 top-1 grid min-w-6 place-items-center rounded bg-accent px-1.5 py-0.5 font-mono text-xs font-bold text-accent-on shadow-sm"
+              >
+                {i + 1}
+              </span>
             </div>
-            <span data-numeric className="truncate text-2xs text-muted" title={it.label}>{i + 1} · {it.label}</span>
+
+            {/* The page's origin, which does not change when it is reordered,
+                so it is deliberately quieter than the position above. */}
+            <span className="truncate text-2xs text-muted" title={it.label}>{it.label}</span>
+
             <div className="flex items-center justify-between">
               <div className="contents">
                 <button type="button" data-move="earlier" className={icon} aria-label={`${t.earlier}: ${it.label}`} disabled={i === 0} onClick={() => move(it.id, -1)}>←</button>

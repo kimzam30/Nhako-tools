@@ -170,7 +170,7 @@ test.describe('PDF tools with no output check of their own', () => {
     await page.getByLabel('Top').fill('150');
     await page.getByLabel('Bottom').fill('140');
     await page.locator('input[type=file]').setInputFiles(await pdfFile(2));
-    await expect(page.locator('p[class*="text-err"]')).toContainText(/page 1/i, { timeout: 30_000 });
+    await expect(page.locator('[data-status-message]')).toContainText(/page 1/i, { timeout: 30_000 });
     await expect(page.getByRole('link', { name: 'Save' })).toHaveCount(0);
   });
 
@@ -199,7 +199,7 @@ test.describe('PDF tools with no output check of their own', () => {
  */
 test.describe('a PDF that loads but has no pages', () => {
   const broken = { name: 'separuh.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 then nothing but noise '.repeat(40)) };
-  const error = (page: Page) => page.locator('p[class*="text-err"]').first();
+  const error = (page: Page) => page.locator('[data-status-message]').first();
 
   for (const [id, prepare] of [
     ['pdf/merge', null],
@@ -216,6 +216,10 @@ test.describe('a PDF that loads but has no pages', () => {
       if (prepare === 'password') await page.getByLabel('Password').fill('rahsia123');
       const files = id === 'pdf/merge' ? [broken, broken] : broken;
       await page.locator('input[type=file]').setInputFiles(files);
+      // Merge stages its files and runs on request, so the engine is only
+      // reached once Combine is pressed. Split validates at stage time, while
+      // it is drawing the pages, and names the file without being asked.
+      if (id === 'pdf/merge') await page.getByRole('button', { name: 'Combine into one PDF' }).click();
 
       await expect(error(page)).toContainText('separuh.pdf', { timeout: 30_000 });
       const message = await error(page).innerText();
@@ -277,7 +281,7 @@ test.describe('image tools with no output check of their own', () => {
   test('HEIC to JPG: a file that is not HEIC is named in the error', async ({ page }) => {
     await page.goto('/image/heic-to-jpg');
     await page.locator('input[type=file]').setInputFiles({ name: 'notes.heic', mimeType: 'image/heic', buffer: Buffer.from('this is not a photo') });
-    await expect(page.locator('p[class*="text-err"]')).toContainText(/notes\.heic/, { timeout: 60_000 });
+    await expect(page.locator('[data-status-message]')).toContainText(/notes\.heic/, { timeout: 60_000 });
   });
 });
 
@@ -313,7 +317,7 @@ test.describe('an encoder the browser does not have', () => {
     });
     await page.locator('input[type=file]').setInputFiles({ name: 'photo.webp', mimeType: 'image/webp', buffer: Buffer.from(webp, 'base64') });
 
-    await expect(page.locator('p[class*="text-err"]').first()).toContainText(/cannot encode|could not be opened/i, { timeout: 20_000 });
+    await expect(page.locator('[data-status-message]').first()).toContainText(/cannot encode|could not be opened/i, { timeout: 20_000 });
   });
 });
 

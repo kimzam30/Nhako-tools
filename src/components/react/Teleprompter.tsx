@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
-  clock, docxXmlToScript, parseRemote, parseScript, readingSeconds, roomCode, scriptTitle, WPM,
+  clock, docxXmlToScript, parseRemote, parseScript, readingSeconds, roomCode, scriptTitle,
+  wpmForSeconds, WPM,
   type PrompterState, type RemoteMessage,
 } from '../../tools/media/teleprompter';
 import { deleteTake, listTakes, takeFile, type Take } from '../../lib/takes';
@@ -16,6 +17,9 @@ import TeleprompterStage from './TeleprompterStage';
 import { filesBeforeHydration, valueBeforeHydration } from './hydration';
 
 const hasSpeech = () => typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
+
+/** Common slot lengths: a short ad, then the usual social and briefing cuts. */
+const TARGETS = [30, 60, 120, 180, 300];
 
 export default function Teleprompter({ locale = 'en' }: { locale?: Locale }) {
   const t = PROMPTER_TEXT[locale];
@@ -38,6 +42,12 @@ export default function Teleprompter({ locale = 'en' }: { locale?: Locale }) {
   const [playingTake, setPlayingTake] = useState<string | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const [speechOk, setSpeechOk] = useState(true);
+  // No Wake Lock means the screen dims mid-take with no explanation. Firefox
+  // and a Safari older than 16.4 are the ones that land here.
+  const [wakeOk, setWakeOk] = useState(true);
+  // Target length, held as typed so an empty box stays empty rather than 0.
+  const [targetM, setTargetM] = useState('');
+  const [targetS, setTargetS] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
   const ready = useRef(false);
 
@@ -49,6 +59,7 @@ export default function Teleprompter({ locale = 'en' }: { locale?: Locale }) {
   // be typed between hydration and this load and then overwritten by it.
   useLayoutEffect(() => {
     setSpeechOk(hasSpeech());
+    setWakeOk('wakeLock' in navigator);
     setSettingsState(loadSettings(locale));
     let list = loadScripts();
     if (list.length === 0) {
@@ -92,6 +103,30 @@ export default function Teleprompter({ locale = 'en' }: { locale?: Locale }) {
 
   const setSettings = (s: Settings) => { setSettingsState(s); saveSettings(s); };
   const set = <K extends keyof Settings>(k: K, v: Settings[K]) => setSettings({ ...settings, [k]: v });
+
+  // ─── Speed, and the target length that can drive it ──────────────────
+  const words = script.words.length;
+  const targetSeconds = Math.max(0, Math.round((Number(targetM) || 0) * 60 + (Number(targetS) || 0)));
+  // Before clamping: what the target actually asks for, so the note below can
+  // say the target is out of reach rather than silently missing it.
+  const requiredWpm = targetSeconds > 0 && words > 0 ? (words / targetSeconds) * 60 : 0;
+  const clearTarget = () => { setTargetM(''); setTargetS(''); };
+
+  // A target length sets the speed, and keeps setting it as the script is edited.
+  useEffect(() => {
+    if (targetSeconds <= 0 || words === 0) return;
+    const next = wpmForSeconds(words, targetSeconds);
+    if (next !== settings.wpm) set('wpm', next);
+    // `set` closes over the whole settings object, so it cannot be a dependency
+    // here without re-running on every unrelated setting change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetSeconds, words]);
+
+  const targetNote = targetSeconds <= 0 ? t.targetHelp
+    : words === 0 ? t.targetNoWords
+    : requiredWpm > WPM.max ? t.targetTooFast(WPM.max, clock(readingSeconds(words, WPM.max)))
+    : requiredWpm < WPM.min ? t.targetTooSlow(WPM.min, clock(readingSeconds(words, WPM.min)))
+    : t.targetExact(clock(readingSeconds(words, settings.wpm)));
 
   /** A title that was made from the text keeps following it until you edit it. */
   function typed(next: string) {
@@ -235,6 +270,10 @@ export default function Teleprompter({ locale = 'en' }: { locale?: Locale }) {
 
   return (
     <section className="flex flex-col gap-4">
+      {/* The script and the settings sit side by side once there is room for
+          both, so the page is a screen shorter and the speed you are setting
+          is next to the words it applies to. Below lg they stack as before. */}
+      <div className="gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_21rem] lg:items-start">
       {/* Script */}
       <div className={card}>
         <div className="mb-3 flex flex-wrap items-end gap-2">
@@ -249,7 +288,7 @@ export default function Teleprompter({ locale = 'en' }: { locale?: Locale }) {
           <input ref={fileRef} id="prompter-import" type="file" accept=".txt,.md,.markdown,.docx,text/plain,text/markdown" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(e) => void importFile(e.target.files?.[0])} data-testid="import" />
           <button type="button" onClick={() => fileRef.current?.click()} className={small}>{t.importFile}</button>
         </div>
-        {importError && <p role="alert" className="mb-3 rounded border border-err bg-err-subtle px-3 py-2 text-sm text-err">{importError}</p>}
+        {importError && <p role="alert" data-status-message className="mb-3 rounded border border-err bg-err-subtle px-3 py-2 text-sm text-err">{importError}</p>}
         <label className="mb-3 flex flex-col gap-1.5">
           <span className={label}>{t.title}</span>
           <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={60} className={field} />
@@ -275,11 +314,61 @@ export default function Teleprompter({ locale = 'en' }: { locale?: Locale }) {
         </details>
       </div>
 
+      {/* Display, speed and Start: one rail beside the script. It keeps its
+          natural height. Capping it and scrolling inside only hid settings,
+          because the rail is usually the taller of the two columns. */}
+      <div className="mt-4 flex flex-col gap-4 lg:mt-0">
       {/* Settings */}
       <div className={card}>
         <h2 className="mb-3 text-sm font-semibold">{t.settings}</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
-          {range('wpm', t.speed, WPM.min, WPM.max, WPM.step, (v) => `${v} ${t.wpmUnit}`)}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+          {/* Speed, what it comes to in minutes, and a target length to work
+              back from. Typing a target sets the speed; touching the slider
+              gives control back to you and drops the target. */}
+          <div className="flex flex-col gap-1.5">
+            <span className="flex items-baseline justify-between gap-2">
+              <span className={label}>{t.speed}</span>
+              <span data-numeric className="font-mono text-xs tabular-nums" data-testid="wpm-value">{settings.wpm} {t.wpmUnit}</span>
+            </span>
+            <input
+              type="range" min={WPM.min} max={WPM.max} step={1} value={settings.wpm}
+              onChange={(e) => { clearTarget(); set('wpm', Number(e.target.value)); }}
+              className="accent-[var(--accent)]" data-setting="wpm" aria-label={t.speed}
+            />
+            <span data-numeric className="text-xs text-muted" data-testid="speed-time">
+              {t.speedTime(clock(readingSeconds(words, settings.wpm)), words)}
+            </span>
+
+            <div className="mt-2 rounded border border-border p-2.5">
+              <span className={`${label} block`}>{t.targetLength}</span>
+              <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                <input
+                  type="number" inputMode="numeric" min={0} max={180} value={targetM} placeholder="0"
+                  onChange={(e) => setTargetM(e.target.value)} aria-label={t.targetMinutes}
+                  className={`${field} w-14 text-center`} data-testid="target-min"
+                />
+                <span aria-hidden="true" className="font-mono text-sm text-muted">:</span>
+                <input
+                  type="number" inputMode="numeric" min={0} max={59} value={targetS} placeholder="00"
+                  onChange={(e) => setTargetS(e.target.value)} aria-label={t.targetSeconds}
+                  className={`${field} w-14 text-center`} data-testid="target-sec"
+                />
+                {targetSeconds > 0 && (
+                  <button type="button" onClick={clearTarget} className={small} data-testid="target-clear">{t.targetClear}</button>
+                )}
+              </div>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {TARGETS.map((secs) => (
+                  <button
+                    key={secs} type="button" aria-pressed={targetSeconds === secs}
+                    onClick={() => { setTargetM(String(Math.floor(secs / 60))); setTargetS(String(secs % 60)); }}
+                    className={`rounded border px-2 py-0.5 font-mono text-2xs tabular-nums transition-colors ${targetSeconds === secs ? 'border-accent text-accent' : 'border-border text-muted hover:border-accent hover:text-text'}`}
+                  >{clock(secs)}</button>
+                ))}
+              </div>
+              <p className="mt-2 text-xs leading-snug text-muted" aria-live="polite" data-testid="target-note">{targetNote}</p>
+            </div>
+          </div>
           {range('fontSize', t.fontSize, 24, 140, 2, (v) => `${v}px`)}
           {range('lineHeight', t.lineHeight, 1.1, 2.2, 0.05, (v) => v.toFixed(2))}
           {range('margin', t.margin, 0, 30, 1, (v) => `${v}%`)}
@@ -333,8 +422,8 @@ export default function Teleprompter({ locale = 'en' }: { locale?: Locale }) {
         </div>
       </div>
 
-      {/* Start */}
-      <div className="flex flex-wrap gap-3">
+      {/* Start. Side by side where the row is wide, stacked in the rail. */}
+      <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
         <button type="button" onClick={() => setStage({ record: false })} className="min-h-12 flex-1 rounded-lg bg-accent px-5 py-3 text-base font-semibold text-accent-on hover:bg-accent-hover" data-testid="start">
           {t.start}
         </button>
@@ -342,6 +431,10 @@ export default function Teleprompter({ locale = 'en' }: { locale?: Locale }) {
           ● {t.startRecord}
         </button>
       </div>
+      {!wakeOk && <p className="text-xs leading-snug text-warn" data-testid="screen-sleep">{t.screenSleep}</p>}
+      </div>
+      </div>
+
       <details className="text-sm">
         <summary className="cursor-pointer text-xs font-medium text-muted hover:text-text">{t.keysTitle}</summary>
         <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs">

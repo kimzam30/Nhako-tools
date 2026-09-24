@@ -423,7 +423,7 @@ export default function PhotoMaker({ locale = 'en', accept }: { locale?: Locale;
             )}
             {matteState.name === 'error' && (
               <div className="flex items-start gap-3 rounded-lg border border-err bg-err-subtle px-4 py-3">
-                <p className="flex-1 text-sm text-err">{matteState.message}</p>
+                <p data-status-message className="flex-1 text-sm text-err">{matteState.message}</p>
                 <button type="button" onClick={() => source && void segment(source)} className="shrink-0 rounded border border-border px-2.5 py-1 text-xs text-muted hover:text-text">{t.retry}</button>
               </div>
             )}
@@ -467,7 +467,7 @@ export default function PhotoMaker({ locale = 'en', accept }: { locale?: Locale;
         </div>
       )}
 
-      {error && <p className="rounded-lg border border-err bg-err-subtle px-4 py-3 text-sm text-err">{error}</p>}
+      {error && <p data-status-message className="rounded-lg border border-err bg-err-subtle px-4 py-3 text-sm text-err">{error}</p>}
     </section>
   );
 }

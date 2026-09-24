@@ -55,8 +55,7 @@ export const categoryModifier = (category: Category, locale: Locale): string =>
  *  group, so the two files cannot drift apart. */
 const GROUP_MS: Record<string, string> = {
   'pdf/organise': 'Susun halaman',
-  'pdf/create': 'Buat PDF',
-  'pdf/extract': 'Tukar dan ekstrak',
+  'pdf/convert': 'Tukar ke dan dari PDF',
   'pdf/mark-up': 'Sunting dan tandatangan',
   'pdf/shrink': 'Kecilkan saiz fail',
   'pdf/secure': 'Kata laluan dan kebenaran',
@@ -83,21 +82,25 @@ export const MS: Record<string, ToolText> = {
   // ─── PDF ──────────────────────────────────────────────────────────────────
   'pdf/merge': {
     name: 'Gabung PDF',
-    blurb: 'Satukan beberapa PDF menjadi satu fail.',
+    blurb: 'Satukan beberapa PDF, mengikut susunan anda.',
     description: 'Gabungkan fail PDF dalam pelayar anda. Tiada muat naik, tiada had saiz fail, tiada akaun. Lepaskan fail dan PDF gabungan siap serta-merta.',
     keywords: ['gabung', 'cantum', 'satukan', 'gabung pdf', 'cantum pdf'],
-    about: 'Fail digabungkan mengikut susunan anda melepaskannya, dan setiap halaman kekal pada saiz dan kualiti asal. Tiada apa-apa dikod semula, jadi hasilnya tanpa kehilangan kualiti.',
+    about: 'Fail yang dilepaskan dipentaskan sebagai barisan lakaran kecil yang boleh anda seret ke susunan yang dikehendaki sebelum apa-apa berjalan. Setiap halaman kekal pada saiz dan kualiti asal, dan tiada apa-apa dikod semula, jadi hasilnya tanpa kehilangan kualiti.',
     limits: ['PDF yang disulitkan atau dilindungi kata laluan perlu dibuka kuncinya dahulu.', 'Gabungan yang sangat besar dihadkan oleh memori peranti anda, bukan had muat naik.'],
   },
   'pdf/split': {
     name: 'Pisah PDF',
-    blurb: 'Keluarkan setiap halaman menjadi PDF berasingan.',
-    description: 'Pisahkan PDF kepada halaman tunggal dalam pelayar anda. Hasilnya dalam ZIP, tanpa muat naik dan tanpa had halaman.',
-    keywords: ['pisah', 'asingkan', 'pecah', 'keluarkan halaman', 'pisah pdf'],
-    about: 'Setiap halaman yang dipilih menjadi PDF sendiri, dihimpunkan dalam ZIP. Halaman disalin, bukan dilukis semula, jadi kualitinya tidak terjejas.',
-    limits: ['Hasil sentiasa dalam ZIP, walaupun untuk satu halaman.'],
+    blurb: 'Tandakan halaman yang anda mahu dan pisahkan.',
+    description: 'Pisahkan PDF dalam pelayar anda. Setiap halaman dipaparkan dengan kotak tanda, jadi anda memilih tanpa menaip julat halaman. Tanpa muat naik dan tanpa had halaman.',
+    keywords: ['pisah', 'asingkan', 'pecah', 'keluarkan halaman', 'pilih halaman', 'pisah pdf'],
+    about: 'Setiap halaman dilukis dengan kotak tanda, jadi halaman dipilih dengan melihat dan bukan dengan menaip julat. Tandakan yang anda mahu, kemudian potong setiap halaman menjadi PDF sendiri dalam ZIP, atau kekalkan pilihan itu bersama sebagai satu PDF baharu. Halaman disalin, bukan dilukis semula, jadi kualitinya tidak terjejas.',
+    limits: ['Satu fail bagi setiap halaman tiba dalam ZIP, walaupun hanya satu halaman ditandakan.'],
     options: {
       range: { label: 'Halaman', placeholder: 'semua, atau 1-5, 8, 11-13', help: 'Biarkan kosong untuk memisahkan setiap halaman.' },
+      mode: {
+        label: 'Bahagi kepada',
+        choices: { each: 'Satu fail bagi setiap halaman', one: 'Satu PDF bagi halaman yang dipilih' },
+      },
     },
   },
   'pdf/compress': {
@@ -177,7 +180,7 @@ export const MS: Record<string, ToolText> = {
 
   'pdf/jpg-to-pdf': {
     name: 'JPG ke PDF',
-    blurb: 'Jadikan gambar dan imbasan satu PDF.',
+    blurb: 'Susun gambar, kemudian jadikan ia PDF.',
     description: 'Tukar JPG, PNG dan imej lain kepada PDF dalam pelayar anda, satu halaman setiap imej. JPG dan PNG dimasukkan tanpa dimampat semula. Tiada muat naik.',
     keywords: ['jpg ke pdf', 'gambar ke pdf', 'png ke pdf', 'tukar gambar ke pdf', 'imbasan'],
     about: 'Setiap imej menjadi satu halaman, mengikut susunan anda melepaskannya. JPG dan PNG dimasukkan seadanya, jadi PDF kelihatan sama seperti asal. Gambar telefon yang hanya dipusingkan oleh tag EXIF diluruskan dahulu, kerana PDF mengabaikan tag itu.',

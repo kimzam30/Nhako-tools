@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
   clampWpm, cleanRoomCode, clock, docxXmlToScript, followMatch, isRoomCode, normalizeWord,
-  parseRemote, parseScript, parseState, pixelsPerSecond, readingSeconds, roomCode, scriptTitle, ROOM_ALPHABET,
+  parseRemote, parseScript, parseState, pixelsPerSecond, readingSeconds, roomCode, scriptTitle,
+  snapWpm, wpmForSeconds, ROOM_ALPHABET, WPM,
 } from './teleprompter';
 
 describe('parseScript', () => {
@@ -66,10 +67,49 @@ describe('timing', () => {
     expect(pixelsPerSecond(120, 1000, 0)).toBe(0);
   });
 
-  it('keeps speed on its steps and in range', () => {
-    expect(clampWpm(143)).toBe(140);
+  it('keeps speed in range, at whole words a minute', () => {
+    expect(clampWpm(143)).toBe(143);
+    expect(clampWpm(143.4)).toBe(143);
     expect(clampWpm(5)).toBe(60);
     expect(clampWpm(999)).toBe(260);
+  });
+
+  it('snaps to the step only where the slider and buttons ask for it', () => {
+    expect(snapWpm(143)).toBe(140);
+    expect(snapWpm(146)).toBe(150);
+    expect(snapWpm(5)).toBe(60);
+    expect(snapWpm(999)).toBe(260);
+  });
+});
+
+describe('target length', () => {
+  it('works back from a length to a speed that hits it', () => {
+    // 430 words in three minutes wants 143.3 wpm; 143 reads it in 180.4 s.
+    const wpm = wpmForSeconds(430, 180);
+    expect(wpm).toBe(143);
+    expect(clock(readingSeconds(430, wpm))).toBe('3:00');
+  });
+
+  it('round-trips a spread of scripts and slot lengths to the second', () => {
+    for (const words of [90, 217, 430, 1000, 2400]) {
+      for (const secs of [30, 60, 120, 180, 300]) {
+        const wpm = wpmForSeconds(words, secs);
+        // Only where the ask is inside the range the tool can actually run at.
+        if (wpm > WPM.min && wpm < WPM.max) {
+          expect(Math.abs(readingSeconds(words, wpm) - secs)).toBeLessThanOrEqual(1);
+        }
+      }
+    }
+  });
+
+  it('clamps an impossible target to the fastest or slowest it can go', () => {
+    expect(wpmForSeconds(2000, 30)).toBe(WPM.max);
+    expect(wpmForSeconds(10, 300)).toBe(WPM.min);
+  });
+
+  it('falls back to the default rather than dividing by zero', () => {
+    expect(wpmForSeconds(0, 180)).toBe(WPM.default);
+    expect(wpmForSeconds(430, 0)).toBe(WPM.default);
   });
 });
 

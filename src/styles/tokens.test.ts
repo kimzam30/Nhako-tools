@@ -88,6 +88,12 @@ describe.each(themes)('%s theme contrast', (_name, scope) => {
     expect(contrast(t('--err'), t('--err-subtle'))).toBeGreaterThanOrEqual(AA_TEXT);
   });
 
+  /* The done indicator is the one moment the user is definitely looking at
+     this page, so its fill is held to the same bar as the error state. */
+  it('success text meets AA on its own subtle background', () => {
+    expect(contrast(t('--ok'), t('--ok-subtle'))).toBeGreaterThanOrEqual(AA_TEXT);
+  });
+
   it('borders are distinguishable from their surface', () => {
     // Non-text contrast: 3:1 per WCAG 1.4.11 for meaningful UI boundaries.
     expect(contrast(t('--border-strong'), t('--bg'))).toBeGreaterThanOrEqual(1.5);

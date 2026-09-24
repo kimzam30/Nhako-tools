@@ -113,6 +113,22 @@ export interface ToolMeta {
   alsoIn?: GroupRef[];
   /** Produces output from options alone; the input pane is hidden (uuid). */
   generator?: boolean;
+  /**
+   * Hide the settings until a file is in.
+   *
+   * For most file tools the settings make sense on their own: "compress to
+   * 500 KB" is a decision you can take before choosing the photo, which is
+   * exactly what the preset pages rely on. For a few, the settings are
+   * adjustments to something you must already be looking at. Watermark image
+   * asks for the text, size, opacity, colour and position of a mark on a
+   * picture that is not there yet, so every one of those choices is made
+   * blind and then corrected once the picture arrives.
+   *
+   * Deliberately opt-in rather than the default: a tool that hides its
+   * settings also hides what it can do, and for the other thirty-five that
+   * costs more than it saves.
+   */
+  stageFirst?: boolean;
   /** Needs a large runtime (ffmpeg / Whisper). Only heavy tools get a real
    *  progress bar: a bar on a 400ms task makes it feel slower. */
   heavy?: boolean;

@@ -113,7 +113,10 @@ test.describe('PDF tools', () => {
       await picture(page, 400, 600, 'image/jpeg', 'tall.jpg'),
       await picture(page, 600, 400, 'image/png', 'wide.png'),
     ]);
-    await expect(page.getByText('2 images → 2 pages')).toBeVisible();
+    // Staged first, in the order given, then built on request.
+    await expect(page.locator('[data-stage-card]')).toHaveCount(2);
+    await page.getByRole('button', { name: 'Make the PDF' }).click();
+    await expect(page.getByText('2 images → 2 pages')).toBeVisible({ timeout: 20_000 });
     const doc = await PDFDocument.load(await saved(page));
     const sizes = doc.getPages().map((p) => [Math.round(p.getWidth()), Math.round(p.getHeight())]);
     expect(sizes).toEqual([[595, 842], [842, 595]]);
@@ -204,9 +207,11 @@ test.describe('image tools', () => {
 
   test('watermark: pixels change, dimensions do not', async ({ page }) => {
     await page.goto('/image/watermark');
-    await page.getByLabel('Text').fill('NHAKO');
+    // The image comes first here: this tool withholds its settings until
+    // there is a picture to judge them against (ToolMeta.stageFirst).
     await page.locator('input[type=file]').setInputFiles(await picture(page, 400, 300, 'image/png', 'w.png'));
-    await expect(page.getByText('"NHAKO" on 1 image')).toBeVisible();
+    await page.getByLabel('Text').fill('NHAKO');
+    await expect(page.getByText('"NHAKO" on 1 image')).toBeVisible({ timeout: 20_000 });
     expect((await saved(page)).length).toBeGreaterThan(0);
   });
 });

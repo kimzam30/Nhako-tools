@@ -2,21 +2,25 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { FileToolResult, OptionSpec, OptionValues, ToolMeta } from '../../tools/types';
 import { defaultOptions, ToolError } from '../../tools/types';
 import { runFileTool, type RunHandle } from '../../tools/run-tool';
-import { bytes, duration } from '../../lib/format';
 import OptionsPanel from './OptionsPanel';
-import CopyButton from './CopyButton';
+import FilePreview from './FilePreview';
+import ResultPreview from './ResultPreview';
+import { ResultBar, ErrorBar } from './ResultBar';
 import { optionsBeforeHydration } from './hydration';
 import { localePath, type Locale } from '../../i18n/paths';
 import { islandText } from '../../i18n/island';
 
+/** A finished run, kept apart from the phase so it can outlive the next one. */
+interface Done { result: FileToolResult; elapsed: number; size: number; url: string }
+
 type Phase =
   | { name: 'idle' }
   | { name: 'running'; progress: number; label?: string }
-  | { name: 'done'; result: FileToolResult; elapsed: number; size: number; url: string }
+  | ({ name: 'done' } & Done)
   | { name: 'error'; message: string };
 
 interface Props {
-  tool: Pick<ToolMeta, 'category' | 'slug' | 'name' | 'accept' | 'multiple' | 'heavy'> & { options?: OptionSpec[] };
+  tool: Pick<ToolMeta, 'category' | 'slug' | 'name' | 'accept' | 'multiple' | 'heavy' | 'stageFirst'> & { options?: OptionSpec[] };
   locale?: Locale;
   /** A preset page's starting values, e.g. { target: '500' }. */
   initialOptions?: OptionValues;
@@ -28,6 +32,12 @@ interface Props {
  * to disable the field, so it lost focus after the first character.
  */
 const SETTLE_MS = 400;
+
+/** Wording for the empty preview pane. The filled one words itself. */
+const PREVIEW_TEXT = {
+  en: { label: 'Preview', waiting: 'Your result appears here, and follows every setting you change.' },
+  ms: { label: 'Pratonton', waiting: 'Hasil anda muncul di sini, dan mengikut setiap tetapan yang anda ubah.' },
+} satisfies Record<Locale, unknown>;
 
 export default function FileToolRunner({ tool, locale = 'en', initialOptions }: Props) {
   const id = `${tool.category}/${tool.slug}`;
@@ -48,6 +58,21 @@ export default function FileToolRunner({ tool, locale = 'en', initialOptions }: 
   const optionsRef = useRef(options);
   const [phase, setPhase] = useState<Phase>({ name: 'idle' });
   const [dragging, setDragging] = useState(false);
+  /**
+   * The last successful run, kept while the next one is in flight.
+   *
+   * Without it the preview panel unmounted on every option change and came
+   * back a few hundred milliseconds later, so dragging the opacity slider on
+   * Watermark PDF strobed the page rather than showing the watermark fading.
+   * The held copy stays on screen, dimmed, until its replacement is ready.
+   */
+  const [held, setHeld] = useState<Done | null>(null);
+  /**
+   * The name the user typed, minus the extension, or null for the tool's own.
+   * It survives a re-run: renaming the output and then nudging a slider must
+   * not silently put the tool's default name back on the Save button.
+   */
+  const [rename, setRename] = useState<string | null>(null);
   // Heavy tools (minutes of ffmpeg or Whisper) never re-run on their own
   // when a setting changes; they wait for an explicit click.
   const [stale, setStale] = useState(false);
@@ -91,9 +116,15 @@ export default function FileToolRunner({ tool, locale = 'en', initialOptions }: 
       if (downloadRef.current) URL.revokeObjectURL(downloadRef.current);
       const url = URL.createObjectURL(result.blob);
       downloadRef.current = url;
-      setPhase({ name: 'done', result, elapsed: performance.now() - started, size: result.blob.size, url });
+      const done: Done = { result, elapsed: performance.now() - started, size: result.blob.size, url };
+      setHeld(done);
+      setPhase({ name: 'done', ...done });
     } catch (err) {
       if (ticket !== runId.current) return;
+      // The held preview goes with it. A page range that no longer parses
+      // leaves the previous output on screen, and showing it beside the error
+      // would state that the settings now on the panel produced that file.
+      setHeld(null);
       // Inline, never alert(). The old build used alert() seven times over.
       setPhase({
         name: 'error',
@@ -118,6 +149,7 @@ export default function FileToolRunner({ tool, locale = 'en', initialOptions }: 
   }, []);
 
   const busy = phase.name === 'running';
+  const tPreview = PREVIEW_TEXT[locale];
 
   /** Selecting files starts the work immediately. There is no Run button. */
   const accept = useCallback((list: FileList | null) => {
@@ -129,6 +161,10 @@ export default function FileToolRunner({ tool, locale = 'en', initialOptions }: 
     const selected = tool.multiple ? picked : picked.slice(0, 1);
     filesRef.current = selected;
     setFiles(selected);
+    // A different input means a different output: neither the old preview nor
+    // a name typed for the previous file carries over.
+    setHeld(null);
+    setRename(null);
     void execute(selected, optionsRef.current);
   }, [busy, execute, tool.heavy, tool.multiple]);
 
@@ -160,12 +196,27 @@ export default function FileToolRunner({ tool, locale = 'en', initialOptions }: 
     filesRef.current = [];
     setFiles([]);
     setStale(false);
+    setHeld(null);
+    setRename(null);
     setPhase({ name: 'idle' });
     if (inputRef.current) inputRef.current.value = '';
   }
 
   return (
-    <section className="flex flex-col gap-5">
+    /*
+      TWO COLUMNS ON A WIDE SCREEN: THE CONTROLS, AND WHAT THEY PRODUCE.
+
+      The preview has to sit beside the settings, not under them. Under them it
+      is below the fold on every tool with more than two controls, so adjusting
+      an opacity slider means dragging, scrolling down to look, scrolling back
+      up to drag again. Beside them, the slider and its effect are in one view
+      and the loop closes.
+
+      The right column is sticky, so a long options panel or a long file list
+      cannot scroll the preview away from the control being adjusted.
+    */
+    <section className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] lg:items-start lg:gap-6">
+      <div className="flex flex-col gap-5">
       <input
         ref={inputRef}
         id={inputId}
@@ -206,15 +257,30 @@ export default function FileToolRunner({ tool, locale = 'en', initialOptions }: 
         </span>
       </button>
 
-      <p className="-mt-2 text-xs text-muted">
-        {t.runsInBrowser}{' '}
-        <a href={localePath(locale, '/privacy')} className="underline decoration-border underline-offset-2 transition-colors hover:text-accent">
-          {t.verifyNetwork}
-        </a>
-        .
+      <p className="-mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-xs text-muted">
+        <span>
+          {t.runsInBrowser}{' '}
+          <a href={localePath(locale, '/privacy')} className="underline decoration-border underline-offset-2 transition-colors hover:text-accent">
+            {t.verifyNetwork}
+          </a>
+          .
+        </span>
+        {/* Batch support, stated rather than left to be inferred from a plural. */}
+        <span className="inline-flex items-center rounded border border-border px-1.5 py-0.5 text-2xs">
+          {tool.multiple ? t.multiYes : t.multiNo}
+        </span>
       </p>
 
-      {specs.length > 0 && (
+      {/* What was handed to the tool, beside what came back out of it. */}
+      {files.length > 0 && <FilePreview files={files} locale={locale} />}
+
+      {/*
+        `stageFirst` tools keep their settings back until there is something to
+        apply them to. See ToolMeta.stageFirst for why this is opt-in. The
+        panel is not merely disabled: a greyed-out form still asks you to read
+        five settings you cannot use yet.
+      */}
+      {specs.length > 0 && (!tool.stageFirst || files.length > 0) && (
         <div className="rounded-lg border border-border bg-surface p-4">
           <OptionsPanel specs={specs} values={options} onChange={changeOption} rangeText={t.numberRange} />
         </div>
@@ -280,49 +346,55 @@ export default function FileToolRunner({ tool, locale = 'en', initialOptions }: 
         )}
 
         {phase.name === 'done' && (
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-lg border border-border bg-sunken px-4 py-3 shadow-[inset_0_1px_0_var(--edge)]">
-            <span className="text-ok" aria-hidden="true">✓</span>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{phase.result.filename}</p>
-              <p data-numeric className="text-2xs text-muted">
-                {[phase.result.summary, bytes(phase.size), duration(phase.elapsed)].filter(Boolean).join(' · ')}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <a
-                href={phase.url}
-                download={phase.result.filename}
-                className="rounded bg-accent px-3 py-1.5 text-sm font-medium text-accent-on transition-colors duration-[120ms] hover:bg-accent-hover"
-              >
-                {t.save}
-              </a>
-              <button type="button" onClick={reset} className="rounded border border-border px-3 py-1.5 text-sm text-muted transition-colors hover:border-border-strong hover:text-text">
-                {t.clear}
-              </button>
-            </div>
-            {phase.result.text !== undefined && (
-              <div className="basis-full">
-                <div className="mb-1.5 flex items-center justify-between">
-                  <label htmlFor={`${inputId}-text`} className="text-2xs font-semibold uppercase tracking-wider text-muted">{t.output}</label>
-                  <CopyButton text={phase.result.text} label={t.copy} copiedLabel={t.copied} announce={t.copiedAnnounce} />
-                </div>
-                <textarea
-                  id={`${inputId}-text`} readOnly value={phase.result.text} rows={10}
-                  className="w-full resize-y rounded border border-border bg-bg p-3 font-mono text-xs leading-relaxed"
-                />
-              </div>
-            )}
-          </div>
+          <ResultBar
+            done={{ result: phase.result, url: phase.url, size: phase.size, elapsed: phase.elapsed }}
+            name={rename}
+            onRename={setRename}
+            onClear={reset}
+            t={t}
+            idBase={inputId}
+          />
         )}
 
         {phase.name === 'error' && (
-          <div className="flex items-start gap-3 rounded-lg border border-err bg-err-subtle px-4 py-3">
-            <span className="text-err" aria-hidden="true">!</span>
-            <p className="flex-1 text-sm text-err">{phase.message}</p>
-            <button type="button" onClick={reset} className="shrink-0 rounded border border-border px-2.5 py-1 text-xs text-muted transition-colors hover:text-text">
-              {t.clear}
-            </button>
+          <ErrorBar message={phase.message} onClear={reset} t={t} />
+        )}
+      </div>
+      </div>
+
+      {/*
+        The output preview sits OUTSIDE the live region above.
+
+        Inside it, every re-render of the canvas would be announced, so dragging
+        a slider would read the whole panel out again on each settle. The result
+        row states the outcome in words; this shows it.
+
+        It is fed by `held`, not by `phase`, so it survives a re-run and dims
+        instead of disappearing. See the comment on `held`.
+      */}
+      <div className="mt-5 lg:mt-0 lg:sticky lg:top-20">
+        {held ? (
+          <div className={`transition-opacity duration-200 ${busy ? 'opacity-50' : 'opacity-100'}`}>
+            <ResultPreview blob={held.result.blob} locale={locale} />
           </div>
+        ) : (
+          /*
+            The pane is present before there is anything in it, for the same
+            reason the result readout is: the column is reserved, so nothing
+            jumps when the first result lands, and an empty labelled frame
+            reads as "ready" where a gap reads as "unfinished".
+
+            aria-hidden, because it states nothing the live region does not.
+          */
+          <section
+            aria-hidden="true"
+            className="hidden rounded-lg border border-dashed border-border bg-sunken p-3 lg:block"
+          >
+            <p className="mb-2 text-2xs font-semibold uppercase tracking-wider text-muted">{tPreview.label}</p>
+            <div className="grid min-h-56 place-items-center rounded bg-bg/40">
+              <p className="px-6 text-center text-xs text-muted">{tPreview.waiting}</p>
+            </div>
+          </section>
         )}
       </div>
     </section>

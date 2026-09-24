@@ -100,8 +100,28 @@ export function clock(seconds: number): string {
 }
 
 export const WPM = { min: 60, max: 260, step: 10, default: 140 } as const;
+
+/**
+ * Into range, to the nearest whole word a minute. A speed worked out from a
+ * target length lands wherever the arithmetic puts it, so this does not round
+ * to the step: 143 wpm is a real setting and survives being saved and reloaded.
+ */
 export const clampWpm = (v: number): number =>
+  Math.min(WPM.max, Math.max(WPM.min, Math.round(v)));
+
+/** Into range and back onto the step grid: what the slider and ± buttons do. */
+export const snapWpm = (v: number): number =>
   Math.min(WPM.max, Math.max(WPM.min, Math.round(v / WPM.step) * WPM.step));
+
+/**
+ * The speed that reads `words` words aloud in `seconds`, as near as the range
+ * allows. Short script, long target -> WPM.min; the caller compares
+ * `readingSeconds` at the result against the target to see if it was reached.
+ */
+export function wpmForSeconds(words: number, seconds: number): number {
+  if (words <= 0 || seconds <= 0) return WPM.default;
+  return clampWpm((words / seconds) * 60);
+}
 
 /**
  * Scroll speed in pixels a second. Laid-out text has a measurable height per

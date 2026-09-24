@@ -123,7 +123,7 @@ export default function TextToolPane({ tool, locale = 'en' }: Props) {
         >
           <div className="min-h-56 overflow-auto">
             {shownError ? (
-              <p className="p-3 font-mono text-xs leading-relaxed text-err">{shownError}</p>
+              <p data-status-message className="p-3 font-mono text-xs leading-relaxed text-err">{shownError}</p>
             ) : result?.language === 'image' && output ? (
               <div className="flex flex-col items-center gap-3 p-4">
                 <img src={output} alt={t.qrAlt} className="max-w-full rounded bg-white p-2" width={256} height={256} />

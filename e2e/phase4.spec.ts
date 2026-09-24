@@ -257,7 +257,8 @@ test.describe('Remove background (downloads a model from Hugging Face)', () => {
     });
     await page.locator('input[type=file]').setInputFiles({ name: 'ball.png', mimeType: 'image/png', buffer: Buffer.from(b64, 'base64') });
     await expect(page.getByRole('link', { name: 'Save' })).toBeVisible({ timeout: 200_000 });
-    await expect(page.getByText('ball-no-bg.png')).toBeVisible();
+    // The output name lives in the rename field now, split from its extension.
+    await expect(page.getByLabel('File name')).toHaveValue('ball-no-bg');
     const alpha = await page.evaluate(async (href) => {
       const img = await createImageBitmap(await (await fetch(href!)).blob());
       const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
@@ -301,7 +302,7 @@ test.describe('Audio to text', () => {
     expect(models.some((m) => m.endsWith('.en'))).toBe(false);
 
     // Let the run reach the point where the runtime starts its session.
-    await expect(page.getByRole('link', { name: 'Save' }).or(page.locator('p[class*="text-err"]'))).toBeVisible({ timeout: 180_000 });
+    await expect(page.getByRole('link', { name: 'Save' }).or(page.locator('[data-status-message]'))).toBeVisible({ timeout: 180_000 });
     expect(crashes).toEqual([]);
   });
 });

@@ -1,4 +1,17 @@
 import { test, expect, type Page } from '@playwright/test';
+import { CATEGORIES } from '../src/tools/types';
+import { groupsIn } from '../src/tools/groups';
+
+/**
+ * Counts read from the taxonomy rather than typed in.
+ *
+ * These were hardcoded, so re-cutting the PDF groups failed three tests that
+ * had no opinion about the cut: they only ever meant "as many headings as the
+ * taxonomy declares". Derived, they keep testing the rendering and stop
+ * testing the number.
+ */
+const PDF_GROUPS = groupsIn('pdf').length;
+const ALL_GROUPS = CATEGORIES.reduce((n, c) => n + groupsIn(c).length, 0);
 
 /**
  * The browse layer: category pages, job groups, preset chips, the mobile nav
@@ -15,7 +28,7 @@ test.describe('category pages', () => {
     await expect(page.getByRole('heading', { level: 1, name: 'PDF' })).toBeVisible();
 
     const groups = page.locator('main section > h2');
-    await expect(groups).toHaveCount(6);
+    await expect(groups).toHaveCount(PDF_GROUPS);
     await expect(groups.first()).toHaveText('Organise pages');
 
     // 18 own. PDF's cross-listings point outwards, into Image, so nothing
@@ -133,7 +146,7 @@ test.describe('homepage filter', () => {
   test('hides a group heading once every tool under it is filtered out', async ({ page }) => {
     await page.goto('/');
     const before = await visibleGroups(page);
-    expect(before).toBe(15);
+    expect(before).toBe(ALL_GROUPS);
 
     // 'jwt' names exactly one tool, so exactly one group and one category
     // should survive. 'merge' would leave two: Text diff carries it as a
@@ -151,7 +164,7 @@ test.describe('homepage filter', () => {
 
     await page.fill('#tool-search', '');
     await expect(page.locator('[data-search-empty]')).toBeHidden();
-    expect(await visibleGroups(page)).toBe(15);
+    expect(await visibleGroups(page)).toBe(ALL_GROUPS);
   });
 
   test('honours a ?q= deep link on load', async ({ page }) => {

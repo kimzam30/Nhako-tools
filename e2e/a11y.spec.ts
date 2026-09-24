@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
 /**
@@ -12,7 +12,10 @@ import AxeBuilder from '@axe-core/playwright';
 
 const PAGES = [
   ['/', 'homepage'],
-  ['/pdf/merge', 'file tool'],
+  ['/pdf/rotate', 'file tool'],
+  ['/pdf/merge', 'merge staging'],
+  ['/pdf/split', 'split staging'],
+  ['/pdf/jpg-to-pdf', 'jpg to pdf staging'],
   ['/dev/json', 'text tool'],
   ['/dev/css-shadow', 'generator tool'],
   ['/privacy', 'static page'],
@@ -56,6 +59,54 @@ for (const [path, label] of PAGES) {
     });
   }
 }
+
+/**
+ * The staging grids, populated.
+ *
+ * The entries above only ever see the empty drop zone. Everything these tools
+ * added (the queue, the position chips, the tick boxes, the reorder controls)
+ * exists only once a file is in, so it would otherwise never be scanned.
+ */
+test.describe('staging grids with files in them', () => {
+  async function pdf(pages: number, name: string) {
+    const { PDFDocument } = await import('pdf-lib');
+    const doc = await PDFDocument.create();
+    for (let i = 0; i < pages; i++) doc.addPage([420, 560]);
+    return { name, mimeType: 'application/pdf', buffer: Buffer.from(await doc.save()) };
+  }
+
+  async function png(page: Page, name: string) {
+    const b64 = await page.evaluate(() => {
+      const c = document.createElement('canvas'); c.width = 240; c.height = 180;
+      const x = c.getContext('2d')!; x.fillStyle = '#e0457b'; x.fillRect(0, 0, 240, 180);
+      return c.toDataURL('image/png').split(',')[1]!;
+    });
+    return { name, mimeType: 'image/png', buffer: Buffer.from(b64, 'base64') };
+  }
+
+  for (const theme of ['light', 'dark'] as const) {
+    test(`merge, split and jpg to pdf with files (${theme}) have no violations`, async ({ page }) => {
+      await page.addInitScript((t) => {
+        try { localStorage.setItem('theme', t); } catch { /* blocked */ }
+      }, theme);
+
+      await page.goto('/pdf/merge');
+      await page.locator('input[type=file]').setInputFiles([await pdf(2, 'a.pdf'), await pdf(3, 'b.pdf')]);
+      await expect(page.locator('[data-stage-card]')).toHaveCount(2);
+      expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+
+      await page.goto('/pdf/split');
+      await page.locator('input[type=file]').setInputFiles(await pdf(3, 'c.pdf'));
+      await expect(page.locator('[data-page-card]')).toHaveCount(3);
+      expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+
+      await page.goto('/pdf/jpg-to-pdf');
+      await page.locator('input[type=file]').setInputFiles([await png(page, 'one.png'), await png(page, 'two.png')]);
+      await expect(page.locator('[data-stage-card]')).toHaveCount(2);
+      expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+    });
+  }
+});
 
 test('the command palette dialog is reachable and labelled', async ({ page }) => {
   await page.goto('/');

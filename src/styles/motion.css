@@ -48,14 +48,6 @@
         animation-timeline: view();
         animation-range: entry 0% entry 46%;
       }
-
-      /* Section rules draw themselves in from the left. */
-      [data-reveal-rule] {
-        transform-origin: left center;
-        animation: reveal-rule linear both;
-        animation-timeline: view();
-        animation-range: entry 6% entry 40%;
-      }
     }
   }
 
@@ -70,9 +62,85 @@
     to   { transform: none; }
   }
 
-  @keyframes reveal-rule {
-    from { transform: scaleX(0); opacity: 0; }
-    to   { transform: scaleX(1); opacity: 1; }
+  /* --- Result status ------------------------------------------------------
+     The one deliberate exception to rule 1 above.
+
+     Rule 1 exists so that someone waiting on their file is never watching an
+     animation instead. That reasoning applies to the WAIT. It does not apply
+     to the MOMENT THE WAIT ENDS, which is the single instant the user is
+     definitely looking at this region and the single fact they came for. Flat
+     and unannounced, the result row was indistinguishable from the idle gauge
+     it replaced, and on a fast tool the whole state change could pass between
+     two glances. So the finish announces itself, and nothing else here moves.
+
+     It stays inside the house language: the panel rises and settles once, the
+     tick is DRAWN rather than popped, and a rule sweeps the top edge the way a
+     readout confirms a reading. No overshoot, no scale, no bounce. Every piece
+     is one-shot; nothing loops, so there is no ambient motion left behind.
+
+     Space is reserved by the layout, not by the animation, so CLS stays 0. */
+
+  [data-status] {
+    animation: status-settle 240ms var(--ease-out) both;
+  }
+
+  @keyframes status-settle {
+    from { transform: translateY(5px); }
+    to   { transform: none; }
+  }
+
+  /* The sweep is a child pseudo-element on the panel's top edge: a single
+     accent pass, left to right, that lands with the tick and does not repeat. */
+  [data-status]::after {
+    content: '';
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline: 0;
+    block-size: 1px;
+    transform-origin: left center;
+    animation: status-sweep 460ms var(--ease-out) both;
+  }
+
+  [data-status='done']::after { background: var(--ok); }
+  [data-status='error']::after { background: var(--err); }
+
+  @keyframes status-sweep {
+    from { transform: scaleX(0); }
+    to   { transform: scaleX(1); }
+  }
+
+  /* The tick and the bar of the error mark draw themselves along their own
+     path. pathLength="1" is set on the element, so one unit is the whole
+     stroke and these numbers never need to track the geometry. */
+  [data-status-mark] {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: status-draw 300ms var(--ease-out) 110ms both;
+  }
+
+  /* The dot of the error mark has no length to draw, so it steps in on time
+     with the bar above it rather than fading. */
+  [data-status-dot] {
+    animation: status-dot 1ms steps(1, end) 400ms both;
+  }
+
+  @keyframes status-draw {
+    to { stroke-dashoffset: 0; }
+  }
+
+  @keyframes status-dot {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  /* The ring around the mark closes in one pass, starting from twelve
+     o'clock, which is why it carries its own rotation. */
+  [data-status-ring] {
+    transform-origin: center;
+    rotate: -90deg;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: status-draw 380ms var(--ease-out) both;
   }
 
   /* --- Local runtime indicator ------------------------------------------ */
@@ -112,8 +180,7 @@
   @media (prefers-reduced-motion: reduce) {
     @view-transition { navigation: none; }
 
-    [data-reveal],
-    [data-reveal-rule] {
+    [data-reveal] {
       opacity: 1 !important;
       transform: none !important;
       animation: none !important;
@@ -124,6 +191,22 @@
       animation: none !important;
       opacity: 1 !important;
     }
+
+    /* The result still has to READ as finished without motion, so these assert
+       the end state rather than merely shortening the way to it: the tick and
+       the ring sit fully drawn, the sweep sits fully extended. */
+    [data-status],
+    [data-status]::after,
+    [data-status-mark],
+    [data-status-ring],
+    [data-status-dot] {
+      animation: none !important;
+      transform: none !important;
+      stroke-dashoffset: 0 !important;
+      opacity: 1 !important;
+    }
+
+    [data-status-ring] { rotate: -90deg !important; }
 
     [data-readout][data-typing] [data-row] {
       visibility: visible !important;
