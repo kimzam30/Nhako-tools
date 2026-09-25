@@ -1,4 +1,5 @@
 import type { Locale } from '../../i18n/paths';
+import { CameraError, platformOf, type CameraProblem } from '../../lib/camera';
 
 const en = {
   // Script
@@ -108,8 +109,21 @@ const en = {
   more: 'More',
   close: 'Close',
   dismiss: 'Dismiss',
-  cameraBlocked: 'Camera or microphone access was blocked. Allow it in your browser\'s site settings, then try again.',
-  cameraMissing: 'No camera or microphone was found.',
+  cameraBlocked: 'Camera or microphone access was blocked. Allow it in your browser\'s site settings, then press Try again.',
+  cameraBlockedIos: 'Camera or microphone is blocked for this site. Tap aA in the address bar, then Website Settings, set Camera and Microphone to Allow, then press Try again.',
+  cameraBlockedAndroid: 'Camera or microphone is blocked for this site. Tap the icon left of the address, then Permissions, allow Camera and Microphone, then press Try again.',
+  cameraSystemIos: 'Your iPhone or iPad is keeping the camera from this browser. Open Settings, then Safari (under Apps on iOS 18), set Camera and Microphone to Ask or Allow, then press Try again.',
+  cameraSystemAndroid: 'Your phone is keeping the camera from this browser. Open Settings, then Apps, then your browser, then Permissions, allow Camera and Microphone, then press Try again.',
+  cameraSystem: 'Your system is keeping the camera from this browser. Allow it in the system\'s privacy settings, then press Try again.',
+  cameraMissing: 'No camera was found.',
+  cameraBusy: 'Another app or tab is using the camera. Close it, then press Try again.',
+  cameraInsecure: 'The camera only works on a secure (https) page. Open this page at its https address.',
+  cameraInApp: 'This in-app browser cannot use the camera. Open the page in Safari or Chrome.',
+  cameraNoMic: 'No microphone was available, so takes will have picture but no sound.',
+  cameraStopped: 'The camera stopped, perhaps because another app took it. Press Try again to turn it back on.',
+  cameraAsking: 'Opening camera…',
+  cameraTap: 'Tap to show the camera',
+  tryAgain: 'Try again',
   recordUnsupported: 'This browser cannot record video.',
   recordFailed: 'Recording stopped unexpectedly. The device may be out of space.',
   takeSaved: (name: string) => `Saved ${name} on this device.`,
@@ -253,8 +267,21 @@ const ms: typeof en = {
   more: 'Lagi',
   close: 'Tutup',
   dismiss: 'Tutup',
-  cameraBlocked: 'Akses kamera atau mikrofon disekat. Benarkannya dalam tetapan laman pelayar anda, kemudian cuba lagi.',
-  cameraMissing: 'Tiada kamera atau mikrofon ditemui.',
+  cameraBlocked: 'Akses kamera atau mikrofon disekat. Benarkannya dalam tetapan laman pelayar anda, kemudian tekan Cuba lagi.',
+  cameraBlockedIos: 'Kamera atau mikrofon disekat untuk laman ini. Ketik aA di bar alamat, kemudian Tetapan Tapak Web, tetapkan Kamera dan Mikrofon kepada Benarkan, kemudian tekan Cuba lagi.',
+  cameraBlockedAndroid: 'Kamera atau mikrofon disekat untuk laman ini. Ketik ikon di kiri alamat, kemudian Kebenaran, benarkan Kamera dan Mikrofon, kemudian tekan Cuba lagi.',
+  cameraSystemIos: 'iPhone atau iPad anda menghalang kamera daripada pelayar ini. Buka Tetapan, kemudian Safari (di bawah Apl pada iOS 18), tetapkan Kamera dan Mikrofon kepada Tanya atau Benarkan, kemudian tekan Cuba lagi.',
+  cameraSystemAndroid: 'Telefon anda menghalang kamera daripada pelayar ini. Buka Tetapan, kemudian Apl, kemudian pelayar anda, kemudian Kebenaran, benarkan Kamera dan Mikrofon, kemudian tekan Cuba lagi.',
+  cameraSystem: 'Sistem anda menghalang kamera daripada pelayar ini. Benarkannya dalam tetapan privasi sistem, kemudian tekan Cuba lagi.',
+  cameraMissing: 'Tiada kamera ditemui.',
+  cameraBusy: 'Apl atau tab lain sedang menggunakan kamera. Tutupnya, kemudian tekan Cuba lagi.',
+  cameraInsecure: 'Kamera hanya berfungsi pada halaman selamat (https). Buka halaman ini di alamat https.',
+  cameraInApp: 'Pelayar dalam apl ini tidak boleh menggunakan kamera. Buka halaman ini dalam Safari atau Chrome.',
+  cameraNoMic: 'Tiada mikrofon tersedia, jadi rakaman akan ada gambar tetapi tiada bunyi.',
+  cameraStopped: 'Kamera berhenti, mungkin kerana apl lain mengambilnya. Tekan Cuba lagi untuk menghidupkannya semula.',
+  cameraAsking: 'Membuka kamera…',
+  cameraTap: 'Ketik untuk tunjuk kamera',
+  tryAgain: 'Cuba lagi',
   recordUnsupported: 'Pelayar ini tidak boleh merakam video.',
   recordFailed: 'Rakaman berhenti tanpa diduga. Ruang storan peranti mungkin sudah penuh.',
   takeSaved: (name) => `${name} disimpan pada peranti ini.`,
@@ -324,3 +351,27 @@ Pemusing halaman Bluetooth, pedal kaki atau telefon anda juga boleh mengawalnya,
 # Rakaman
 Tekan Mula dan rakam untuk merakam diri anda semasa membaca. Video kekal pada peranti ini.`,
 };
+
+/** What to tell someone whose camera did not open, in the words of their own system. */
+export function cameraProblemText(t: typeof en, e: unknown): string {
+  const problem: CameraProblem = e instanceof CameraError ? e.problem : typeof e === 'string' ? (e as CameraProblem) : 'missing';
+  switch (problem) {
+    case 'blocked': {
+      const platform = platformOf(navigator.userAgent, navigator.maxTouchPoints);
+      return platform === 'ios' ? t.cameraBlockedIos : platform === 'android' ? t.cameraBlockedAndroid : t.cameraBlocked;
+    }
+    case 'system': {
+      const platform = platformOf(navigator.userAgent, navigator.maxTouchPoints);
+      return platform === 'ios' ? t.cameraSystemIos : platform === 'android' ? t.cameraSystemAndroid : t.cameraSystem;
+    }
+    case 'busy': return t.cameraBusy;
+    case 'insecure': return t.cameraInsecure;
+    case 'inapp': return t.cameraInApp;
+    case 'unsupported': return t.recordUnsupported;
+    default: return t.cameraMissing;
+  }
+}
+
+/** Problems a second tap can fix, so the message carries a Try again button. */
+export const cameraRetryable = (e: unknown) =>
+  !(e instanceof CameraError) || e.problem === 'blocked' || e.problem === 'system' || e.problem === 'busy' || e.problem === 'missing';

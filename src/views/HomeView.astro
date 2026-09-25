@@ -92,7 +92,7 @@ const jsonLd = {
           <li class="flex">
             <a
               href={p.href}
-              class="popular-card group/pop relative flex w-full items-start gap-3 rounded-xl border border-border bg-surface p-3 shadow-[inset_0_1px_0_var(--edge)] transition-[border-color,transform,background-color] duration-150 hover:-translate-y-0.5 hover:border-accent hover:bg-bg focus-visible:border-accent active:bg-sunken max-sm:items-center max-sm:gap-2.5 max-sm:p-2.5 sm:p-3.5"
+              class="popular-card group/pop relative flex w-full items-start gap-3 rounded-xl border border-border bg-surface p-3 shadow-[inset_0_1px_0_var(--edge)] transition-[border-color,transform,background-color] duration-150 hover:-translate-y-0.5 hover:border-accent hover:bg-bg focus-visible:border-accent active:bg-sunken max-sm:items-center max-sm:gap-2.5 max-sm:p-2.5 max-xs:flex-col max-xs:gap-2 max-xs:text-center sm:p-3.5"
             >
               <span class="grid size-9 shrink-0 place-items-center rounded-lg border border-border bg-bg transition-colors duration-150 group-hover/pop:border-accent/30 group-hover/pop:bg-accent-subtle sm:size-11">
                 <ToolIcon tool={p.tool} />
@@ -150,7 +150,7 @@ const jsonLd = {
             <span data-numeric class="ml-auto font-mono text-2xs text-muted">{toolsIn(category).length}</span>
           </div>
 
-          <div class="tool-list grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div class="tool-list grid grid-cols-2 gap-2.5 lg:grid-cols-3 xl:grid-cols-4">
             {tools.map((tool) => (
               <ToolTile tool={localizeTool(tool, locale)} href={localePath(locale, `/${toolId(tool)}`)} />
             ))}

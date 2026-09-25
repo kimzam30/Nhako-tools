@@ -45,7 +45,7 @@ const star = 'M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1
     </header>
 
     <section aria-label={t.favorites}>
-      <div data-fav-grid class="tool-list grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div data-fav-grid class="tool-list grid grid-cols-2 gap-2.5 lg:grid-cols-3 xl:grid-cols-4">
         {TOOLS.map((tool) => (
           <div data-fav-slot={toolId(tool)} hidden class="contents">
             <ToolTile tool={localizeTool(tool, locale)} href={localePath(locale, `/${toolId(tool)}`)} />

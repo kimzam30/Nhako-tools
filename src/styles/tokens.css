@@ -209,6 +209,9 @@
      the row name column, so a mark costs no width and no height.
      See .design/redesign/INFORMATION_ARCHITECTURE.md sections 1 and 2. */
   --mark-size: 20px;
+  /* The narrowest phones in use (iPhone SE, small Androids). max-xs: is where
+     the two-up tool cards stack their mark above the name. */
+  --breakpoint-xs: 360px;
   --mark-gutter: 28px;
 
   /* Motion: fast and flat. No overshoot: bounce reads slow. */

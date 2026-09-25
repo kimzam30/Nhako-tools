@@ -12,7 +12,8 @@ import {
   loadCurrent, loadScripts, loadSettings, newId, saveCurrent, saveScripts, saveSettings,
   DEFAULTS, type SavedScript, type Settings,
 } from './teleprompter-store';
-import { PROMPTER_TEXT, SAMPLE } from './teleprompter-text';
+import { cameraProblemText, cameraRetryable, PROMPTER_TEXT, SAMPLE } from './teleprompter-text';
+import { currentCameraBlocker, openCamera, type OpenedCamera } from '../../lib/camera';
 import TeleprompterStage from './TeleprompterStage';
 import { filesBeforeHydration, valueBeforeHydration } from './hydration';
 
@@ -40,7 +41,12 @@ export default function Teleprompter({ locale = 'en' }: { locale?: Locale }) {
   });
   const [title, setTitle] = useState('');
   const [settings, setSettingsState] = useState<Settings>({ ...DEFAULTS, voiceLang: locale === 'ms' ? 'ms-MY' : 'en-US' });
-  const [stage, setStage] = useState<{ record: boolean } | null>(null);
+  const [stage, setStage] = useState<{ record: boolean; camera?: OpenedCamera } | null>(null);
+  // Start and record asks for the camera here, in the tap, before the stage
+  // goes full screen: the prompt then comes up over an ordinary page, and the
+  // stage only opens with a live picture.
+  const [asking, setAsking] = useState(false);
+  const [cameraError, setCameraError] = useState<{ text: string; retry: boolean } | null>(null);
   const [takes, setTakes] = useState<(Take & { url: string | null })[]>([]);
   const [playingTake, setPlayingTake] = useState<string | null>(null);
   const [allTakes, setAllTakes] = useState(false);
@@ -56,6 +62,21 @@ export default function Teleprompter({ locale = 'en' }: { locale?: Locale }) {
   const ready = useRef(false);
 
   const script = useMemo(() => parseScript(text), [text]);
+
+  async function startRecord() {
+    if (asking) return;
+    const blocker = currentCameraBlocker();
+    if (blocker) { setCameraError({ text: cameraProblemText(t, blocker), retry: false }); return; }
+    setAsking(true);
+    setCameraError(null);
+    try {
+      setStage({ record: true, camera: await openCamera() });
+    } catch (e) {
+      setCameraError({ text: cameraProblemText(t, e), retry: cameraRetryable(e) });
+    } finally {
+      setAsking(false);
+    }
+  }
   const pauses = useMemo(() => script.blocks.reduce((n, b) => n + (b.kind === 'para' ? b.items.filter((i) => i.kind === 'cue' && i.pause).length : 0), 0), [script]);
 
   // ─── Load what this browser remembers ────────────────────────────────
@@ -357,10 +378,20 @@ export default function Teleprompter({ locale = 'en' }: { locale?: Locale }) {
         <button type="button" onClick={() => setStage({ record: false })} className="min-h-12 flex-1 rounded-lg bg-accent px-5 py-3 text-base font-semibold text-accent-on hover:bg-accent-hover" data-testid="start">
           {t.start}
         </button>
-        <button type="button" onClick={() => setStage({ record: true })} className="min-h-12 flex-1 rounded-lg border border-border bg-surface px-5 py-3 text-base font-semibold hover:border-accent" data-testid="start-record">
-          ● {t.startRecord}
+        <button type="button" onClick={() => void startRecord()} disabled={asking} aria-busy={asking} className="min-h-12 flex-1 rounded-lg border border-border bg-surface px-5 py-3 text-base font-semibold hover:border-accent disabled:opacity-60" data-testid="start-record">
+          {asking ? t.cameraAsking : `● ${t.startRecord}`}
         </button>
       </div>
+      {cameraError && (
+        <div role="alert" className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-warn/40 bg-surface px-3.5 py-3 text-sm" data-testid="camera-error">
+          <p className="min-w-0 flex-1 basis-64 leading-snug">{cameraError.text}</p>
+          {cameraError.retry && (
+            <button type="button" onClick={() => void startRecord()} disabled={asking} className="min-h-11 shrink-0 rounded-lg bg-accent px-4 text-sm font-semibold text-accent-on hover:bg-accent-hover disabled:opacity-60" data-testid="camera-error-retry">
+              {t.tryAgain}
+            </button>
+          )}
+        </div>
+      )}
       {!wakeOk && <p className="text-xs leading-snug text-warn" data-testid="screen-sleep">{t.screenSleep}</p>}
       <details className="text-sm">
         <summary className="cursor-pointer text-xs font-medium text-muted hover:text-text pointer-coarse:py-3.5">{t.keysTitle}</summary>
@@ -483,6 +514,7 @@ export default function Teleprompter({ locale = 'en' }: { locale?: Locale }) {
           onSettings={setSettings}
           t={t}
           record={stage.record}
+          camera={stage.camera}
           onClose={() => setStage(null)}
           onTake={() => void refreshTakes()}
           remote={{ code, status, phoneSeen, pair, send, handler }}

@@ -218,40 +218,11 @@
 /* Unlayered on purpose: these restyle elements that carry Tailwind utilities
    (gap-2.5, border, rounded-lg), and any rule inside a layer loses to the
    utilities layer however specific it is. */
-/* --- Tool lists on a phone ---------------------------------------------
-   Below 640px a grid of separate bordered cards becomes one grouped list:
-   one surface, hairlines between rows, and the row itself as the pressed
-   state. It is how every native settings or file list reads, and it spends
-   no height on gaps and doubled borders. Tablet and desktop keep the grid. */
-@media (max-width: 639.98px) {
-  .tool-list {
-    gap: 0;
-    overflow: hidden;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    background: var(--surface);
-    box-shadow: inset 0 1px 0 var(--edge);
-  }
-  /* Favourites wraps each card in a display:contents slot it reorders. */
-  .tool-list > [data-tool-card],
-  .tool-list > [data-fav-slot] > [data-tool-card] {
-    border: 0;
-    border-radius: 0;
-    box-shadow: none;
-    background: transparent;
-  }
-  .tool-list > [data-tool-card]:not([hidden]) ~ [data-tool-card]:not([hidden])::before,
-  .tool-list > [data-fav-slot]:not([hidden]) ~ [data-fav-slot]:not([hidden]) > [data-tool-card]::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    left: calc(12px + var(--mark-gutter));
-    height: 1px;
-    background: var(--border);
-  }
-  .tool-list [data-tool-card]:has(> a:active) { background: var(--sunken); }
-}
+/* Tool lists on a phone are a two-column grid of cards, the same as the
+   popular cards above them: the layout lives in ToolTile's max-sm: classes.
+   (Until 2026-09-25 this was one grouped, hairline-separated list with each
+   tool's blurb; Kim chose the card grid, which shows twice the tools per
+   screen and matches what sits above it.) */
 
 /* A row of chips that scrolls sideways on a phone instead of wrapping into
    three ragged lines, bleeding to the screen edges like a native filter bar. */

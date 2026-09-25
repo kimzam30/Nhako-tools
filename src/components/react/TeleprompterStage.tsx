@@ -5,7 +5,8 @@ import {
 } from '../../tools/media/teleprompter';
 import { prepareRecording, startRecording, type PreparedRecording, type Recording, type Take } from '../../lib/takes';
 import type { Settings } from './teleprompter-store';
-import type { StageText } from './teleprompter-text';
+import { cameraProblemText, cameraRetryable, type StageText } from './teleprompter-text';
+import { currentCameraBlocker, isLive, openCamera, type OpenedCamera } from '../../lib/camera';
 
 interface Props {
   script: Script;
@@ -14,6 +15,9 @@ interface Props {
   t: StageText;
   /** Opened from "Start and record": bring the camera up, ready to record. */
   record: boolean;
+  /** Opened by the setup page, inside the Start and record tap, so the
+   *  permission prompt came up over the page rather than the full-screen stage. */
+  camera?: OpenedCamera | null;
   onClose: () => void;
   onTake: (take: Take) => void;
   /** Remote wiring, owned by the parent so a pairing outlives the stage. */
@@ -49,7 +53,7 @@ const speechRecognition = (): (new () => SpeechRecognitionLike) | null => {
   return (w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null) as (new () => SpeechRecognitionLike) | null;
 };
 
-export default function TeleprompterStage({ script, settings, onSettings, t, record, onClose, onTake, remote }: Props) {
+export default function TeleprompterStage({ script, settings, onSettings, t, record, camera = null, onClose, onTake, remote }: Props) {
   const theme = THEMES[settings.theme];
   const rootRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<HTMLDivElement>(null);
@@ -70,10 +74,23 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
   const [countdown, setCountdown] = useState(0);
   const [progress, setProgress] = useState({ fraction: 0, section: -1 });
   const [pausedAtCue, setPausedAtCue] = useState(false);
-  const [stream, setStream] = useState<MediaStream | null>(null);
+  const [stream, setStream] = useState<MediaStream | null>(camera?.stream ?? null);
+  // For the handlers: a stream opened moments ago is not in their closure yet.
+  const streamRef = useRef(stream);
+  streamRef.current = stream;
   const [recording, setRecording] = useState<{ rec: Recording; started: number } | null>(null);
   const [elapsed, setElapsed] = useState(0);
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessageText] = useState<string | null>(camera && !camera.audio ? t.cameraNoMic : null);
+  // The message is a camera problem that one more tap may fix. Any other
+  // message replaces it, Try again included.
+  const [cameraRetry, setCameraRetry] = useState(false);
+  const setMessage = (m: string | null) => { setMessageText(m); setCameraRetry(false); };
+  // The preview's play() was refused (iOS Low Power Mode blocks even muted autoplay).
+  const [needsTap, setNeedsTap] = useState(false);
+  // The picture's real shape. A phone's front camera films portrait
+  // (1080 x 1920 on the Android emulator), which a fixed 16:9 box cropped to a
+  // strip across the presenter's eyes.
+  const [aspect, setAspect] = useState(16 / 9);
   const [voiceState, setVoiceState] = useState<'off' | 'listening' | 'unsupported' | 'blocked'>('off');
   const [showRemote, setShowRemote] = useState(false);
   const [qr, setQr] = useState<string | null>(null);
@@ -100,7 +117,7 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
   }, []);
 
   const normWords = useMemo(() => script.words.map(normalizeWord), [script]);
-  const canRecord = typeof MediaRecorder !== 'undefined' && Boolean(navigator.mediaDevices?.getUserMedia);
+  const canRecord = currentCameraBlocker() === null;
 
   // ─── Layout ──────────────────────────────────────────────────────────
   const measure = useCallback(() => {
@@ -259,24 +276,91 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
   const speed = (delta: number) => onSettings({ ...settingsRef.current, wpm: snapWpm(settingsRef.current.wpm + delta) });
 
   // ─── Camera, meter, recording ────────────────────────────────────────
-  async function ensureCamera(): Promise<MediaStream | null> {
-    if (stream) return stream;
-    try {
-      const s = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30 } },
-        audio: { echoCancellation: true, noiseSuppression: true },
-      });
-      setStream(s);
-      return s;
-    } catch (e) {
-      setMessage(e instanceof DOMException && e.name === 'NotAllowedError' ? t.cameraBlocked : t.cameraMissing);
-      return null;
-    }
+  // One request at a time. Start and record opens the camera as the stage
+  // mounts, and a Record pressed during the permission prompt used to ask a
+  // second time; on iOS the second capture mutes the first, and the preview
+  // stayed black.
+  const opening = useRef<Promise<MediaStream | null> | null>(null);
+
+  function cameraFailed(e: unknown) {
+    setMessage(cameraProblemText(t, e));
+    setCameraRetry(cameraRetryable(e));
   }
+
+  function ensureCamera(): Promise<MediaStream | null> {
+    if (isLive(streamRef.current)) return Promise.resolve(streamRef.current);
+    if (opening.current) return opening.current;
+    const blocker = currentCameraBlocker();
+    if (blocker) { cameraFailed(blocker); return Promise.resolve(null); }
+    opening.current = openCamera().then(
+      (cam) => {
+        streamRef.current?.getTracks().forEach((tr) => tr.stop());
+        streamRef.current = cam.stream;
+        setStream(cam.stream);
+        setPreview(true);
+        setMessage(cam.audio ? null : t.cameraNoMic);
+        return cam.stream;
+      },
+      (e: unknown) => { cameraFailed(e); return null; },
+    ).finally(() => { opening.current = null; });
+    return opening.current;
+  }
+
+  // The picture. autoplay alone is not enough on a phone: iOS in Low Power
+  // Mode refuses even a muted autoplay, and an element that mounted before
+  // the stream arrived never starts. So: attach, play, and if play is
+  // refused, show a button, because a tap is always allowed to start it.
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!stream || !preview || !v) return;
+    if (v.srcObject !== stream) v.srcObject = stream;
+    v.play().then(() => setNeedsTap(false), () => setNeedsTap(true));
+  }, [stream, preview]);
+
+  // A camera can go away under the page: another app takes it, or the phone
+  // stops it while the browser is in the background. An ended track is a
+  // black box forever, so drop it and say so.
+  useEffect(() => {
+    if (!stream) return;
+    const tracks = stream.getVideoTracks();
+    const onEnded = () => {
+      if (streamRef.current !== stream) return;
+      streamRef.current = null;
+      setStream(null);
+      setMessage(t.cameraStopped);
+      setCameraRetry(true);
+    };
+    tracks.forEach((tr) => tr.addEventListener('ended', onEnded));
+    return () => tracks.forEach((tr) => tr.removeEventListener('ended', onEnded));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stream]);
+
+  // Back from the home screen or another app, a phone may hand back a track
+  // that is still muted or already ended. Permission was given, so opening it
+  // again is silent. Not while recording: the take is tied to the old stream.
+  const recordingRef = useRef(false);
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return;
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        const s = streamRef.current;
+        if (!s || recordingRef.current) return;
+        const video = s.getVideoTracks()[0];
+        if (video && video.readyState === 'live' && !video.muted) return;
+        s.getTracks().forEach((tr) => tr.stop());
+        streamRef.current = null;
+        void ensureCamera();
+      }, 600);
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => { clearTimeout(timer); document.removeEventListener('visibilitychange', onVisible); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!stream) return;
-    if (videoRef.current) videoRef.current.srcObject = stream;
     if (!stream.getAudioTracks().length) return;
     let ctx: AudioContext | null = null;
     let raf = 0;
@@ -317,7 +401,7 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
       return;
     }
     if (busy.current) return;
-    if (!canRecord) { setMessage(t.recordUnsupported); return; }
+    if (!canRecord) { cameraFailed(currentCameraBlocker()); return; }
     busy.current = true;
     try {
       const s = await ensureCamera();
@@ -342,7 +426,7 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
     if (recording) { stop(false); await toggleRecord(); return; }
     if (countdown) { stop(false); return; }
     if (busy.current) return;
-    if (!canRecord) { setMessage(t.recordUnsupported); return; }
+    if (!canRecord) { cameraFailed(currentCameraBlocker()); return; }
     busy.current = true;
     try {
       // The camera and the file first: a permission prompt must not eat the countdown.
@@ -358,6 +442,7 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
       busy.current = false;
     }
   }
+  recordingRef.current = Boolean(recording);
   useEffect(() => {
     if (!recording) return;
     const id = setInterval(() => setElapsed(Math.round((Date.now() - recording.started) / 1000)), 500);
@@ -581,8 +666,16 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
     </>
   );
   const restartButton = <button type="button" onClick={restart} className={quiet}>{t.restart}</button>;
-  const cameraButton = stream && (
-    <button type="button" onClick={() => setPreview((p) => !p)} className={quiet} aria-pressed={preview}>{t.preview}</button>
+  // With no camera yet (opened with plain Start, or after a refusal) this is
+  // the way to ask for it, from a tap, which is where every browser prompts.
+  const cameraButton = canRecord && (
+    <button
+      type="button"
+      onClick={() => (isLive(stream) ? setPreview((p) => !p) : void ensureCamera())}
+      className={quiet} aria-pressed={isLive(stream) && preview} data-testid="camera"
+    >
+      {t.preview}
+    </button>
   );
   const remoteButton = (
     <button type="button" onClick={() => void openRemote()} className={quiet} data-testid="remote">
@@ -645,8 +738,26 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
 
       {/* Camera preview with a framing grid and a mic level. */}
       {stream && preview && (
-        <div className="pointer-events-none absolute right-3 top-3 z-30 w-40 overflow-hidden rounded-lg border border-white/30 bg-black shadow-lg sm:w-52">
-          <video ref={videoRef} autoPlay muted playsInline className="block aspect-video w-full object-cover" style={{ transform: 'scaleX(-1)' }} />
+        <div
+          className={`pointer-events-none absolute right-[max(0.75rem,env(safe-area-inset-right))] top-[max(0.75rem,env(safe-area-inset-top))] z-30 overflow-hidden rounded-lg border border-white/30 bg-black shadow-lg ${aspect < 1 ? 'w-24 sm:w-32' : 'w-40 sm:w-52'}`}
+          data-testid="camera-preview"
+        >
+          <video
+            ref={videoRef} autoPlay muted playsInline disablePictureInPicture
+            onLoadedMetadata={(e) => { const v = e.currentTarget; if (v.videoWidth && v.videoHeight) setAspect(v.videoWidth / v.videoHeight); }}
+            onResize={(e) => { const v = e.currentTarget; if (v.videoWidth && v.videoHeight) setAspect(v.videoWidth / v.videoHeight); }}
+            className="block w-full object-cover" style={{ transform: 'scaleX(-1)', aspectRatio: String(aspect) }}
+          />
+          {needsTap && (
+            <button
+              type="button"
+              onClick={() => { void videoRef.current?.play().then(() => setNeedsTap(false), () => undefined); }}
+              className="pointer-events-auto absolute inset-0 z-10 flex items-center justify-center bg-black/60 px-2 text-center text-xs font-medium text-white"
+              data-testid="camera-tap"
+            >
+              {t.cameraTap}
+            </button>
+          )}
           <div aria-hidden="true" className="absolute inset-0 grid grid-cols-3 grid-rows-3">
             {Array.from({ length: 9 }, (_, i) => <span key={i} className="border border-white/15" />)}
           </div>
@@ -655,14 +766,16 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
       )}
 
       {recording && (
-        <div className="absolute left-3 top-3 z-30 flex items-center gap-2 rounded-full bg-black/70 px-3 py-1.5 text-sm text-white" data-testid="rec-badge">
+        <div className="absolute left-[max(0.75rem,env(safe-area-inset-left))] top-[max(0.75rem,env(safe-area-inset-top))] z-30 flex items-center gap-2 rounded-full bg-black/70 px-3 py-1.5 text-sm text-white" data-testid="rec-badge">
           <span className="size-2.5 animate-pulse bg-red-500" aria-hidden="true" />
           <span className="font-mono tabular-nums">{t.rec} {clock(elapsed)}</span>
         </div>
       )}
 
-      {/* Controls: never mirrored, big enough for a thumb on a tablet. */}
-      <div className={`relative z-40 border-t border-white/10 bg-black/85 px-3 py-2 text-white transition-opacity duration-300 ${isPlaying ? 'opacity-40 hover:opacity-100 focus-within:opacity-100' : 'opacity-100'}`}>
+      {/* Controls: never mirrored, big enough for a thumb on a tablet, and
+          clear of the home indicator and a landscape notch (the page is
+          viewport-fit=cover, so the system no longer keeps them clear). */}
+      <div className={`relative z-40 border-t border-white/10 bg-black/85 pb-[max(0.5rem,env(safe-area-inset-bottom))] pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] pt-2 text-white transition-opacity duration-300 ${isPlaying ? 'opacity-40 hover:opacity-100 focus-within:opacity-100' : 'opacity-100'}`}>
         {/* Floated above the bar rather than placed in it: taking a line of the
             bar and giving it back on play would resize the text area, and the
             reading line sits at a percentage of that, so the script would jump
@@ -742,9 +855,16 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
           <button type="button" onClick={() => void close()} className={quiet} data-testid="close">{t.close}</button>
         </div>
         {message && (
-          <p role="status" className="mt-2 flex items-center gap-3 rounded bg-white/10 px-3 py-2 text-sm">
-            <span className="flex-1">{message}</span>
-            <button type="button" onClick={() => setMessage(null)} className="text-xs underline">{t.dismiss}</button>
+          <p role="status" className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded bg-white/10 px-3 py-2 text-sm" data-testid="stage-message">
+            <span className="min-w-0 flex-1 basis-60">{message}</span>
+            <span className="flex items-center gap-2">
+              {cameraRetry && (
+                <button type="button" onClick={() => void ensureCamera()} className={`${btn} min-h-11 bg-white text-black hover:bg-white/90`} data-testid="camera-retry">
+                  {t.tryAgain}
+                </button>
+              )}
+              <button type="button" onClick={() => setMessage(null)} className="min-h-11 px-2 text-xs underline">{t.dismiss}</button>
+            </span>
           </p>
         )}
       </div>

@@ -125,7 +125,7 @@ import BackLink from '../components/astro/BackLink.astro';
       </div>
     )}
 
-    <div class="tool-list mb-9 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div class="tool-list mb-9 grid grid-cols-2 gap-2.5 lg:grid-cols-3 xl:grid-cols-4">
       {rows.map(({ tool, group }) => (
         <ToolTile
           tool={localizeTool(tool, locale)}

@@ -428,6 +428,172 @@ test.describe('recording', () => {
   });
 });
 
+/**
+ * Why the camera "sometimes does not show up" on phones and tablets, one cause
+ * per test. Chromium's fake camera stands in for the device; getUserMedia,
+ * play() and the track are stubbed only where a phone behaves differently.
+ */
+test.describe('camera on phones and tablets', () => {
+  test.skip(({ browserName }) => browserName !== 'chromium', 'Chromium provides a fake camera and microphone');
+  test.use({ permissions: ['camera', 'microphone'] });
+
+  /** Make getUserMedia refuse `times` times with `name`, counting every call.
+   *  `site` is what the Permissions API reports for the site meanwhile. */
+  async function refuse(page: Page, name: string, times = 1, site?: 'denied' | 'granted') {
+    if (site) {
+      await page.addInitScript((state) => {
+        const real = navigator.permissions.query.bind(navigator.permissions);
+        let left = 1;
+        navigator.permissions.query = (d) => (left-- > 0 ? Promise.resolve({ state } as PermissionStatus) : real(d));
+      }, site);
+    }
+    await page.addInitScript(([n, k]) => {
+      const w = window as unknown as { gumCalls: number };
+      w.gumCalls = 0;
+      let left = k as number;
+      const real = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+      navigator.mediaDevices.getUserMedia = async (c) => {
+        w.gumCalls++;
+        if (left-- > 0) throw new DOMException('stubbed', n as string);
+        return real(c);
+      };
+    }, [name, times] as const);
+  }
+
+  test('a refusal keeps you on the page, says where the setting is, and Try again opens the stage', async ({ page }) => {
+    await fresh(page);
+    await refuse(page, 'NotAllowedError', 1, 'denied');
+    await page.goto('/media/teleprompter');
+    await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
+    await page.getByTestId('start-record').click();
+    await expect(page.getByTestId('camera-error')).toContainText('was blocked');
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    // Asked once: a refusal is not retried behind the person's back.
+    expect(await page.evaluate(() => (window as unknown as { gumCalls: number }).gumCalls)).toBe(1);
+
+    await page.getByTestId('camera-error-retry').click();
+    await expect(page.getByTestId('camera-preview')).toBeVisible();
+    await expect(page.getByTestId('ready-hint')).toContainText('Camera on');
+    await expect.poll(() => page.locator('[data-testid=camera-preview] video').evaluate((v: HTMLVideoElement) => v.readyState >= 2 && !v.paused)).toBe(true);
+    await expect(page.getByTestId('camera-error')).toHaveCount(0);
+  });
+
+  test('refused while the site holds the permission, it points at the system settings instead', async ({ page }) => {
+    // Found on the Android emulator: Chrome denied the camera by Android
+    // itself. The site reads as granted, so the site setting is not the fix.
+    await fresh(page);
+    await refuse(page, 'NotAllowedError', 1, 'granted');
+    await page.goto('/media/teleprompter');
+    await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
+    await page.getByTestId('start-record').click();
+    await expect(page.getByTestId('camera-error')).toContainText('keeping the camera from this browser');
+    await page.getByTestId('camera-error-retry').click();
+    await expect(page.getByTestId('camera-preview')).toBeVisible();
+  });
+
+  test('a camera that will not open at 1080p opens at whatever size it can', async ({ page }) => {
+    await fresh(page);
+    await refuse(page, 'OverconstrainedError');
+    await page.goto('/media/teleprompter');
+    await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
+    await page.getByTestId('start-record').click();
+    await expect(page.getByTestId('camera-preview')).toBeVisible();
+    expect(await page.evaluate(() => (window as unknown as { gumCalls: number }).gumCalls)).toBe(2);
+  });
+
+  test('a second tap while the camera is opening does not ask twice', async ({ page }) => {
+    await fresh(page);
+    await page.addInitScript(() => {
+      const w = window as unknown as { gumCalls: number };
+      w.gumCalls = 0;
+      const real = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+      // A permission prompt the person takes a moment over.
+      navigator.mediaDevices.getUserMedia = async (c) => { w.gumCalls++; await new Promise((r) => setTimeout(r, 800)); return real(c); };
+    });
+    await page.goto('/media/teleprompter');
+    await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
+    await page.getByTestId('start-record').click();
+    await expect(page.getByTestId('start-record')).toHaveText('Opening camera…');
+    await page.getByTestId('start-record').click({ force: true });
+    await expect(page.getByTestId('camera-preview')).toBeVisible();
+    // Record straight away: the stage already has the camera, so no new request.
+    await page.getByTestId('record').click();
+    await expect(page.getByTestId('rec-badge')).toBeVisible();
+    await page.getByTestId('record').click();
+    await expect(page.getByText(/^Saved take-/)).toBeVisible();
+    expect(await page.evaluate(() => (window as unknown as { gumCalls: number }).gumCalls)).toBe(1);
+  });
+
+  test('a preview the browser will not autoplay gets a tap-to-show button', async ({ page }) => {
+    await fresh(page);
+    await page.addInitScript(() => {
+      // iOS in Low Power Mode: play() without a tap is refused, even muted.
+      const real = HTMLMediaElement.prototype.play;
+      let refused = false;
+      HTMLMediaElement.prototype.play = function () {
+        if (!refused && this instanceof HTMLVideoElement && this.srcObject) {
+          refused = true;
+          return Promise.reject(new DOMException('stubbed', 'NotAllowedError'));
+        }
+        return real.call(this);
+      };
+    });
+    await page.goto('/media/teleprompter');
+    await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
+    await page.getByTestId('start-record').click();
+    await page.getByTestId('camera-tap').click();
+    await expect(page.getByTestId('camera-tap')).toHaveCount(0);
+    await expect.poll(() => page.locator('[data-testid=camera-preview] video').evaluate((v: HTMLVideoElement) => !v.paused)).toBe(true);
+  });
+
+  test('plain Start can still bring the camera up from the Camera button', async ({ page }) => {
+    await fresh(page);
+    await page.goto('/media/teleprompter');
+    await page.getByTestId('start').click();
+    await expect(page.getByTestId('camera-preview')).toHaveCount(0);
+    await page.getByTestId('camera').click();
+    await expect(page.getByTestId('camera-preview')).toBeVisible();
+    await expect(page.getByTestId('camera')).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  test('a camera that ends under the page says so, and Try again brings it back', async ({ page }) => {
+    await fresh(page);
+    await page.goto('/media/teleprompter');
+    await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
+    await page.getByTestId('start-record').click();
+    await expect(page.getByTestId('camera-preview')).toBeVisible();
+    // Another app takes the camera: the browser ends the track and fires ended.
+    await page.locator('[data-testid=camera-preview] video').evaluate((v: HTMLVideoElement) => {
+      const tr = (v.srcObject as MediaStream).getVideoTracks()[0]!;
+      tr.stop();
+      tr.dispatchEvent(new Event('ended'));
+    });
+    await expect(page.getByTestId('camera-preview')).toHaveCount(0);
+    await expect(page.getByTestId('stage-message')).toContainText('camera stopped');
+    await page.getByTestId('camera-retry').click();
+    await expect(page.getByTestId('camera-preview')).toBeVisible();
+    await expect(page.getByTestId('stage-message')).toHaveCount(0);
+  });
+
+  test('back from another app with a dead camera, it reopens by itself', async ({ page }) => {
+    await fresh(page);
+    await page.goto('/media/teleprompter');
+    await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
+    await page.getByTestId('start-record').click();
+    const video = page.locator('[data-testid=camera-preview] video');
+    await expect(video).toBeVisible();
+    const firstId = await video.evaluate((v: HTMLVideoElement) => (v.srcObject as MediaStream).id);
+    // The phone ended the track while the page was hidden, with no event.
+    await video.evaluate((v: HTMLVideoElement) => (v.srcObject as MediaStream).getVideoTracks()[0]!.stop());
+    await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+    await expect.poll(() => video.evaluate((v: HTMLVideoElement) => {
+      const s = v.srcObject as MediaStream | null;
+      return s ? `${s.id !== undefined}:${s.getVideoTracks()[0]?.readyState}` : 'none';
+    }), { timeout: 5000 }).toBe('true:live');
+    expect(await video.evaluate((v: HTMLVideoElement) => (v.srcObject as MediaStream).id)).not.toBe(firstId);
+  });
+});
+
 test.describe('phone remote (live relay)', () => {
   test('a phone page controls the tablet through the relay', async ({ browser }) => {
     test.setTimeout(60_000);

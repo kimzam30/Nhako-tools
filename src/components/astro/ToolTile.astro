@@ -51,6 +51,17 @@ const locale = localeFromPath(Astro.url.pathname);
 
   No shadow. Depth is a border, a surface and an inset hairline: machined, not
   floating. See DESIGN_BRIEF.md amendment 2.
+
+  On a phone (below 640px) it is the "Popular with students" card: the mark in
+  its own rounded tile, the name, and nothing else, two to a row. The blurb and
+  the star go (Kim, 2026-09-25): the name says what the tool does, the blurb
+  doubled every card's height, and a 44px star on a 170px card is a quarter of
+  the card that does not open the tool. Starring on a phone happens on the
+  tool's own page, or in Favourites' "Choose your tools" list. A card with
+  size presets spans both columns, so its chips sit on one line instead of
+  stacking. Under 360px (an iPhone SE, small Androids) the tile sits above the
+  name, centred, as an app icon does: beside it, a 70px line could not hold
+  "Teleprompter" or "PowerPoint".
 */}
 <div
   data-tool-card
@@ -59,31 +70,45 @@ const locale = localeFromPath(Astro.url.pathname);
   data-keywords={tool.keywords.join(' ')}
   data-category={tool.category}
   data-group-id={group}
-  class="group/card relative flex flex-col rounded-lg border border-border bg-surface shadow-[inset_0_1px_0_var(--edge)] transition-colors duration-[120ms] hover:border-accent focus-within:border-accent"
+  class:list={[
+    'group/card relative flex flex-col rounded-lg border border-border bg-surface shadow-[inset_0_1px_0_var(--edge)] transition-colors duration-[120ms] hover:border-accent focus-within:border-accent',
+    // The pressed state is the whole card darkening, as the popular cards do.
+    'max-sm:rounded-xl has-[>a:active]:bg-sunken',
+    presets.length > 0 && 'max-sm:col-span-2',
+  ]}
 >
-  <a href={href} class="flex flex-1 gap-2.5 rounded-lg p-3 pr-11">
-    {/* Nudged so the mark's optical centre sits on the name's first baseline. */}
-    <ToolIcon tool={tool} class="mt-0.5 group-hover/card:text-accent" />
+  <a href={href} class="flex flex-1 gap-2.5 rounded-lg p-3 pr-11 max-sm:items-center max-sm:rounded-xl max-sm:p-2.5 max-xs:flex-col max-xs:gap-2 max-xs:text-center">
+    {/* The tile exists only on a phone; from 640px it steps aside (contents)
+        and the bare mark is nudged so its optical centre sits on the name's
+        first baseline. */}
+    <span class="contents max-sm:grid max-sm:size-9 max-sm:shrink-0 max-sm:place-items-center max-sm:rounded-lg max-sm:border max-sm:border-border max-sm:bg-bg">
+      <ToolIcon tool={tool} class="mt-0.5 group-hover/card:text-accent max-sm:mt-0" />
+    </span>
 
     <span class="flex min-w-0 flex-col gap-0.5">
-      {/* A size up on a phone, where the card becomes a list row and is read
-          at arm's length: 16/14 is close to a native list's 17/15. */}
-      <span class="text-sm font-medium transition-colors group-hover/card:text-accent max-sm:text-base">
+      <span class="text-sm font-medium transition-colors group-hover/card:text-accent max-sm:font-semibold max-sm:leading-snug">
         {tool.name}
       </span>
-      <span class="text-xs leading-snug text-muted max-sm:text-sm">{context ?? tool.blurb}</span>
+      <span class="text-xs leading-snug text-muted max-sm:hidden">{context ?? tool.blurb}</span>
     </span>
   </a>
 
   {/* A sibling of the link, never inside it: a button in a link is invalid
       and would navigate on every star. */}
-  <FavButton id={`${tool.category}/${tool.slug}`} name={tool.name} locale={locale} class="absolute right-1.5 top-1.5" />
+  <FavButton
+    id={`${tool.category}/${tool.slug}`}
+    name={tool.name}
+    locale={locale}
+    class="absolute right-1.5 top-1.5 max-sm:hidden"
+  />
 
   {presets.length > 0 && (
     /* Indented to the blurb, so the chips read as belonging to the name above
        them rather than to the card edge. The card that owns presets is taller
-       than its neighbours, which is honest: it leads somewhere they do not. */
-    <ul class="flex flex-wrap gap-1.5 pb-3 pr-3 pl-[calc(0.75rem+var(--mark-gutter)-0.5rem)]">
+       than its neighbours, which is honest: it leads somewhere they do not.
+       On a phone they start at the tile's edge instead: indented, Compress
+       PDF's five sizes wrapped to a second line at 390px. */
+    <ul class="flex flex-wrap gap-1.5 pb-3 pr-3 pl-[calc(0.75rem+var(--mark-gutter)-0.5rem)] max-sm:pb-2.5 max-sm:pl-2.5 max-sm:pr-2.5">
       {presets.map((p) => (
         <li>
           {/*
