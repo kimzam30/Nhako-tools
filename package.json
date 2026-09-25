@@ -19,7 +19,8 @@
     "icons": "node scripts/icons.mjs",
     "og": "node scripts/og-images.mjs",
     "screenshots": "node scripts/screenshots.mjs",
-    "test:e2e:mobile": "playwright test --project=android --project=ios --project=ios-landscape --project=ipados --project=ipados-landscape"
+    "test:e2e:mobile": "playwright test --project=android --project=ios --project=ios-landscape --project=ipados --project=ipados-landscape",
+    "launch:video": "node launch/video/capture.mjs && node launch/video/audio.mjs && node launch/video/render.mjs"
   },
   "dependencies": {
     "@astrojs/preact": "^4.1.3",

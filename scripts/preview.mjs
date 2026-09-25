@@ -18,6 +18,7 @@ const TYPES = {
   '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml',
   '.wasm': 'application/wasm', '.woff2': 'font/woff2', '.xml': 'application/xml',
   '.png': 'image/png', '.jpg': 'image/jpeg', '.txt': 'text/plain; charset=utf-8',
+  '.ico': 'image/x-icon', '.webmanifest': 'application/manifest+json',
 };
 
 async function resolve(pathname) {

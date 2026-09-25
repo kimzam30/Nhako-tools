@@ -36,7 +36,9 @@ for (const [slug, heading, sub] of CARDS) {
         display: flex; flex-direction: column; justify-content: space-between;
         padding: 72px 80px;
       }
-      .mark { width: 88px; height: 88px }
+      /* 96 = 3 x the icon's 32px grid, so every art pixel lands whole. */
+      .mark { width: 96px; height: 96px }
+      .mark svg { display: block; width: 100%; height: 100% }
       h1 { font-size: 78px; line-height: 1.05; letter-spacing: -0.035em; font-weight: 700 }
       p  { font-size: 32px; color: #63636e; margin-top: 20px; letter-spacing: -0.01em }
       .foot { display: flex; align-items: center; gap: 14px; font-size: 26px; color: #63636e;

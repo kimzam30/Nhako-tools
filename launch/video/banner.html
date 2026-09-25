@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Nhako Tools banner</title>
+<!--
+  The README banner. Plain and flat on purpose: one off-white ground, SF Pro
+  Display, the site's own ink and accent (tokens.css: --ink, --gray-500,
+  --pink-600), the real icon in a squircle, and the real home screen on an
+  iPhone. No gradients, no pixel type.
+  `node launch/video/render.mjs --banner` writes it to docs/brand/banner.png.
+-->
+<style>
+  :root { --ink: #131316; --muted: #63636e; --line: #e4e4e8; --accent: #c7009b; --bg: #fbfbfd; }
+  * { margin: 0; box-sizing: border-box; }
+  html, body { width: 1280px; height: 560px; overflow: hidden; }
+  body { position: relative; color: var(--ink); background: var(--bg); -webkit-font-smoothing: antialiased;
+    font-family: 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif; }
+  img.px { image-rendering: pixelated; display: block; }
+  .abs { position: absolute; }
+
+  #icon { left: 96px; top: 104px; width: 144px; height: 144px; border-radius: 33px; overflow: hidden;
+    box-shadow: 0 18px 40px rgba(19, 19, 22, 0.14), 0 0 0 1px rgba(19, 19, 22, 0.06); }
+  /* 36 art cells at 4 px each: a whole number, so the pixel art stays crisp. */
+  #icon img { width: 144px; height: 144px; }
+  h1 { left: 272px; top: 126px; font-size: 92px; font-weight: 700; letter-spacing: -0.035em; line-height: 1; white-space: nowrap; }
+  #url { left: 276px; top: 222px; font-size: 26px; font-weight: 500; color: var(--muted); letter-spacing: -0.01em; }
+  #url b { color: var(--accent); font-weight: 600; }
+  #tag { left: 96px; top: 300px; font-size: 44px; font-weight: 600; letter-spacing: -0.025em; }
+  #sub { left: 96px; top: 362px; font-size: 28px; font-weight: 400; color: var(--muted); letter-spacing: -0.01em; }
+  #chips { left: 96px; top: 436px; display: flex; gap: 10px; }
+  .chip { font-size: 21px; font-weight: 500; letter-spacing: -0.01em; padding: 9px 20px; border-radius: 999px;
+    background: #fff; border: 1px solid var(--line); }
+
+  /* The iPhone, at half the video's size, cropped by the bottom edge. */
+  #phone { left: 884px; top: 64px; width: 636px; height: 1336px; transform: scale(0.5); transform-origin: 0 0; }
+  .frame { position: absolute; inset: 0; border-radius: 110px; background: #2b2b2f;
+    box-shadow: 0 50px 100px rgba(19, 19, 22, 0.18), 0 0 0 3px #d4d4d9; }
+  .bezel { position: absolute; inset: 7px; border-radius: 103px; background: #050506; }
+  .screen { position: absolute; left: 18px; top: 18px; width: 600px; height: 1300px; border-radius: 92px; overflow: hidden; background: #fff; }
+  .status { position: absolute; left: 0; right: 0; top: 0; height: 83px; background: #fff; z-index: 2; }
+  .status .time { position: absolute; left: 72px; top: 28px; font-family: 'SF Pro Text', system-ui; font-weight: 600; font-size: 26px; }
+  .status svg { position: absolute; right: 48px; top: 31px; }
+  .island { position: absolute; left: 50%; top: 17px; width: 190px; height: 56px; margin-left: -95px; border-radius: 28px; background: #000; z-index: 3; }
+  .content { position: absolute; left: 0; top: 83px; width: 600px; }
+  .content img { width: 600px; display: block; }
+</style>
+</head>
+<body>
+  <div id="icon" class="abs"><img class="px" src="../../public/icons/apple-touch-icon.png" alt=""></div>
+  <h1 class="abs">Nhako Tools</h1>
+  <div id="url" class="abs"><b>tools</b>.nhako.com</div>
+  <div id="tag" class="abs">Nothing uploads. Nothing waits.</div>
+  <div id="sub" class="abs">50 free tools that run on your device. No account, no daily limit.</div>
+  <div id="chips" class="abs"><div class="chip">PDF</div><div class="chip">Image</div><div class="chip">Media</div><div class="chip">Calculators</div><div class="chip">Developer</div></div>
+
+  <div id="phone" class="abs">
+    <div class="frame"></div><div class="bezel"></div>
+    <div class="screen">
+      <div class="status"><span class="time">9:41</span>
+        <svg width="112" height="23" viewBox="0 0 118 24" aria-hidden="true"><g fill="#000">
+          <rect x="0" y="15" width="6" height="8" rx="1.5"/><rect x="9" y="11" width="6" height="12" rx="1.5"/>
+          <rect x="18" y="6" width="6" height="17" rx="1.5"/><rect x="27" y="1" width="6" height="22" rx="1.5"/>
+          <path d="M53 22.5l4.2-4.4a6 6 0 0 0-8.4 0zM45.6 14.9l2.1 2.2a8.7 8.7 0 0 1 10.6 0l2.1-2.2a11.7 11.7 0 0 0-14.8 0zM42.2 11.3l2.1 2.2a13.4 13.4 0 0 1 17.4 0l2.1-2.2a16.4 16.4 0 0 0-21.6 0z"/>
+          <rect x="74" y="2" width="38" height="20" rx="6" fill="none" stroke="#000" stroke-width="2" opacity=".4"/>
+          <rect x="77" y="5" width="30" height="14" rx="3.5"/><rect x="114" y="8.5" width="3" height="7" rx="1.5" opacity=".4"/></g></svg>
+      </div>
+      <div class="island"></div>
+      <div class="content"><img src="shots/home.png" alt=""></div>
+    </div>
+  </div>
+<script type="module">
+  await document.fonts.ready;
+  await Promise.all([...document.images].map((img) => img.decode().catch(() => {})));
+  window.sceneReady = true;
+</script>
+</body>
+</html>

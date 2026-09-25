@@ -20,8 +20,13 @@ export default [
     },
   },
   {
-    files: ['scripts/**/*.mjs'],
+    files: ['scripts/**/*.mjs', 'launch/**/*.mjs'],
     languageOptions: { globals: globals.node },
+  },
+  {
+    // The launch video's scene runs in the browser that render.mjs drives.
+    files: ['launch/**/*.js'],
+    languageOptions: { globals: globals.browser },
   },
   {
     files: ['**/*.test.ts'],

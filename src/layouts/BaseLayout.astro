@@ -70,6 +70,9 @@ const SECTION_PATHS = LOCALES.flatMap((l) =>
       <link rel="alternate" hreflang={LANG[l]} href={new URL(localePath(l, path), site).href} />
     ))}
     {alternates && <link rel="alternate" hreflang="x-default" href={new URL(path, site).href} />}
+    {/* The .ico is for browsers without SVG favicons; sizes="32x32" keeps
+        the ones with them on the SVG. Both come from npm run icons. */}
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />

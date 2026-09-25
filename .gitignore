@@ -7,3 +7,5 @@ dist
 test-results
 playwright-report
 public/vendor
+launch/video/shots
+launch/video/out

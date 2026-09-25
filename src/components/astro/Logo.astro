@@ -1,17 +1,24 @@
 ---
+/**
+ * The Nhako Tools mark: the NeraOS-style pixel toolbox, the same file the PWA
+ * installs (scripts/logo-art.mjs draws it, `npm run icons` writes it).
+ *
+ * Always 32px, the art's own grid: the 192px PNG shrinks by an exact 6, 3 or 2
+ * on 1x, 2x and 3x screens. `px` is NeraOS's pixelated rendering (nera.css),
+ * which keeps it hard-edged where the header's centring lands it on a half
+ * pixel (x = 80.5 at 1280 wide with a scrollbar) and on fractional screens.
+ * There is no 16px version: at 16 the browser averages away half the art, and
+ * pixelated drops it (checked 2026-09-25). Decorative: the link carries the name.
+ */
 interface Props { class?: string }
 const { class: className = '' } = Astro.props;
 ---
-<svg
-  viewBox="0 0 32 32"
-  class={className}
-  aria-hidden="true"
-  focusable="false"
-  fill="none"
->
-  <rect width="32" height="32" rx="6" class="fill-accent" />
-  <path
-    d="M9 9h3.6v14H9z M19.4 9H23v14h-3.6z M9 9h3.6L23 23h-3.6z"
-    class="fill-accent-on"
-  />
-</svg>
+<img
+  src="/icons/icon-192.png"
+  alt=""
+  width="32"
+  height="32"
+  decoding="async"
+  class:list={['px size-8 shrink-0', className]}
+  draggable="false"
+/>

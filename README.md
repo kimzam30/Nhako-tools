@@ -1,17 +1,68 @@
-# Nhako Tools
+<p align="center">
+  <img src="docs/brand/banner.png" alt="Nhako Tools: the app icon, a red pixel-art toolbox on a lawn, next to the words Nothing uploads. Nothing waits., and an iPhone showing the Nhako Tools home screen" width="100%">
+</p>
 
-50 utilities for PDFs, images, calculations, media and code, all of which run on your device.
-In English and Bahasa Melayu ([tools.nhako.com/ms](https://tools.nhako.com/ms)).
+<p align="center">
+  <b>50 free tools for PDFs, images, media, calculators and code, that run on your device.</b><br>
+  Nothing uploads. Nothing waits. No account, no daily limit, no watermark.
+</p>
 
-**Live at [tools.nhako.com](https://tools.nhako.com)**
+<p align="center">
+  <a href="https://tools.nhako.com"><b>tools.nhako.com</b></a>
+  &nbsp;|&nbsp;
+  <a href="https://tools.nhako.com/ms">Bahasa Melayu</a>
+  &nbsp;|&nbsp;
+  <a href="launch/nhako-tools-launch.mp4">Launch video</a>
+  &nbsp;|&nbsp;
+  <a href="docs/pwa-and-android.md">PWA and Android plan</a>
+  &nbsp;|&nbsp;
+  <a href="https://tools.nhako.com/feedback">Feedback</a>
+</p>
 
-![Astro](https://img.shields.io/badge/Astro_5-BC52EE?style=flat-square&logo=astro&logoColor=white)
-![Preact](https://img.shields.io/badge/Preact-673AB8?style=flat-square&logo=preact&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)
-![Tailwind](https://img.shields.io/badge/Tailwind_v4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
-![License](https://img.shields.io/github/license/kimzam30/Nhako-tools?style=flat-square)
+<p align="center">
+  <img src="https://img.shields.io/badge/Astro_5-BC52EE?style=flat-square&logo=astro&logoColor=white" alt="Astro 5">
+  <img src="https://img.shields.io/badge/Preact-673AB8?style=flat-square&logo=preact&logoColor=white" alt="Preact">
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript">
+  <img src="https://img.shields.io/badge/Tailwind_v4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind v4">
+  <img src="https://img.shields.io/badge/PWA-installable-5A0FC8?style=flat-square&logo=pwa&logoColor=white" alt="Installable PWA">
+  <img src="https://img.shields.io/github/license/kimzam30/Nhako-tools?style=flat-square" alt="License">
+</p>
 
 ---
+
+## Contents
+
+- [On a phone](#on-a-phone)
+- [Why it exists](#why-it-exists)
+- [What you get besides the tools](#what-you-get-besides-the-tools)
+- [Tools](#tools)
+- [Install it as an app](#install-it-as-an-app)
+- [Launch video](#launch-video)
+- [Honest limits](#honest-limits)
+- [Privacy, precisely](#privacy-precisely)
+- [Architecture](#architecture)
+- [Local development](#local-development)
+- [Design](#design)
+- [Roadmap](#roadmap)
+- [Feedback and support](#feedback-and-support)
+- [Credits and licence](#credits-and-licence)
+
+---
+
+## On a phone
+
+Real captures of the production build at iPhone size, taken by
+`launch/video/capture.mjs`. Below 1024 px the site switches to an app shell: a
+floating tab bar, a More sheet, and a back link instead of breadcrumbs.
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/images/phone-home.png" width="200" alt="Home: search 50 tools, popular with students"><br><sub>Home</sub></td>
+    <td align="center"><img src="docs/images/phone-image-compress-done.png" width="200" alt="Compress image finished: under 500 KB, 432 KB"><br><sub>A 5.5 MB photo to 432 KB</sub></td>
+    <td align="center"><img src="docs/images/phone-salary.png" width="200" alt="Salary calculator: RM 4,706.00 take-home pay"><br><sub>Malaysian take-home pay</sub></td>
+    <td align="center"><img src="docs/images/phone-home-dark.png" width="200" alt="Home in dark mode"><br><sub>Dark mode</sub></td>
+  </tr>
+</table>
 
 ## Why it exists
 
@@ -26,7 +77,18 @@ private, because a file that is never sent anywhere cannot leak.
 You do not have to take that on trust. Open your network tab and run any tool:
 your file never appears in it.
 
----
+## What you get besides the tools
+
+| | |
+|---|---|
+| **Search everything** | `⌘K` or `Ctrl K` (or the search icon on a phone) finds any of the 50 tools and their size presets, in English or Malay ("gaji" finds the salary calculator) |
+| **Favourites** | Star a tool and it waits on [/favourites](https://tools.nhako.com/favourites). Stored in this browser only; there is no account to sync it to |
+| **Two languages** | Every page and tool in English and Bahasa Melayu, at `/` and `/ms` |
+| **Malaysia page** | [/malaysia](https://tools.nhako.com/malaysia) gathers the jobs Malaysian forms ask for: SPA MyRésumé photo sizes, the salary calculator, passport photos, CGPA |
+| **Size presets** | Pages like [Compress PDF to 500 KB](https://tools.nhako.com/pdf/compress/500kb) and [Compress image to 100 KB](https://tools.nhako.com/image/compress/100kb) open with the target already set |
+| **Light and dark** | Light by default; dark from the toggle in the header, remembered per browser |
+| **Installable** | An app on Android, iPhone, iPad, Mac, Windows and ChromeOS, with offline support ([below](#install-it-as-an-app)) |
+| **NeraOS details** | Pixel butterflies drift behind the page; loading and finished states use the NeraOS boot bar, pops and petals. All of it stops under "reduce motion" |
 
 ## Tools
 
@@ -105,7 +167,55 @@ your file never appears in it.
 | [Text diff](https://tools.nhako.com/dev/diff) | Compare by line, word or character |
 | [CSS shadow](https://tools.nhako.com/dev/css-shadow) | Build `box-shadow` with a live preview |
 
----
+## Install it as an app
+
+Nhako Tools is a Progressive Web App: a web app manifest
+(`public/manifest.webmanifest`), a service worker (`scripts/build-sw.mjs`), and
+maskable icons drawn for Android's adaptive mask. The site offers to install
+itself on your second page view (or after 20 seconds), with the right steps for
+each browser, and never nags: "Not now" snoozes it for 14 days. Inside the
+installed app it never asks.
+
+| Device | How |
+|---|---|
+| Android (Chrome, Edge) | Tap **Install** on the card, or the browser menu's **Install app**. Chrome turns it into a WebAPK, a real Android app in the launcher and Settings > Apps |
+| iPhone and iPad (Safari) | **Share**, then **Add to Home Screen**, then **Add**. The card shows these steps |
+| Mac (Safari 17+) | **File > Add to Dock** |
+| Windows, Mac, Linux, ChromeOS (Chrome, Edge) | The install icon in the address bar |
+
+**Offline.** After one visit the home page works offline, and any tool works
+offline once you have opened it once (the engines it downloaded stay cached).
+Big runtimes (ffmpeg, the ONNX runtime, LibreOffice, Tesseract) are cached the
+first time a tool needs them, never up front.
+
+**An APK for Google Play and sideloading** is planned, as a Trusted Web
+Activity built with Bubblewrap: a small Android shell that opens this site full
+screen in the phone's own Chrome, so ffmpeg.wasm, the service worker and the
+camera behave exactly as they do in the browser, and every web deploy updates
+the app. The phases, the Play Store requirements and the decisions still open
+are in **[docs/pwa-and-android.md](docs/pwa-and-android.md)**.
+
+## Launch video
+
+<a href="launch/nhako-tools-launch.mp4"><img src="launch/poster.png" width="270" align="right" alt="The launch video's end card: the pixel toolbox logo, NHAKO TOOLS, tools.nhako.com"></a>
+
+**[launch/nhako-tools-launch.mp4](launch/nhako-tools-launch.mp4)**: 58 seconds,
+vertical 1080 x 1920, for Reels, TikTok, Shorts and a store listing.
+
+Styled like an Apple keynote film, with the NeraOS butterflies flying through
+it: the real app on an iPhone that tilts, zooms and fans out, in flat colour
+on a plain stage. Search, a
+5.5 MB photo compressed to 432 KB for a form, PDF to JPG, the salary
+calculator, the teleprompter, both languages, dark mode, and the install to the
+Home Screen. The score is an original synth track generated by code, with a
+sound on every tap, so it is safe to post anywhere.
+
+Every screen in the phone is a capture of the production build, and every
+number on screen is one the app printed. The whole video is rebuilt with one
+command after a site change. Storyboard, sources and how to rebuild:
+**[docs/launch-video.md](docs/launch-video.md)**.
+
+<br clear="right">
 
 ## Honest limits
 
@@ -169,11 +279,12 @@ Things this project does **not** do, stated here rather than discovered later:
 - **File size is bounded by your device's memory.** No upload cap, but no server's RAM
   either.
 
----
-
 ## Privacy, precisely
 
-No backend of our own, no database, no cookies, no account. Page views are counted with
+No backend of our own for the tools, no cookies, no account. The one exception is the
+[feedback page](https://tools.nhako.com/feedback): only what you type there, only when you
+press Send, goes into a Supabase table (`supabase/migrations/`) that accepts inserts and
+nothing else from the site. Page views are counted with
 [Vercel Web Analytics](https://vercel.com/docs/analytics/privacy-policy), which is
 cookieless and served from this same domain; it records the page, referrer,
 approximate location and browser/device type, never files or tool input. `localStorage`
@@ -208,8 +319,6 @@ What the browser does request:
   recognition, which in Chrome and Edge sends microphone audio to Google while listening.
 - Those model downloads, the relay and voice-follow are the only third-party requests,
   and the last two are opt-in. A model download is never an upload of your audio or photo.
-
----
 
 ## Architecture
 
@@ -264,7 +373,24 @@ to inline if a worker cannot start.
 | Tests | Vitest + Playwright + axe-core |
 | Hosting | Vercel |
 
----
+### Where things live
+
+```
+src/
+  tools/        registry.ts (every tool's metadata) and loaders.ts (their code, loaded on demand)
+  components/   astro/ (nav, tab bar, palette, install card, butterflies) and react/ (Preact islands)
+  pages/        one prerendered page per tool, category and preset; ms/ mirrors it in Malay
+  lib/          engines: pdf, ffmpeg, OCR, LibreOffice, qpdf, camera, relay, sprites
+  i18n/         every string, in English and Malay
+  styles/       tokens.css (colours, tested for contrast), nera.css (the NeraOS layer), motion.css
+  workers/      the Web Worker that runs CPU-heavy PDF work off the main thread
+scripts/        build-sw.mjs, icons.mjs + logo-art.mjs, og-images.mjs, vendor.mjs, sweep.mjs
+e2e/            Playwright specs, Chromium, WebKit and mobile profiles
+supabase/       the feedback table's migration
+launch/video/   the launch video: capture, timeline, scene, soundtrack, renderer
+docs/           the Android plan, the video's documentation, brand art
+.design/        the design brief, information architecture and task history
+```
 
 ## Local development
 
@@ -285,7 +411,11 @@ npm run dev
 | `npm test` | Vitest unit tests |
 | `npm run test:e2e` | Playwright functional and accessibility tests |
 | `npm run vendor` | Copy the ffmpeg core and ONNX runtime into `public/vendor/<name>/<version>` (runs automatically) |
-| `npm run icons` | Rasterise `public/favicon.svg` into the PNG icon sizes |
+| `npm run icons` | Draw every icon (favicon.svg, favicon.ico, the PNG and maskable sizes) from the pixel art in `scripts/logo-art.mjs` |
+| `npm run og` | Regenerate the share cards in `public/og/` |
+| `npm run screenshots` | Retake the web-manifest screenshots from a running preview |
+| `npm run test:e2e:mobile` | The e2e suite on Android, iPhone and iPad profiles, portrait and landscape |
+| `npm run launch:video` | Rebuild the launch video from a running preview (see [docs/launch-video.md](docs/launch-video.md)) |
 
 > **Cross-origin isolation.** `ffmpeg.wasm` needs `SharedArrayBuffer`, which needs the
 > COOP/COEP headers set in `astro.config.mjs` (dev), `scripts/preview.mjs` (preview)
@@ -315,30 +445,66 @@ Lighthouse against the deployed site (tools.nhako.com, Chrome, 2026-09-18) score
 both tool-page types, with LCP 1.1-1.4 s, blocking time 0-80 ms and layout shift at
 most 0.001.
 
----
-
 ## Design
 
-`public/favicon.svg` is the single source for the mark: a geometric N whose stems
-and diagonal share one 3.6u width on a 32u grid, dark on brand pink at 9.23:1, so it
-stays legible at 16 px. `npm run icons` rasterises every other size from it.
+<img src="docs/brand/logo.png" width="128" align="left" alt="The Nhako Tools logo: a red pixel-art toolbox on a lawn, a wrench and a screwdriver poking out, a butterfly sticker and a heart sticker" style="image-rendering: pixelated">
+
+**The mark** is a red pixel-art toolbox on a lawn, a wrench and a screwdriver
+poking out, a butterfly sticker and a heart sticker slapped on at opposite
+tilts. It is drawn on a 32 x 32 grid in the NeraOS sprite format, one letter
+per pixel, in [`scripts/logo-art.mjs`](scripts/logo-art.mjs), and
+`npm run icons` writes every size from it: the SVG favicon, `favicon.ico`, the
+192 and 512 icons, the Apple touch icon, and maskable icons with extra lawn for
+Android. Every size is a whole multiple of the grid, so no pixel is ever
+resampled. The stickers are placed by hand: rotating a 7-pixel sprite turns it
+into a blob.
+
+<br clear="left">
+
+**NeraOS.** The butterflies, the loading and finished states, and the logo's
+palette come from [NeraOS](https://github.com/kimzam30/NeraOS), with the
+sprites copied cell for cell into `src/lib/butterfly.ts`. Everything NeraOS
+lives in `src/styles/nera.css`, so the line between it and the rest of the site
+stays visible. Its win colour was nudged from `#b34a7d` to `#aa4677` to pass AA
+on its own panel; `nera.test.ts` checks every gradient stop.
+
+**Type.** One typeface, San Francisco, the Apple system font. Apple licenses SF
+Pro only for Apple-platform mock-ups, so it is reached through the system font
+stack rather than served: it is SF on iPhone, iPad and Mac, and each other
+device's own interface face elsewhere. No web font is downloaded; a token test
+fails the build on any import.
+
+**Colour.** `#FF91E7` is the Nhako brand accent. It is pale, so it cannot carry
+text on a light background (white on it is 2.01:1, well under the 4.5:1 AA
+threshold). It is kept as the identity colour, and deepened variants are
+derived for interactive elements. The token test enforces this.
 
 The visual system and the reasoning behind it live in
-[`.design/nhako-tools-rebuild/`](.design/nhako-tools-rebuild/), covering the brief,
+[`.design/nhako-tools-rebuild/`](.design/nhako-tools-rebuild/): the brief,
 information architecture, and screenshots.
 
-One typeface, San Francisco, the iOS system font. Apple licenses SF Pro only for
-Apple-platform mock-ups, so it is reached through the system font stack rather than
-served: it is SF on iPhone, iPad and Mac, and each other device's own interface face
-elsewhere. No web font is downloaded; a token test fails the build on any import.
+## Roadmap
 
-`#FF91E7` is the Nhako brand accent. It is pale, so it cannot carry text on a light
-background (white on it is 2.01:1, well under the 4.5:1 AA threshold). It is kept as
-the identity colour, and deepened variants are derived for interactive elements. The
-token test enforces this.
+- **Android APK and Google Play** via a Trusted Web Activity: [docs/pwa-and-android.md](docs/pwa-and-android.md), Phases 1 to 4.
+- **Share to Nhako Tools** from any Android app (a manifest `share_target`), and **Open with** for PDFs and images on desktop (`file_handlers`): Phase 0 of the same plan.
+- **An offline page** for tools not opened yet, instead of the browser's error page.
+- Still open from the rebuild: a real screen-reader pass (axe is a weaker claim) and production parity checks. See `.design/nhako-tools-rebuild/TASKS.md`.
 
----
+Tool requests decide what comes next; send them from the [feedback page](https://tools.nhako.com/feedback).
 
-## License
+## Feedback and support
+
+- **Feedback, bugs and tool requests:** [tools.nhako.com/feedback](https://tools.nhako.com/feedback), or open an issue here. Every message is read.
+- **Support:** there are no ads, no premium tier and no daily limit, and there will not be. If a tool saved you a trip to a paid one, [buy me a coffee](https://buymeacoffee.com/nhakotools).
+
+## Credits and licence
 
 MIT. See [LICENSE](LICENSE).
+
+Built on [pdf-lib](https://pdf-lib.js.org), [pdf.js](https://mozilla.github.io/pdf.js/),
+[ffmpeg.wasm](https://ffmpegwasm.netlify.app), [transformers.js](https://huggingface.co/docs/transformers.js)
+and Whisper, [Tesseract.js](https://tesseract.projectnaptha.com),
+[LibreOffice](https://www.libreoffice.org) compiled to WebAssembly (MPL-2.0),
+[qpdf](https://qpdf.sourceforge.io), [libheif](https://github.com/strukturag/libheif) (LGPL-3.0),
+and the ISNet, ormbg and MODNet models (Apache-2.0). Pixel art and the NeraOS
+theme from [NeraOS](https://github.com/kimzam30/NeraOS).
