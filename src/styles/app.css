@@ -1,0 +1,293 @@
+/* ==========================================================================
+   App shell: what makes the site behave like an installed app on a phone
+   or tablet rather than a desktop page squeezed down to fit.
+
+   Measured against Apple's Human Interface Guidelines on 2026-09-25, with
+   WebKit (iPhone 15, iPad Air) and the Android emulator's Chrome:
+     - every control is at least 44 x 44 on a touch screen;
+     - no text field is below 16px, which is the size under which iOS
+       Safari zooms the whole page in when the field takes focus;
+     - the tab bar is 49px (48 + its hairline) plus the home indicator's
+       safe area, as UIKit's is;
+     - nothing sits under a notch, a rounded corner or the home indicator.
+   Colours are the tokens'. Nothing here introduces a new one.
+   ========================================================================== */
+
+@layer base {
+  html {
+    /* The grey flash WebKit paints over anything tapped. Every control here
+       has its own pressed state instead, which reads as the control reacting
+       rather than the browser. */
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Double-tap-to-zoom waits ~300ms to rule out a second tap on some
+     browsers. Pinch zoom stays available: only the double tap goes. */
+  a, button, input, select, textarea, label, summary, [role='button'] {
+    touch-action: manipulation;
+  }
+
+  /* The home indicator, the notch and the rounded corners. viewport-fit=cover
+     (BaseLayout) hands those areas to the page, so the page keeps its content
+     out of them. Backgrounds still run edge to edge, as a native app's do. */
+  body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Room for the tab bar, so the last row of a page and the footer are
+     never trapped behind it. */
+  /* Same condition as the app-shell variant in tokens.css. */
+  @media (max-width: 1023.98px) {
+    body { padding-bottom: calc(49px + env(safe-area-inset-bottom)); }
+  }
+
+  /* Installed and opened from the home screen there is no browser UI at all,
+     so the page's own chrome is everything. Nothing on it should select like
+     text when a thumb rests on it. */
+  @media (display-mode: standalone) {
+    [data-tabbar], .vt-nav { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+    [data-install-row] { display: none !important; }
+  }
+
+  .vt-tabbar { view-transition-name: tabbar; }
+
+  /* Search open: it is the whole screen, so the page under it stops
+     scrolling and the tab bar steps aside. The palette lives inside the
+     sticky header, whose stacking context caps it at the header's z-index,
+     so without this the tab bar (later in the page, same z-index) painted
+     over the last results and stayed tappable. */
+  body:has(#palette:not([hidden])) { overflow: hidden; }
+  body:has(#palette:not([hidden])) [data-tabbar] { display: none; }
+}
+
+@layer components {
+  /* --- Bottom sheet ----------------------------------------------------------
+     A popover, so it opens with no JavaScript at all (popovertarget), closes
+     on Escape and on a tap outside, and sits in the top layer above the tab
+     bar. On a wide screen the same element is a centred card. */
+  .sheet[popover] {
+    position: fixed;
+    inset: auto 0 0 0;
+    margin: 0;
+    width: 100%;
+    max-width: 100%;
+    max-height: min(88dvh, 820px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border: 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    padding: 0 max(12px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    background: var(--sunken);
+    color: var(--text);
+    box-shadow: var(--shadow-overlay);
+    transform: translateY(100%);
+    transition:
+      transform 280ms var(--ease-out),
+      overlay 280ms allow-discrete,
+      display 280ms allow-discrete;
+  }
+  [data-theme='dark'] .sheet[popover] { background: var(--bg); }
+  .sheet[popover]:popover-open { transform: translateY(0); }
+  @starting-style {
+    .sheet[popover]:popover-open { transform: translateY(100%); }
+  }
+  .sheet[popover]::backdrop {
+    background: rgb(0 0 0 / 0);
+    transition: background-color 280ms var(--ease-out), overlay 280ms allow-discrete, display 280ms allow-discrete;
+  }
+  .sheet[popover]:popover-open::backdrop { background: rgb(0 0 0 / 0.4); }
+  @starting-style {
+    .sheet[popover]:popover-open::backdrop { background: rgb(0 0 0 / 0); }
+  }
+
+  @media (min-width: 768px) {
+    .sheet[popover] {
+      inset: 0;
+      margin: auto;
+      width: min(420px, calc(100vw - 32px));
+      height: fit-content;
+      border-radius: var(--radius-lg);
+      padding-bottom: 16px;
+      transform: translateY(12px);
+      opacity: 0;
+      transition:
+        transform 200ms var(--ease-out),
+        opacity 200ms var(--ease-out),
+        overlay 200ms allow-discrete,
+        display 200ms allow-discrete;
+    }
+    .sheet[popover]:popover-open { transform: none; opacity: 1; }
+    @starting-style {
+      .sheet[popover]:popover-open { transform: translateY(12px); opacity: 0; }
+    }
+  }
+
+  /* Grouped rows inside a sheet: iOS's inset grouped list, in the tokens. */
+  .sheet-group {
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    background: var(--bg);
+  }
+  [data-theme='dark'] .sheet-group { background: var(--surface); }
+  .sheet-row {
+    position: relative;
+    display: flex;
+    min-height: 52px;
+    width: 100%;
+    align-items: center;
+    gap: 12px;
+    padding: 0 16px;
+    text-align: left;
+    font-size: var(--text-base);
+    transition: background-color 120ms var(--ease-out);
+  }
+  .sheet-row:active { background: var(--sunken); }
+  [data-theme='dark'] .sheet-row:active { background: var(--gray-850); }
+  /* Hairlines start at the label, not the edge, as in a native list. */
+  .sheet-row + .sheet-row::before,
+  .sheet-row + [hidden] + .sheet-row::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 58px;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* An install row that is not offered here leaves the group's first visible
+     row with no neighbour above it, so no hairline either. */
+  .sheet-group > [hidden]:first-child + .sheet-row::before { content: none; }
+
+  /* --- Install card -------------------------------------------------------
+     A banner in the top layer: above the tab bar on a phone, in the corner on
+     a tablet or laptop, where a toast would be. */
+  .install-card[popover] {
+    position: fixed;
+    inset: auto max(12px, env(safe-area-inset-right)) calc(49px + env(safe-area-inset-bottom) + 12px) max(12px, env(safe-area-inset-left));
+    margin: 0;
+    width: auto;
+    max-width: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    background: var(--bg);
+    color: var(--text);
+    box-shadow: var(--shadow-overlay);
+    transform: translateY(0);
+    opacity: 1;
+    transition:
+      transform 240ms var(--ease-out),
+      opacity 240ms var(--ease-out),
+      overlay 240ms allow-discrete,
+      display 240ms allow-discrete;
+  }
+  .install-card[popover]:not(:popover-open) { transform: translateY(16px); opacity: 0; }
+  @starting-style {
+    .install-card[popover]:popover-open { transform: translateY(16px); opacity: 0; }
+  }
+  [data-theme='dark'] .install-card[popover] { background: var(--surface); }
+  @media (min-width: 768px) {
+    .install-card[popover] {
+      inset: auto 24px 24px auto;
+      width: 380px;
+    }
+  }
+  @media (min-width: 768px) and (max-width: 1023.98px) {
+    .install-card[popover] { bottom: calc(49px + env(safe-area-inset-bottom) + 16px); }
+  }
+  .install-steps { display: grid; gap: 10px; font-size: var(--text-sm); }
+  .install-steps > li { display: flex; align-items: center; gap: 10px; }
+  .install-step-n {
+    display: grid;
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    place-items: center;
+    border-radius: var(--radius-full);
+    background: var(--accent-subtle);
+    color: var(--accent);
+    font-size: var(--text-2xs);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+}
+
+/* Unlayered on purpose: these restyle elements that carry Tailwind utilities
+   (gap-2.5, border, rounded-lg), and any rule inside a layer loses to the
+   utilities layer however specific it is. */
+/* --- Tool lists on a phone ---------------------------------------------
+   Below 640px a grid of separate bordered cards becomes one grouped list:
+   one surface, hairlines between rows, and the row itself as the pressed
+   state. It is how every native settings or file list reads, and it spends
+   no height on gaps and doubled borders. Tablet and desktop keep the grid. */
+@media (max-width: 639.98px) {
+  .tool-list {
+    gap: 0;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: inset 0 1px 0 var(--edge);
+  }
+  /* Favourites wraps each card in a display:contents slot it reorders. */
+  .tool-list > [data-tool-card],
+  .tool-list > [data-fav-slot] > [data-tool-card] {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+  }
+  .tool-list > [data-tool-card]:not([hidden]) ~ [data-tool-card]:not([hidden])::before,
+  .tool-list > [data-fav-slot]:not([hidden]) ~ [data-fav-slot]:not([hidden]) > [data-tool-card]::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: calc(12px + var(--mark-gutter));
+    height: 1px;
+    background: var(--border);
+  }
+  .tool-list [data-tool-card]:has(> a:active) { background: var(--sunken); }
+}
+
+/* A row of chips that scrolls sideways on a phone instead of wrapping into
+   three ragged lines, bleeding to the screen edges like a native filter bar. */
+.chip-scroller {
+  scrollbar-width: none;
+}
+.chip-scroller::-webkit-scrollbar { display: none; }
+@media (max-width: 639.98px) {
+  .chip-scroller {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin-inline: -16px;
+    padding-inline: 16px;
+    scroll-padding-inline: 16px;
+  }
+  .chip-scroller > * { flex-shrink: 0; }
+}
+
+/* Form fields on a touch screen. Unlayered for the same reason: the fields
+   carry text-sm and h-9 utilities, which a layered rule cannot beat, and the
+   first version of this rule (in @layer base) measured as doing nothing.
+   - 16px: iOS Safari zooms the whole page into any field under 16px when it
+     takes focus, and does not zoom back out. Measured: 28 fields on the CGPA
+     page alone. The dense 13-14px fields stay on a mouse, where nothing zooms.
+   - 44px: the HIG minimum. The CGPA fields were 34px, selects 40px.
+   - Sliders: the thumb stays its own size, the row it sits in becomes
+     thumb-high, so a drag can start anywhere near it. */
+@media (pointer: coarse) {
+  input:not([type='checkbox'], [type='radio'], [type='range'], [type='color'], [type='file'], [type='hidden']),
+  select,
+  textarea {
+    font-size: max(16px, 1em);
+  }
+  input:not([type='checkbox'], [type='radio'], [type='range'], [type='color'], [type='file'], [type='hidden']),
+  select {
+    min-height: 44px;
+  }
+  input[type='range'] { min-height: 44px; }
+}

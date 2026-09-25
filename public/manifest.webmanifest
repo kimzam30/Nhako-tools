@@ -1,12 +1,26 @@
 {
+  "id": "/",
   "name": "Nhako Tools",
   "short_name": "Nhako",
   "description": "Free PDF, image, media, calculator and developer tools that run entirely in your browser. No upload, no account.",
+  "lang": "en",
+  "dir": "ltr",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "any",
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
+  "launch_handler": {
+    "client_mode": [
+      "navigate-existing",
+      "auto"
+    ]
+  },
   "categories": [
     "utilities",
     "productivity",
@@ -26,10 +40,81 @@
       "purpose": "any"
     },
     {
-      "src": "/favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/icons/maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
       "purpose": "maskable"
+    },
+    {
+      "src": "/icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/phone-home.png",
+      "sizes": "786x1704",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Search 50 tools, with the popular ones one tap away"
+    },
+    {
+      "src": "/screenshots/phone-pdf.png",
+      "sizes": "786x1704",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Every PDF tool in one list, filtered by job"
+    },
+    {
+      "src": "/screenshots/wide-home.png",
+      "sizes": "1280x800",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Nhako Tools on a laptop"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Compress PDF",
+      "url": "/pdf/compress",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Merge PDF",
+      "url": "/pdf/merge",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "JPG to PDF",
+      "url": "/pdf/jpg-to-pdf",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Favourites",
+      "url": "/favourites",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ]
 }

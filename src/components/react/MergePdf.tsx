@@ -22,7 +22,7 @@ import { BusyLabel } from './NeraLoader';
 
 const TEXT = {
   en: {
-    drop: 'Drop PDFs here, or browse',
+    drop: 'Drop PDFs here, or browse', tap: 'Choose PDFs',
     dropSub: 'Put them in order first. Nothing is uploaded, and nothing runs until you say so',
     combine: 'Combine into one PDF',
     working: 'Combining…',
@@ -31,7 +31,7 @@ const TEXT = {
     ready: (n: number) => `${n} PDFs ready to combine.`,
   },
   ms: {
-    drop: 'Lepaskan PDF di sini, atau semak imbas',
+    drop: 'Lepaskan PDF di sini, atau semak imbas', tap: 'Pilih PDF',
     dropSub: 'Susun dahulu. Tiada muat naik, dan tiada apa-apa berjalan sehingga anda memintanya',
     combine: 'Gabungkan menjadi satu PDF',
     working: 'Menggabungkan…',
@@ -148,6 +148,7 @@ export default function MergePdf({ locale = 'en', accept }: { locale?: Locale; a
           onPick={() => inputRef.current?.click()}
           onFiles={add}
           title={t.drop}
+          tap={t.tap}
           subtitle={t.dropSub}
         />
         {error && <ErrorBar message={error} onClear={() => setError(null)} t={ui} />}

@@ -1,3 +1,4 @@
+import { DropLabel } from './DropLabel';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   PRESETS, DIGITAL_DPI, clampView, coverScale, digitalPhoto, mmToPx, printSheet, renderFrame,
@@ -19,7 +20,7 @@ const TEXT = {
       'custom': 'Custom size',
     } as Record<string, string>,
     width: 'Width', height: 'Height', mm: 'mm',
-    drop: 'Drop a photo here, or browse',
+    drop: 'Drop a photo here, or browse', tap: 'Choose a photo',
     dropSub: 'JPG, PNG or WebP. It never leaves your device',
     another: 'Use a different photo',
     frameLabel: 'Photo preview. Drag to move, scroll or pinch to zoom, or use the arrow keys and plus and minus.',
@@ -58,7 +59,7 @@ const TEXT = {
       'custom': 'Saiz tersuai',
     },
     width: 'Lebar', height: 'Tinggi', mm: 'mm',
-    drop: 'Lepaskan gambar di sini, atau semak imbas',
+    drop: 'Lepaskan gambar di sini, atau semak imbas', tap: 'Pilih gambar',
     dropSub: 'JPG, PNG atau WebP. Ia tidak pernah meninggalkan peranti anda',
     another: 'Guna gambar lain',
     frameLabel: 'Pratonton gambar. Seret untuk mengalih, tatal atau cubit untuk zum, atau guna kekunci anak panah serta tambah dan tolak.',
@@ -339,7 +340,7 @@ export default function PhotoMaker({ locale = 'en', accept }: { locale?: Locale;
           {preset.source && (
             <p className="mt-1 text-xs text-muted">
               {t.source}:{' '}
-              <a className="underline decoration-border underline-offset-2 hover:text-accent" href={preset.source.url} rel="noopener noreferrer">{preset.source.title}</a>
+              <a className="underline decoration-border underline-offset-2 hover:text-accent pointer-coarse:inline-block pointer-coarse:py-3.5" href={preset.source.url} rel="noopener noreferrer">{preset.source.title}</a>
               {', '}{preset.source.checked}
             </p>
           )}
@@ -368,7 +369,7 @@ export default function PhotoMaker({ locale = 'en', accept }: { locale?: Locale;
           <legend className="mb-1.5 text-2xs font-semibold uppercase tracking-wider text-muted">{t.background}</legend>
           <div className="flex flex-wrap gap-x-5 gap-y-2">
             {(['keep', 'white', ...(preset.background ? [] : ['blue', 'red'])] as Background[]).map((b) => (
-              <label key={b} className="flex cursor-pointer items-center gap-2 text-sm">
+              <label key={b} className="flex cursor-pointer items-center gap-2 text-sm pointer-coarse:min-h-11">
                 <input type="radio" name="photo-bg" value={b} checked={background === b} onChange={() => chooseBackground(b)} className="accent-[var(--accent)]" />
                 {b === 'keep' ? t.bgKeep : b === 'white' ? t.bgWhite : b === 'blue' ? t.bgBlue : t.bgRed}
               </label>
@@ -390,7 +391,7 @@ export default function PhotoMaker({ locale = 'en', accept }: { locale?: Locale;
             dragging ? 'border-accent bg-accent-subtle' : 'border-border bg-surface hover:border-border-strong'
           }`}
         >
-          <span className="text-sm font-medium">{t.drop}</span>
+          <span className="text-sm font-medium"><DropLabel drop={t.drop} tap={t.tap} /></span>
           <span className="text-xs text-muted">{t.dropSub}</span>
         </button>
       ) : (

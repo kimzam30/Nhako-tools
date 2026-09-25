@@ -1,3 +1,4 @@
+import { DropLabel } from './DropLabel';
 import { useEffect, useRef, useState } from 'react';
 import { RATIOS, clampRect, initialRect, type Rect } from '../../tools/image/crop';
 import { surface, toBlob, replaceExtension, EXTENSION, hasAlpha, formatOf, type Encodable } from '../../lib/canvas';
@@ -8,14 +9,14 @@ import type { Locale } from '../../i18n/paths';
 
 const TEXT = {
   en: {
-    drop: 'Drop an image here, or browse', dropSub: 'JPG, PNG, WebP. It never leaves your device',
+    drop: 'Drop an image here, or browse', tap: 'Choose an image', dropSub: 'JPG, PNG, WebP. It never leaves your device',
     ratio: 'Shape', free: 'Free', frame: 'Crop area. Drag to move, drag a corner to resize.',
     x: 'Left', y: 'Top', w: 'Width', h: 'Height', px: 'px',
     save: 'Save', another: 'Use a different image', bad: 'That file could not be opened as an image.',
     size: (w: number, h: number) => `${w} × ${h} px`,
   },
   ms: {
-    drop: 'Lepaskan imej di sini, atau semak imbas', dropSub: 'JPG, PNG, WebP. Ia tidak pernah meninggalkan peranti anda',
+    drop: 'Lepaskan imej di sini, atau semak imbas', tap: 'Pilih imej', dropSub: 'JPG, PNG, WebP. Ia tidak pernah meninggalkan peranti anda',
     ratio: 'Bentuk', free: 'Bebas', frame: 'Kawasan potongan. Seret untuk mengalih, seret penjuru untuk mengubah saiz.',
     x: 'Kiri', y: 'Atas', w: 'Lebar', h: 'Tinggi', px: 'px',
     save: 'Simpan', another: 'Guna imej lain', bad: 'Fail itu tidak dapat dibuka sebagai imej.',
@@ -157,7 +158,7 @@ export default function CropImage({ locale = 'en', accept }: { locale?: Locale; 
           onDrop={(e) => { e.preventDefault(); setDropZone(false); void load(e.dataTransfer?.files?.[0]); }}
           className={`flex min-h-44 w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-6 py-10 text-center transition-colors duration-[120ms] ${dropZone ? 'border-accent bg-accent-subtle' : 'border-border bg-surface hover:border-border-strong'}`}
         >
-          <span className="text-sm font-medium">{t.drop}</span>
+          <span className="text-sm font-medium"><DropLabel drop={t.drop} tap={t.tap} /></span>
           <span className="text-xs text-muted">{t.dropSub}</span>
         </button>
         {error && <p data-status-message className="mt-4 rounded-lg border border-err bg-err-subtle px-4 py-3 text-sm text-err">{error}</p>}

@@ -3,6 +3,8 @@ import '../styles/tokens.css';
 import Nav from '../components/astro/Nav.astro';
 import Footer from '../components/astro/Footer.astro';
 import ButterflySky from '../components/astro/ButterflySky.astro';
+import TabBar from '../components/astro/TabBar.astro';
+import InstallPrompt from '../components/astro/InstallPrompt.astro';
 import { LANG, LOCALES, localePath, ui, type Locale } from '../i18n';
 import { FAVORITES_EVENT, FAVORITES_KEY } from '../lib/favorites';
 
@@ -48,7 +50,10 @@ const ogImage = new URL(`/og/${category ?? 'default'}.png`, site);
 <html lang={LANG[locale]}>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    {/* viewport-fit=cover hands the notch, the rounded corners and the home
+        indicator's strip to the page, which is what lets the tab bar sit on
+        the bottom edge like a native one. app.css keeps content out of them. */}
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>{tabTitle}</title>
     <meta name="description" content={description} />
     {noindex && <meta name="robots" content="noindex" />}
@@ -78,6 +83,13 @@ const ogImage = new URL(`/og/${category ?? 'default'}.png`, site);
     <meta name="twitter:title" content={socialTitle} />
     <meta name="twitter:description" content={description} />
     <meta name="theme-color" content="#ffffff" />
+    {/* Added to a home screen, iOS reads these rather than the manifest. The
+        status bar stays opaque ("default") so it never draws white text over
+        the light theme. The short title fits under an icon without "...". */}
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Nhako" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 
     {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
 
@@ -111,6 +123,11 @@ const ogImage = new URL(`/og/${category ?? 'default'}.png`, site);
         } catch {
           document.documentElement.dataset.theme = 'light';
         }
+        // The status bar and an installed app's title bar follow the page from
+        // the first frame, not from whenever the toggle's script loads.
+        if (document.documentElement.dataset.theme === 'dark') {
+          document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#0b0b0e');
+        }
       })();
     </script>
   </head>
@@ -125,6 +142,8 @@ const ogImage = new URL(`/og/${category ?? 'default'}.png`, site);
       <slot />
     </main>
     <Footer locale={locale} />
+    <TabBar locale={locale} path={path} alternates={alternates} />
+    <InstallPrompt locale={locale} />
 
     {/*
       Favourites: every star on the page and the count beside Favourites in

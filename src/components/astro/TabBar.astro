@@ -1,0 +1,200 @@
+---
+/**
+ * The phone's navigation: a tab bar along the bottom, where a thumb already
+ * is, and a More sheet for everything that does not earn a tab.
+ *
+ * Below 768px the header's row of category links used to scroll sideways,
+ * showing three of eight items with nothing to say the rest existed, 14px
+ * from the top of a screen a thumb cannot reach. This is the pattern every
+ * native app on the same phone uses instead: five tabs, 49px tall, labelled
+ * icons, the current one tinted. Everything under 1024px gets it, an upright
+ * iPad included (see the app-shell variant in tokens.css); wider screens keep
+ * the header row.
+ *
+ * Almost no JavaScript. The tabs are links; More is a popover opened by
+ * `popovertarget`, so it opens, closes on Escape and closes on a tap outside
+ * with the browser doing all of it. The one script makes a tap on the current
+ * tab scroll to the top.
+ */
+import ThemeToggle from './ThemeToggle.astro';
+import { COFFEE_URL } from '../../lib/community';
+import { community } from '../../i18n/community';
+import { categoryLabel, localePath, ui, type Locale } from '../../i18n';
+
+interface Props { locale: Locale; path: string; alternates: boolean }
+const { locale, path, alternates } = Astro.props;
+const t = ui(locale);
+const c = community(locale);
+const other: Locale = locale === 'en' ? 'ms' : 'en';
+const href = (p: string) => localePath(locale, p);
+const under = (segment: string) => path === `/${segment}` || path.startsWith(`/${segment}/`);
+
+// Everything the More sheet leads to. When the page is one of these, More is
+// the tab that lights up, because that is where the reader came in.
+const moreSections = ['media', 'dev', 'calc', 'malaysia', 'feedback', 'about', 'privacy'];
+const inMore = moreSections.some(under);
+
+// 24-unit glyphs in the marks' drawing language: 1.5 stroke, butt caps,
+// mitre joins. Monochrome, so the tint alone says which tab is current.
+const tabs = [
+  { key: 'home', href: href('/'), label: t.navHome, current: path === '/',
+    icon: '<path d="M3.5 10.2L12 3.5l8.5 6.7V20.5h-5.6v-6.2H9.1v6.2H3.5z"/>' },
+  { key: 'pdf', href: href('/pdf'), label: categoryLabel('pdf', locale), current: under('pdf'),
+    icon: '<path d="M5.5 2.5h8.8l4.2 4.2v14.8h-13z"/><path d="M14.3 2.5v4.2h4.2"/><path d="M8.5 12.5h7M8.5 16h7"/>' },
+  { key: 'image', href: href('/image'), label: categoryLabel('image', locale), current: under('image'),
+    icon: '<path d="M3 4.5h18v15H3z"/><path d="M3 16.5l5.2-5.2 4.3 4.3 3-3 5.5 5.5"/><path d="M16.2 7.5h1.6v1.6h-1.6z"/>' },
+  { key: 'favourites', href: href('/favourites'), label: t.favorites, current: path === '/favourites',
+    icon: '<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/>' },
+];
+const MORE_ICON = '<path d="M4 4h6.5v6.5H4zM13.5 4H20v6.5h-6.5zM4 13.5h6.5V20H4zM13.5 13.5H20V20h-6.5z"/>';
+
+// iOS Settings' idiom: a small tinted tile per row. The tiles take the
+// category hues the marks already use, so Media is blue here too.
+const browse = [
+  { href: href('/media'), label: categoryLabel('media', locale), current: under('media'), tile: 'bg-cat-media',
+    icon: '<path d="M3 5h18v14H3z"/><path d="M10 9v6l5-3z" fill="currentColor"/>' },
+  { href: href('/dev'), label: categoryLabel('dev', locale), current: under('dev'), tile: 'bg-cat-dev',
+    icon: '<path d="M8.5 7L3.5 12l5 5M15.5 7l5 5-5 5"/>' },
+  { href: href('/calc'), label: categoryLabel('calc', locale), current: under('calc'), tile: 'bg-cat-calc',
+    icon: '<path d="M5.5 3h13v18h-13z"/><path d="M8.5 6.5h7v3h-7zM8.5 13h1.6M11.2 13h1.6M13.9 13h1.6M8.5 16.5h1.6M11.2 16.5h1.6M13.9 16.5h1.6"/>' },
+  { href: href('/malaysia'), label: t.malaysia, current: under('malaysia'), tile: 'bg-cat-pdf',
+    icon: '<path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0113 0c0 4.8-6.5 11-6.5 11z"/><path d="M12 7.5v5M9.5 10h5"/>' },
+];
+const site = [
+  { href: href('/feedback'), label: t.navFeedback, current: under('feedback'),
+    icon: '<path d="M3.5 4.5h17v12h-9l-4.5 4v-4H3.5z"/>' },
+  { href: href('/about'), label: t.about, current: under('about'),
+    icon: '<path d="M12 3a9 9 0 110 18 9 9 0 010-18z"/><path d="M12 10.5V17M12 7v1.6"/>' },
+  { href: href('/privacy'), label: t.privacy, current: under('privacy'),
+    icon: '<path d="M12 3l7.5 3v5.5c0 4.6-3.2 8.2-7.5 9.5-4.3-1.3-7.5-4.9-7.5-9.5V6z"/>' },
+];
+const chevron = '<path d="M9 5l7 7-7 7"/>';
+---
+
+<nav
+  data-tabbar
+  aria-label={t.tabBar}
+  class="vt-tabbar fixed inset-x-0 bottom-0 z-40 border-t border-border bg-bg/90 pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] backdrop-blur-md hidden app-shell:block"
+>
+  {/* On a tablet the five tabs gather in the middle with the label beside
+      the icon, as iPadOS lays out a tab bar, instead of five lonely columns
+      spread across 800px. */}
+  <ul class="mx-auto flex sm:max-w-xl">
+    {tabs.map((tab) => (
+      <li class="flex-1">
+        <a
+          href={tab.href}
+          aria-current={tab.current ? 'page' : undefined}
+          data-tab={tab.key}
+          class:list={[
+            'tab relative flex h-12 flex-col items-center justify-center gap-0.5 text-2xs font-medium transition-colors duration-[120ms] sm:flex-row sm:gap-2 sm:text-sm',
+            tab.current ? 'text-accent' : 'text-muted active:text-text',
+          ]}
+        >
+          <span class="relative">
+            <svg class="size-6" viewBox="0 0 24 24" fill={tab.current && tab.key !== 'pdf' && tab.key !== 'image' ? 'currentColor' : 'none'} fill-opacity={tab.current ? '0.16' : undefined} stroke="currentColor" stroke-width="1.5" stroke-linejoin="miter" aria-hidden="true" set:html={tab.icon} />
+            {tab.key === 'favourites' && (
+              <span data-fav-count hidden class="absolute -right-2.5 -top-1 min-w-4 rounded-full bg-accent px-1 text-center text-2xs leading-4 font-semibold text-accent-on tabular-nums"></span>
+            )}
+          </span>
+          <span class="leading-none">{tab.label}</span>
+        </a>
+      </li>
+    ))}
+    <li class="flex-1">
+      <button
+        type="button"
+        popovertarget="more-sheet"
+        aria-haspopup="dialog"
+        data-tab="more"
+        class:list={[
+          'tab flex h-12 w-full flex-col items-center justify-center gap-0.5 text-2xs font-medium transition-colors duration-[120ms] sm:flex-row sm:gap-2 sm:text-sm',
+          inMore ? 'text-accent' : 'text-muted active:text-text',
+        ]}
+      >
+        <svg class="size-6" viewBox="0 0 24 24" fill={inMore ? 'currentColor' : 'none'} fill-opacity={inMore ? '0.16' : undefined} stroke="currentColor" stroke-width="1.5" aria-hidden="true" set:html={MORE_ICON} />
+        <span class="leading-none">{t.navMore}</span>
+      </button>
+    </li>
+  </ul>
+
+  <div id="more-sheet" popover class="sheet" role="dialog" aria-labelledby="more-sheet-title">
+    <div class="sticky top-0 z-10 -mx-3 mb-2 flex items-center justify-between bg-inherit px-5 pb-2 pt-4">
+      <h2 id="more-sheet-title" class="text-xl font-bold tracking-tight">{t.navMore}</h2>
+      <button
+        type="button"
+        popovertarget="more-sheet"
+        popovertargetaction="hide"
+        class="-mr-2 flex h-11 items-center rounded-md px-2 text-base font-semibold text-accent"
+      >
+        {t.close}
+      </button>
+    </div>
+
+    <h3 class="px-4 pb-1.5 text-2xs font-semibold uppercase tracking-[0.14em] text-muted">{t.moreBrowse}</h3>
+    <div class="sheet-group mb-6">
+      {browse.map((row) => (
+        <a href={row.href} aria-current={row.current ? 'page' : undefined} class:list={['sheet-row', row.current && 'text-accent']}>
+          <span class:list={['grid size-[30px] shrink-0 place-items-center rounded-md text-white', row.tile]} aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" set:html={row.icon} />
+          </span>
+          <span class="flex-1">{row.label}</span>
+          <svg class="size-4 text-border-strong" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" aria-hidden="true" set:html={chevron} />
+        </a>
+      ))}
+    </div>
+
+    <h3 class="px-4 pb-1.5 text-2xs font-semibold uppercase tracking-[0.14em] text-muted">{t.moreSettings}</h3>
+    <div class="sheet-group mb-6">
+      <button type="button" data-install-open data-install-row hidden class="sheet-row">
+        <span class="grid size-[30px] shrink-0 place-items-center rounded-md bg-accent text-accent-on" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 3.5v11M7.5 10l4.5 4.5 4.5-4.5M4.5 16v4.5h15V16" /></svg>
+        </span>
+        <span class="flex-1">{t.installApp}</span>
+        <svg class="size-4 text-border-strong" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" aria-hidden="true" set:html={chevron} />
+      </button>
+      <ThemeToggle locale={locale} variant="row" />
+      {alternates && (
+        <a href={localePath(other, path)} hreflang={other} lang={other} class="sheet-row">
+          <span class="grid size-[30px] shrink-0 place-items-center rounded-md bg-cat-dev text-white" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 3a9 9 0 110 18 9 9 0 010-18z" /><path d="M3 12h18M12 3c2.5 2.6 3.7 5.6 3.7 9s-1.2 6.4-3.7 9c-2.5-2.6-3.7-5.6-3.7-9S9.5 5.6 12 3z" /></svg>
+          </span>
+          <span class="flex-1">{t.switchLanguageLabel}</span>
+          <span class="text-sm text-muted" aria-hidden="true">{t.switchLanguageShort}</span>
+          <svg class="size-4 text-border-strong" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" aria-hidden="true" set:html={chevron} />
+        </a>
+      )}
+    </div>
+
+    <h3 class="px-4 pb-1.5 text-2xs font-semibold uppercase tracking-[0.14em] text-muted">{t.moreAboutGroup}</h3>
+    <div class="sheet-group">
+      {site.map((row) => (
+        <a href={row.href} aria-current={row.current ? 'page' : undefined} class:list={['sheet-row', row.current && 'text-accent']}>
+          <span class="grid size-[30px] shrink-0 place-items-center rounded-md bg-muted text-white" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" set:html={row.icon} />
+          </span>
+          <span class="flex-1">{row.label}</span>
+          <svg class="size-4 text-border-strong" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" aria-hidden="true" set:html={chevron} />
+        </a>
+      ))}
+      <a href={COFFEE_URL} rel="noopener noreferrer" target="_blank" aria-label={c.coffeeLabel} data-coffee class="sheet-row">
+        <span class="grid size-[30px] shrink-0 place-items-center rounded-md bg-accent text-accent-on" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M4 9h13v5a5 5 0 01-5 5H9a5 5 0 01-5-5V9z" /><path d="M17 11h1.5a2.5 2.5 0 010 5H17" /><path d="M8 3.5v2.5M11.5 3.5v2.5" /></svg>
+        </span>
+        <span class="flex-1">{c.coffee}</span>
+        <svg class="size-4 text-border-strong" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" aria-hidden="true"><path d="M8 16L16 8M9.5 8H16v6.5" /></svg>
+      </a>
+    </div>
+  </div>
+</nav>
+
+<script is:inline>
+  // Tapping the tab you are already on scrolls back to the top, as it does in
+  // every iOS app, instead of reloading the page you are halfway down.
+  document.querySelector('[data-tabbar]')?.addEventListener('click', (event) => {
+    const tab = event.target instanceof Element ? event.target.closest('a[aria-current="page"]') : null;
+    if (!tab || scrollY === 0) return;
+    event.preventDefault();
+    scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  });
+</script>

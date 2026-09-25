@@ -109,6 +109,33 @@ const en = {
   favSave: 'Add to favourites',
   favSaved: 'In favourites',
   popularHint: 'The jobs people come here for most.',
+
+  // The phone app shell: the tab bar along the bottom and the More sheet.
+  tabBar: 'Sections',
+  navMore: 'More',
+  moreBrowse: 'More tools',
+  moreSettings: 'Settings',
+  moreAboutGroup: 'Nhako Tools',
+  darkMode: 'Dark mode',
+  language: 'Language',
+  languageName: 'English',
+  close: 'Close',
+  backTo: (label: string) => `Back to ${label}`,
+  filterAll: 'All',
+  filterBy: 'Show tools for',
+
+  // Installing the site as an app.
+  installApp: 'Install app',
+  installTitle: 'Install Nhako Tools',
+  installBody: 'Open it from your home screen, dock or Start menu, in its own window. Tools you have used keep working offline.',
+  installAction: 'Install',
+  installLater: 'Not now',
+  installHow: 'Show me how',
+  installDone: 'Installed. Open Nhako Tools from your home screen.',
+  installStepsIos: ['Tap the Share button', 'Scroll down and choose Add to Home Screen', 'Tap Add'],
+  installStepsMac: ['In the menu bar, choose File', 'Choose Add to Dock', 'Click Add'],
+  installStepsOther: "Open your browser's menu and choose Install app or Add to Home screen.",
+  installedAlready: 'You are using the installed app.',
 };
 
 export type UiStrings = typeof en;
@@ -206,6 +233,31 @@ const ms: UiStrings = {
   favSave: 'Tambah ke kegemaran',
   favSaved: 'Dalam kegemaran',
   popularHint: 'Kerja yang paling kerap dibuat di sini.',
+
+  tabBar: 'Bahagian',
+  navMore: 'Lagi',
+  moreBrowse: 'Lagi alat',
+  moreSettings: 'Tetapan',
+  moreAboutGroup: 'Nhako Tools',
+  darkMode: 'Mod gelap',
+  language: 'Bahasa',
+  languageName: 'Bahasa Melayu',
+  close: 'Tutup',
+  backTo: (label) => `Kembali ke ${label}`,
+  filterAll: 'Semua',
+  filterBy: 'Tunjukkan alat untuk',
+
+  installApp: 'Pasang aplikasi',
+  installTitle: 'Pasang Nhako Tools',
+  installBody: 'Buka dari skrin utama, dock atau menu Mula, dalam tetingkapnya sendiri. Alat yang pernah anda guna terus berfungsi di luar talian.',
+  installAction: 'Pasang',
+  installLater: 'Bukan sekarang',
+  installHow: 'Tunjukkan caranya',
+  installDone: 'Sudah dipasang. Buka Nhako Tools dari skrin utama anda.',
+  installStepsIos: ['Ketik butang Kongsi', 'Tatal ke bawah dan pilih Tambah ke Skrin Utama', 'Ketik Tambah'],
+  installStepsMac: ['Pada bar menu, pilih Fail', 'Pilih Tambah ke Dock', 'Klik Tambah'],
+  installStepsOther: 'Buka menu pelayar anda dan pilih Pasang aplikasi atau Tambah ke skrin utama.',
+  installedAlready: 'Anda sedang menggunakan aplikasi yang dipasang.',
 };
 
 const STRINGS: Record<Locale, UiStrings> = { en, ms };

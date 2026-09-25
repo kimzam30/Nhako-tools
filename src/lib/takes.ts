@@ -92,12 +92,28 @@ export interface Recording {
   stop(): Promise<Take>;
 }
 
+export interface PreparedRecording {
+  /**
+   * Start recording. Synchronous on purpose: the file is already open, so a
+   * caller can start the recorder and something else (the teleprompter's
+   * scroll) on the same tick.
+   */
+  start(): Recording;
+  /** Never started after all: close the file and remove it. */
+  cancel(): Promise<void>;
+}
+
 /**
  * Record `stream` to a new take. Throws if the browser cannot record at all.
  * `onError` hears about failures that happen after recording started, such
  * as the device running out of space.
  */
 export async function startRecording(stream: MediaStream, onError: (e: unknown) => void, now = new Date()): Promise<Recording> {
+  return (await prepareRecording(stream, onError, now)).start();
+}
+
+/** Everything slow about starting a take (opening its file), done ahead of time. */
+export async function prepareRecording(stream: MediaStream, onError: (e: unknown) => void, now = new Date()): Promise<PreparedRecording> {
   const type = recordingType();
   if (!type) throw new Error('recording-unsupported');
   const name = stampName(now, type);
@@ -136,9 +152,8 @@ export async function startRecording(stream: MediaStream, onError: (e: unknown) 
   };
   const stopped = new Promise<void>((resolve) => { recorder.onstop = () => resolve(); });
   recorder.onerror = (e) => onError(e);
-  recorder.start(1000);
 
-  return {
+  const recording: Recording = {
     name,
     async stop() {
       if (recorder.state !== 'inactive') recorder.stop();
@@ -152,6 +167,17 @@ export async function startRecording(stream: MediaStream, onError: (e: unknown) 
       const file = new File(chunks, name, { type: type.split(';')[0], lastModified: now.getTime() });
       memory.set(name, file);
       return { name, size: file.size, created: now.getTime(), type: file.type, saved: false };
+    },
+  };
+
+  return {
+    start() {
+      recorder.start(1000);
+      return recording;
+    },
+    async cancel() {
+      await writable?.close().catch(() => undefined);
+      if (fileHandle) await d?.removeEntry(name).catch(() => undefined);
     },
   };
 }

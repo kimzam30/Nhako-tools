@@ -72,6 +72,11 @@ export default function ResultPreview({ blob, locale = 'en' }: { blob: Blob; loc
   // Bumped on every new blob; a render that finishes after its blob was
   // replaced compares this and drops its result instead of painting it.
   const ticket = useRef(0);
+  // The page last asked for, which runs ahead of the page on screen while a
+  // render is in flight. Paging from what is on screen made two quick taps on
+  // "next" both ask for page 2, and a slow render could land after a newer
+  // one and put the older page back.
+  const wanted = useRef(1);
 
   const track = (url: string) => { urls.current.push(url); return url; };
   const release = () => {
@@ -81,6 +86,7 @@ export default function ResultPreview({ blob, locale = 'en' }: { blob: Blob; loc
 
   useEffect(() => {
     const mine = ++ticket.current;
+    wanted.current = 1;
     let cancelled = false;
     setBusy(true);
 
@@ -109,13 +115,16 @@ export default function ResultPreview({ blob, locale = 'en' }: { blob: Blob; loc
   // down by the effect above, which is keyed on the blob.
   useEffect(() => () => { docRef.current?.destroy(); release(); }, []);
 
-  async function goToPage(n: number) {
+  async function step(by: number) {
     if (!view || view.kind !== 'pdf' || !docRef.current) return;
+    const n = Math.min(Math.max(wanted.current + by, 1), view.pages);
+    if (n === wanted.current) return;
+    wanted.current = n;
     const mine = ticket.current;
     const { renderPage } = await import('../../lib/pdf-render');
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const r = await renderPage(docRef.current as any, n, PAGE_W);
-    if (mine !== ticket.current) { URL.revokeObjectURL(r.url); return; }
+    if (mine !== ticket.current || n !== wanted.current) { URL.revokeObjectURL(r.url); return; }
     setView({ ...view, url: track(r.url), page: n, width: r.widthPt, height: r.heightPt });
   }
 
@@ -189,11 +198,11 @@ export default function ResultPreview({ blob, locale = 'en' }: { blob: Blob; loc
 
       {view.pages > 1 && (
         <div className="mt-2.5 flex items-center justify-center gap-2">
-          <PageButton label={t.prev} disabled={view.page <= 1} onClick={() => void goToPage(view.page - 1)}>←</PageButton>
+          <PageButton label={t.prev} disabled={view.page <= 1} onClick={() => void step(-1)}>←</PageButton>
           <span data-page-indicator data-numeric className="min-w-24 text-center text-2xs text-muted">
             {view.page} / {view.pages}
           </span>
-          <PageButton label={t.next} disabled={view.page >= view.pages} onClick={() => void goToPage(view.page + 1)}>→</PageButton>
+          <PageButton label={t.next} disabled={view.page >= view.pages} onClick={() => void step(1)}>→</PageButton>
         </div>
       )}
     </Shell>

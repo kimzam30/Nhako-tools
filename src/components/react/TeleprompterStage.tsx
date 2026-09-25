@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   clock, followMatch, normalizeWord, pixelsPerSecond, readingSeconds, snapWpm, WPM,
   type Action, type PrompterState, type RemoteMessage, type Script,
 } from '../../tools/media/teleprompter';
-import { startRecording, type Recording, type Take } from '../../lib/takes';
+import { prepareRecording, startRecording, type PreparedRecording, type Recording, type Take } from '../../lib/takes';
 import type { Settings } from './teleprompter-store';
 import type { StageText } from './teleprompter-text';
 
@@ -40,6 +40,10 @@ type SpeechRecognitionLike = {
   onerror: ((e: { error: string }) => void) | null;
   start(): void; stop(): void;
 };
+/** Where the stage's control bar folds: a phone, then a tablet. */
+const COMPACT = '(max-width: 700px), (max-height: 520px)';
+const MID = '(max-width: 1179.98px)';
+
 const speechRecognition = (): (new () => SpeechRecognitionLike) | null => {
   const w = globalThis as unknown as Record<string, unknown>;
   return (w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null) as (new () => SpeechRecognitionLike) | null;
@@ -78,14 +82,21 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
   const [started, setStarted] = useState(false);
   // A phone has room for a few big controls, not eleven. On a narrow or short
   // screen the secondary ones move behind More, so the script keeps the screen.
-  const [compact, setCompact] = useState(false);
+  // A tablet (an iPad in landscape is 1024 wide) fits one row of controls only
+  // if the setup ones, Camera and Phone remote, wait behind More too.
+  // Read on the first render: the stage only ever opens in the browser, and
+  // waiting for an effect painted one frame of the full bar before it folded.
+  const [compact, setCompact] = useState(() => window.matchMedia(COMPACT).matches);
+  const [mid, setMid] = useState(() => window.matchMedia(MID).matches);
   const [showMore, setShowMore] = useState(false);
   useEffect(() => {
-    const mq = window.matchMedia('(max-width: 700px), (max-height: 520px)');
-    const apply = () => setCompact(mq.matches);
+    const mq = window.matchMedia(COMPACT);
+    const mm = window.matchMedia(MID);
+    const apply = () => { setCompact(mq.matches); setMid(mm.matches); };
     apply();
     mq.addEventListener('change', apply);
-    return () => mq.removeEventListener('change', apply);
+    mm.addEventListener('change', apply);
+    return () => { mq.removeEventListener('change', apply); mm.removeEventListener('change', apply); };
   }, []);
 
   const normWords = useMemo(() => script.words.map(normalizeWord), [script]);
@@ -178,22 +189,42 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
   // ─── Play, pause, move ───────────────────────────────────────────────
   const countdownTimer = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
 
+  // A take opened for Play and record, waiting for the countdown to end.
+  const pendingTake = useRef<PreparedRecording | null>(null);
+  const [takeWaiting, setTakeWaiting] = useState(false);
+
   function stop(atCue: boolean) {
     clearInterval(countdownTimer.current);
     setCountdown(0);
+    if (pendingTake.current) { void pendingTake.current.cancel(); pendingTake.current = null; }
+    setTakeWaiting(false);
     playing.current = false;
     setIsPlaying(false);
     setPausedAtCue(atCue);
     stopVoice();
   }
 
-  function play() {
+  /** Scroll, after the countdown. With `take`, the recording starts on the same tick. */
+  function play(take?: PreparedRecording) {
     if (playing.current || countdown) return;
     setStarted(true);
     setPausedAtCue(false);
     const L = layout.current;
     if (y.current >= L.height - 2) { y.current = 0; armed.current.clear(); }
+    pendingTake.current = take ?? null;
+    setTakeWaiting(Boolean(take));
     const go = () => {
+      if (take) {
+        pendingTake.current = null;
+        setTakeWaiting(false);
+        try {
+          setRecording({ rec: take.start(), started: Date.now() });
+        } catch {
+          void take.cancel();
+          setMessage(t.recordUnsupported);
+          return;
+        }
+      }
       playing.current = true;
       setIsPlaying(true);
       if (settingsRef.current.voice) startVoice();
@@ -268,11 +299,14 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
     return () => { cancelAnimationFrame(raf); void ctx?.close(); };
   }, [stream, preview]);
 
+  // A second press while the camera or file is still opening would open two takes.
+  const busy = useRef(false);
+
+  /** Record, or stop recording. The scroll is left alone: that is Play's job. */
   async function toggleRecord() {
     if (recording) {
       const r = recording;
       setRecording(null);
-      stop(false);
       try {
         const take = await r.rec.stop();
         onTake(take);
@@ -282,20 +316,48 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
       }
       return;
     }
+    if (busy.current) return;
     if (!canRecord) { setMessage(t.recordUnsupported); return; }
-    const s = await ensureCamera();
-    if (!s) return;
+    busy.current = true;
     try {
+      const s = await ensureCamera();
+      if (!s) return;
       const rec = await startRecording(s, () => setMessage(t.recordFailed));
+      setStarted(true);
       setRecording({ rec, started: Date.now() });
       setMessage(null);
-      stop(false);
-      play();
     } catch {
       setMessage(t.recordUnsupported);
+    } finally {
+      busy.current = false;
     }
   }
 
+  /**
+   * Play and record: one countdown, then the recorder and the scroll start on
+   * the same tick, so the take opens on the first line rather than on a few
+   * seconds of countdown. Pressed again, it stops both and saves the take.
+   */
+  async function playRecord() {
+    if (recording) { stop(false); await toggleRecord(); return; }
+    if (countdown) { stop(false); return; }
+    if (busy.current) return;
+    if (!canRecord) { setMessage(t.recordUnsupported); return; }
+    busy.current = true;
+    try {
+      // The camera and the file first: a permission prompt must not eat the countdown.
+      const s = await ensureCamera();
+      if (!s) return;
+      const take = await prepareRecording(s, () => setMessage(t.recordFailed));
+      stop(false);
+      setMessage(null);
+      play(take);
+    } catch {
+      setMessage(t.recordUnsupported);
+    } finally {
+      busy.current = false;
+    }
+  }
   useEffect(() => {
     if (!recording) return;
     const id = setInterval(() => setElapsed(Math.round((Date.now() - recording.started) / 1000)), 500);
@@ -461,7 +523,9 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
   // history entry turns that gesture into Close.
   const closeRef = useRef<() => void>(() => undefined);
   closeRef.current = () => void close();
-  useEffect(() => {
+  // A layout effect, so the entry exists before the stage is on screen: a Back
+  // pressed in its first frame otherwise skipped it and left the tool.
+  useLayoutEffect(() => {
     history.pushState({ nhakoStage: true }, '');
     const onPop = () => closeRef.current();
     window.addEventListener('popstate', onPop);
@@ -509,6 +573,22 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
   const mirror = `scale(${settings.mirrorX ? -1 : 1}, ${settings.mirrorY ? -1 : 1})`;
   const btn = 'inline-flex min-h-12 min-w-12 items-center justify-center rounded-lg px-3 text-sm font-medium transition-colors disabled:opacity-40';
   const quiet = `${btn} bg-white/10 text-white hover:bg-white/20`;
+  // Each lives on the bar or behind More, depending on the screen.
+  const sectionButtons = script.sections.length > 0 && (
+    <>
+      <button type="button" onClick={() => section(-1)} className={quiet} aria-label={t.prevSection}>⇤</button>
+      <button type="button" onClick={() => section(1)} className={quiet} aria-label={t.nextSection}>⇥</button>
+    </>
+  );
+  const restartButton = <button type="button" onClick={restart} className={quiet}>{t.restart}</button>;
+  const cameraButton = stream && (
+    <button type="button" onClick={() => setPreview((p) => !p)} className={quiet} aria-pressed={preview}>{t.preview}</button>
+  );
+  const remoteButton = (
+    <button type="button" onClick={() => void openRemote()} className={quiet} data-testid="remote">
+      {t.remote}{remote.phoneSeen ? ' ●' : ''}
+    </button>
+  );
 
   return (
     <div
@@ -607,51 +687,54 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
           {voiceState === 'unsupported' && <span className="ml-2 text-amber-300">{t.voiceUnsupported}</span>}
           {voiceState === 'blocked' && <span className="ml-2 text-amber-300">{t.voiceBlocked}</span>}
         </span>
-        {compact && showMore && (
+        {(compact || mid) && showMore && (
           <div className="mb-2 flex flex-wrap items-center gap-2 border-b border-white/10 pb-2" data-testid="more-tray">
-            {script.sections.length > 0 && (
-              <>
-                <button type="button" onClick={() => section(-1)} className={quiet} aria-label={t.prevSection}>⇤</button>
-                <button type="button" onClick={() => section(1)} className={quiet} aria-label={t.nextSection}>⇥</button>
-              </>
-            )}
-            <button type="button" onClick={restart} className={quiet}>{t.restart}</button>
-            {stream && (
-              <button type="button" onClick={() => setPreview((p) => !p)} className={quiet} aria-pressed={preview}>{t.preview}</button>
-            )}
-            <button type="button" onClick={() => void openRemote()} className={quiet} data-testid="remote">
-              {t.remote}{remote.phoneSeen ? ' ●' : ''}
-            </button>
+            {compact && sectionButtons}
+            {compact && restartButton}
+            {cameraButton}
+            {remoteButton}
           </div>
         )}
         <div className="flex flex-wrap items-center gap-2">
+          {/* The three ways to go, together: scroll, record, or both at once. */}
           <button type="button" onClick={toggle} className={`${btn} ${compact ? '' : 'min-w-24'} bg-white text-black hover:bg-white/90`} data-testid="play">
             {isPlaying || countdown ? t.pause : t.play}
           </button>
-          <button type="button" onClick={() => speed(-WPM.step)} className={quiet} aria-label={t.slower}>−</button>
-          <span data-testid="wpm" className={`${compact ? 'min-w-16 text-xs' : 'min-w-20 text-sm'} text-center font-mono tabular-nums`} aria-live="polite">{settings.wpm} {t.wpmUnit}</span>
-          <button type="button" onClick={() => speed(WPM.step)} className={quiet} aria-label={t.faster}>+</button>
-          {!compact && script.sections.length > 0 && (
-            <>
-              <button type="button" onClick={() => section(-1)} className={quiet} aria-label={t.prevSection}>⇤</button>
-              <button type="button" onClick={() => section(1)} className={quiet} aria-label={t.nextSection}>⇥</button>
-            </>
-          )}
-          {!compact && <button type="button" onClick={restart} className={quiet}>{t.restart}</button>}
           {canRecord && (
-            <button type="button" onClick={() => void toggleRecord()} className={`${btn} ${recording ? 'bg-red-600 hover:bg-red-500' : 'bg-white/10 hover:bg-white/20'} text-white`} data-testid="record">
-              {recording ? t.stopRecording : t.record}
+            // On a phone this one is just the red dot (or the stop square): it
+            // is the mark every camera uses, and the row then fits in two lines.
+            <button
+              type="button" onClick={() => void toggleRecord()} aria-pressed={Boolean(recording)}
+              aria-label={compact ? (recording ? t.stopRecording : t.record) : undefined}
+              title={compact ? (recording ? t.stopRecording : t.record) : undefined}
+              className={`${btn} gap-2 text-white ${recording ? 'bg-red-600 hover:bg-red-500' : 'border border-red-500 bg-white/10 hover:bg-white/20'}`}
+              data-testid="record"
+            >
+              {recording ? <StopMark /> : <RecMark className="text-red-500" />}
+              {!compact && (recording ? t.stopRecording : t.record)}
             </button>
           )}
-          {!compact && stream && (
-            <button type="button" onClick={() => setPreview((p) => !p)} className={quiet} aria-pressed={preview}>{t.preview}</button>
-          )}
-          {!compact && (
-            <button type="button" onClick={() => void openRemote()} className={quiet} data-testid="remote">
-              {t.remote}{remote.phoneSeen ? ' ●' : ''}
+          {canRecord && (
+            <button
+              type="button" onClick={() => void playRecord()}
+              className={`${btn} gap-2 text-white ${recording || takeWaiting ? 'border border-red-500 bg-white/10 hover:bg-white/20' : 'bg-red-600 hover:bg-red-500'}`}
+              data-testid="play-record"
+            >
+              {recording || takeWaiting ? <StopMark /> : <><PlayMark /><RecMark /></>}
+              {recording || takeWaiting ? t.stopBoth : t.playRecord}
             </button>
           )}
-          {compact && (
+          {/* Slower, the speed, faster: wraps as one, never split across rows. */}
+          <span className="flex items-center gap-2">
+            <button type="button" onClick={() => speed(-WPM.step)} className={quiet} aria-label={t.slower}>−</button>
+            <span data-testid="wpm" className={`${compact ? 'min-w-16 text-xs' : 'min-w-20 text-sm'} text-center font-mono tabular-nums`} aria-live="polite">{settings.wpm} {t.wpmUnit}</span>
+            <button type="button" onClick={() => speed(WPM.step)} className={quiet} aria-label={t.faster}>+</button>
+          </span>
+          {!compact && sectionButtons}
+          {!compact && restartButton}
+          {!compact && !mid && cameraButton}
+          {!compact && !mid && remoteButton}
+          {(compact || mid) && (
             <button type="button" onClick={() => setShowMore((m) => !m)} className={quiet} aria-expanded={showMore} data-testid="more">
               {t.more}
             </button>
@@ -685,6 +768,18 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
     </div>
   );
 }
+
+// Marks for the record controls. Drawn, not typed: a ● or ▶ character takes
+// its size and weight from whatever font the device falls back to.
+const PlayMark = () => (
+  <svg aria-hidden="true" viewBox="0 0 10 10" className="size-3 shrink-0"><path d="M1.5 0.8v8.4L9 5z" fill="currentColor" /></svg>
+);
+const RecMark = ({ className = '' }: { className?: string }) => (
+  <svg aria-hidden="true" viewBox="0 0 10 10" className={`size-3 shrink-0 ${className}`}><circle cx="5" cy="5" r="4.5" fill="currentColor" /></svg>
+);
+const StopMark = () => (
+  <svg aria-hidden="true" viewBox="0 0 10 10" className="size-3 shrink-0"><rect x="1" y="1" width="8" height="8" rx="1" fill="currentColor" /></svg>
+);
 
 /** The phone opens this; the room code rides in the fragment, which never reaches a server. */
 export function remoteUrl(code: string): string {

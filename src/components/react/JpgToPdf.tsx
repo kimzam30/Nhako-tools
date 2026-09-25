@@ -22,7 +22,7 @@ import { BusyLabel } from './NeraLoader';
 
 const TEXT = {
   en: {
-    drop: 'Drop photos here, or browse',
+    drop: 'Drop photos here, or browse', tap: 'Choose photos',
     dropSub: 'Arrange them first. Nothing is uploaded, and nothing runs until you say so',
     build: 'Make the PDF',
     working: 'Building the PDF…',
@@ -32,7 +32,7 @@ const TEXT = {
     settings: 'Page settings',
   },
   ms: {
-    drop: 'Lepaskan foto di sini, atau semak imbas',
+    drop: 'Lepaskan foto di sini, atau semak imbas', tap: 'Pilih foto',
     dropSub: 'Susun dahulu. Tiada muat naik, dan tiada apa-apa berjalan sehingga anda memintanya',
     build: 'Hasilkan PDF',
     working: 'Membina PDF…',
@@ -150,7 +150,7 @@ export default function JpgToPdf({ locale = 'en', accept, options }: {
     return (
       <section className="flex flex-col gap-4">
         {fileInput}
-        <DropZone onPick={() => inputRef.current?.click()} onFiles={add} title={t.drop} subtitle={t.dropSub} />
+        <DropZone onPick={() => inputRef.current?.click()} onFiles={add} title={t.drop} tap={t.tap} subtitle={t.dropSub} />
         {error && <ErrorBar message={error} onClear={() => setError(null)} t={ui} />}
       </section>
     );

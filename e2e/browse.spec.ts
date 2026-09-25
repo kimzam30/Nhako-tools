@@ -12,7 +12,6 @@ import { groupsIn } from '../src/tools/groups';
  * testing the number.
  */
 const PDF_GROUPS = groupsIn('pdf').length;
-const ALL_GROUPS = CATEGORIES.reduce((n, c) => n + groupsIn(c).length, 0);
 
 /**
  * The browse layer: category pages, job groups, preset chips, the mobile nav
@@ -24,22 +23,43 @@ const ALL_GROUPS = CATEGORIES.reduce((n, c) => n + groupsIn(c).length, 0);
  */
 
 test.describe('category pages', () => {
-  test('/pdf exists and groups its 18 tools under job headings', async ({ page }) => {
+  // The job groups used to be headings over their own blocks of tools. Kim had
+  // them removed on 2026-09-25 (a second tier of headings under "PDF" that cost
+  // a phone a screen and a half); on a category page they are filter chips now.
+  test('/pdf lists its tools in one list, with no job headings, and filters by job', async ({ page }) => {
     await page.goto('/pdf');
     await expect(page.getByRole('heading', { level: 1, name: 'PDF' })).toBeVisible();
-
-    const groups = page.locator('main section > h2');
-    await expect(groups).toHaveCount(PDF_GROUPS);
-    await expect(groups.first()).toHaveText('Organise pages');
+    await expect(page.locator('main h2')).toHaveCount(0);
 
     // PDF's own tools. Its cross-listings point outwards, into Image, so
     // nothing arrives here: the count is exactly the category's own tools.
-    await expect(page.locator('main [data-tool-card]')).toHaveCount(TOOLS.filter((t) => t.category === 'pdf').length);
+    const pdfTools = TOOLS.filter((t) => t.category === 'pdf');
+    const cards = page.locator('main [data-tool-card]:not([hidden])');
+    await expect(cards).toHaveCount(pdfTools.length);
+
+    const chips = page.getByRole('group', { name: 'Show tools for' }).getByRole('button');
+    await expect(chips).toHaveCount(PDF_GROUPS + 1);
+    await expect(chips.first()).toHaveAttribute('aria-pressed', 'true');
+
+    await chips.filter({ hasText: 'Organise pages' }).click();
+    await expect(cards).toHaveCount(pdfTools.filter((t) => t.group === 'organise').length);
+    await expect(page).toHaveURL('/pdf#group-organise');
+
+    await chips.first().click();
+    await expect(cards).toHaveCount(pdfTools.length);
   });
 
-  test('a flat category renders no job headings', async ({ page }) => {
+  test('an old #group- link still lands on that job', async ({ page }) => {
+    await page.goto('/pdf#group-convert');
+    const chip = page.getByRole('group', { name: 'Show tools for' }).getByRole('button', { pressed: true });
+    await expect(chip).toContainText('Convert');
+    const visible = page.locator('main [data-tool-card]:not([hidden])');
+    await expect(visible).toHaveCount(TOOLS.filter((t) => t.category === 'pdf' && t.group === 'convert').length);
+  });
+
+  test('a flat category has no filter chips', async ({ page }) => {
     await page.goto('/media');
-    await expect(page.locator('main section > h2')).toHaveCount(0);
+    await expect(page.locator('[data-filter]')).toHaveCount(0);
     await expect(page.locator('main [data-tool-card]')).toHaveCount(4);
   });
 
@@ -126,19 +146,29 @@ test.describe('navigation', () => {
     }
   });
 
-  test('the nav is reachable on a phone', async ({ page }) => {
+  // The header row used to scroll sideways on a phone, three of eight links
+  // in view. A phone now navigates like an app: tabs along the bottom, and
+  // everything else one tap away in the More sheet.
+  test('a phone gets a tab bar, and More reaches every other section', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
-    await page.goto('/');
-    const list = page.locator('header nav ul').first();
-    await expect(list).toBeVisible();
-    // Present and scrollable, rather than hidden as it was before.
-    const { scrollable, count } = await list.evaluate((el) => ({
-      scrollable: el.scrollWidth > el.clientWidth,
-      count: el.querySelectorAll('a').length,
-    }));
-    expect(count).toBe(8);
-    expect(scrollable).toBe(true);
-    // And the page itself must not scroll sideways because of it.
+    await page.goto('/pdf/merge');
+    await expect(page.locator('[data-nav-list]')).toBeHidden();
+
+    const tabs = page.getByRole('navigation', { name: 'Sections' });
+    await expect(tabs).toBeVisible();
+    await expect(tabs.locator('[data-tab]')).toHaveCount(5);
+    await expect(tabs.locator('[aria-current="page"]')).toContainText('PDF');
+
+    await tabs.getByRole('button', { name: 'More' }).click();
+    const sheet = page.getByRole('dialog', { name: 'More' });
+    await expect(sheet).toBeVisible();
+    for (const name of ['Media', 'Developer', 'Calculators', 'Malaysia', 'Feedback', 'About', 'Privacy']) {
+      await expect(sheet.getByRole('link', { name, exact: true })).toBeVisible();
+    }
+    await sheet.getByRole('link', { name: 'Developer', exact: true }).click();
+    await expect(page).toHaveURL('/dev');
+
+    // And the page itself must not scroll sideways.
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
     expect(overflow).toBe(false);
   });
@@ -151,31 +181,35 @@ test.describe('navigation', () => {
 });
 
 test.describe('homepage filter', () => {
-  const visibleGroups = (page: Page) =>
-    page.locator('[data-group]:not([hidden])').count();
+  const visibleSections = (page: Page) =>
+    page.locator('[data-category-section]:not([hidden])').count();
 
-  test('hides a group heading once every tool under it is filtered out', async ({ page }) => {
+  test('has one heading per category and no job headings under them', async ({ page }) => {
     await page.goto('/');
-    const before = await visibleGroups(page);
-    expect(before).toBe(ALL_GROUPS);
+    await expect(page.locator('[data-category-section] h3')).toHaveCount(0);
+    await expect(page.locator('[data-category-section] h2')).toHaveCount(CATEGORIES.length);
+  });
 
-    // 'jwt' names exactly one tool, so exactly one group and one category
-    // should survive. 'merge' would leave two: Text diff carries it as a
-    // keyword, which is the search working, not a bug.
+  test('hides a category heading once every tool under it is filtered out', async ({ page }) => {
+    await page.goto('/');
+    expect(await visibleSections(page)).toBe(CATEGORIES.length);
+
+    // 'jwt' names exactly one tool, so exactly one category should survive.
+    // 'merge' would leave two: Text diff carries it as a keyword, which is
+    // the search working, not a bug.
     await page.fill('#tool-search', 'jwt');
-    expect(await visibleGroups(page)).toBe(1);
-    await expect(page.locator('[data-category-section]:not([hidden])')).toHaveCount(1);
+    expect(await visibleSections(page)).toBe(1);
   });
 
   test('shows the empty state and restores everything when cleared', async ({ page }) => {
     await page.goto('/');
     await page.fill('#tool-search', 'zzzznotatool');
     await expect(page.locator('[data-search-empty]')).toBeVisible();
-    expect(await visibleGroups(page)).toBe(0);
+    expect(await visibleSections(page)).toBe(0);
 
     await page.fill('#tool-search', '');
     await expect(page.locator('[data-search-empty]')).toBeHidden();
-    expect(await visibleGroups(page)).toBe(ALL_GROUPS);
+    expect(await visibleSections(page)).toBe(CATEGORIES.length);
   });
 
   test('honours a ?q= deep link on load', async ({ page }) => {

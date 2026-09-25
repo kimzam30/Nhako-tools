@@ -7,7 +7,7 @@ import { BusyLabel } from './NeraLoader';
 
 const TEXT = {
   en: {
-    camera: 'Take a photo', choose: 'Choose photos', drop: 'or drop photos of pages here',
+    camera: 'Take a photo', choose: 'Choose photos', drop: 'or drop photos of pages here', tap: '',
     help: 'Lay the page on a darker surface in good light. Each page is found, straightened and cleaned up on your device.',
     pages: (n: number) => `${n} page${n === 1 ? '' : 's'}`,
     edit: 'Adjust', done: 'Done', remove: 'Remove', up: 'Move earlier', down: 'Move later',
@@ -20,7 +20,7 @@ const TEXT = {
     page: (n: number) => `Page ${n}`,
   },
   ms: {
-    camera: 'Ambil gambar', choose: 'Pilih gambar', drop: 'atau lepaskan gambar halaman di sini',
+    camera: 'Ambil gambar', choose: 'Pilih gambar', drop: 'atau lepaskan gambar halaman di sini', tap: '',
     help: 'Letakkan halaman di atas permukaan yang lebih gelap dalam cahaya yang baik. Setiap halaman dicari, diluruskan dan dibersihkan pada peranti anda.',
     pages: (n: number) => `${n} halaman`,
     edit: 'Laras', done: 'Selesai', remove: 'Buang', up: 'Alih ke depan', down: 'Alih ke belakang',
@@ -216,7 +216,7 @@ export default function ScanToPdf({ locale = 'en' }: { locale?: Locale }) {
           <button type="button" onClick={() => cameraRef.current?.click()} className="min-h-11 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-on hover:bg-accent-hover">{t.camera}</button>
           <button type="button" onClick={() => chooseRef.current?.click()} className="min-h-11 rounded-lg border border-border bg-bg px-4 py-2 text-sm font-semibold hover:border-accent">{t.choose}</button>
         </div>
-        <p className="text-xs text-muted">{t.drop}</p>
+        <p className="text-xs text-muted pointer-coarse:hidden">{t.drop}</p>
         <p className="max-w-md text-xs leading-snug text-muted">{t.help}</p>
       </div>
 

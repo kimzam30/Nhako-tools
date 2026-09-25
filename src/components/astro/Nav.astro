@@ -26,13 +26,15 @@ const items: { href: string; label: string; current: boolean; star?: boolean }[]
 ---
 
 <header class="vt-nav sticky top-0 z-40 border-b border-border bg-bg/85 backdrop-blur-sm">
-  <nav class="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4 sm:px-6" aria-label={t.mainNav}>
-    <a href={home} aria-label={t.home} class="vt-logo flex shrink-0 items-center gap-2 text-base font-bold tracking-tight">
+  <nav class="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4 app-shell:h-13 sm:px-6" aria-label={t.mainNav}>
+    <a href={home} aria-label={t.home} class="vt-logo flex h-11 min-w-11 shrink-0 items-center gap-2 text-base font-bold tracking-tight">
       <Logo class="size-6 rounded-md" />
-      {/* The wordmark yields to the category row on a phone. The mark still
-          links home, and losing two words is a better trade than a nav that
-          shows one category and looks like it has only one. */}
-      <span class="hidden sm:inline"><span class="text-accent">Nhako</span>Tools</span>
+      {/* In the app shell the category row lives in the tab bar at the bottom,
+          so the header has room for the name again, as an app's title bar
+          does. With the header row it shows only for a mouse at 1280px and
+          up: anywhere narrower, or with touch padding on every link, the
+          eight links need its room. The mark still links home. */}
+      <span class="hidden app-shell:inline xl:pointer-fine:inline"><span class="text-accent">Nhako</span>Tools</span>
     </a>
 
     {/*
@@ -49,7 +51,8 @@ const items: { href: string; label: string; current: boolean; star?: boolean }[]
       there is room the two look identical, because the items are left aligned
       and `ml-auto` still holds the controls to the right.
     */}
-    <ul data-nav-list class="-mx-1 flex min-w-0 flex-1 items-stretch gap-0.5 self-stretch overflow-x-auto px-1 [scrollbar-width:none] pointer-coarse:gap-1 [&::-webkit-scrollbar]:hidden">
+    {/* In the app shell (phones, upright touch tablets) the tab bar carries these instead. */}
+    <ul data-nav-list class="-mx-1 flex min-w-0 app-shell:hidden flex-1 items-stretch gap-0.5 self-stretch overflow-x-auto px-1 [scrollbar-width:none] pointer-coarse:gap-1 [&::-webkit-scrollbar]:hidden">
       {items.map((item) => (
         <li class="relative flex shrink-0 items-center">
           {/*
@@ -97,14 +100,15 @@ const items: { href: string; label: string; current: boolean; star?: boolean }[]
           hreflang={other}
           lang={other}
           aria-label={`${t.switchLanguageShort}, ${t.switchLanguageLabel}`}
-          class="grid h-8 place-items-center rounded border border-border px-2 font-mono text-2xs font-semibold text-muted transition-colors duration-[120ms] hover:border-border-strong hover:text-text pointer-coarse:h-11 pointer-coarse:px-3"
+          class="grid h-8 place-items-center rounded border border-border px-2 font-mono app-shell:hidden text-2xs font-semibold text-muted transition-colors duration-[120ms] hover:border-border-strong hover:text-text pointer-coarse:h-11 pointer-coarse:px-3"
         >
           {t.switchLanguageShort}
         </a>
       )}
-      {/* Phones keep the coffee link in the footer: the bar is already full. */}
-      <span class="hidden sm:contents"><CoffeeButton locale={locale} variant="icon" /></span>
-      <ThemeToggle locale={locale} />
+      {/* Coffee, language and theme move into the More sheet on a phone,
+          leaving the title bar its name and the one action people reach for. */}
+      <span class="contents app-shell:hidden"><CoffeeButton locale={locale} variant="icon" /></span>
+      <span class="contents app-shell:hidden"><ThemeToggle locale={locale} /></span>
     </div>
   </nav>
 </header>

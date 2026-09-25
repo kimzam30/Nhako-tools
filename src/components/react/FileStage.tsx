@@ -1,3 +1,4 @@
+import { DropLabel } from './DropLabel';
 import { useEffect, useRef, useState } from 'react';
 import { describeFile, KIND_LABEL, type Meta } from './file-thumb';
 import { useDragOrder, dragClass, DROP_GAP } from './drag-order';
@@ -232,10 +233,12 @@ export function useThumbnails(
 }
 
 /** A shared empty state, so all three staging tools open the same way. */
-export function DropZone({ onPick, onFiles, title, subtitle }: {
+export function DropZone({ onPick, onFiles, title, tap = '', subtitle }: {
   onPick: () => void;
   onFiles: (files: FileList | null) => void;
   title: string;
+  /** The same call to action for a touch screen, where nothing is dropped. */
+  tap?: string;
   subtitle: string;
 }) {
   const [hot, setHot] = useState(false);
@@ -250,7 +253,7 @@ export function DropZone({ onPick, onFiles, title, subtitle }: {
         hot ? 'border-accent bg-accent-subtle' : 'border-border bg-surface hover:border-border-strong'
       }`}
     >
-      <span className="text-sm font-medium">{title}</span>
+      <span className="text-sm font-medium"><DropLabel drop={title} tap={tap} /></span>
       <span className="text-xs text-muted">{subtitle}</span>
     </button>
   );

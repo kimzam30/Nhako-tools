@@ -14,6 +14,7 @@ import CropImage from '../components/react/CropImage';
 import Teleprompter from '../components/react/Teleprompter';
 import ScanToPdf from '../components/react/ScanToPdf';
 import FavButton from '../components/astro/FavButton.astro';
+import BackLink from '../components/astro/BackLink.astro';
 import { TOOLS_BY_ID } from '../tools/registry';
 import { toolId, type ToolMeta, type ToolVariant } from '../tools/types';
 import { SOURCES as PAYROLL_SOURCES } from '../tools/calc/payroll-my';
@@ -138,20 +139,27 @@ const wide = wideApp || filePane;
   jsonLd={jsonLd}
   category={tool.category}
 >
-  <div class="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-    <nav aria-label={t.breadcrumb} class="mb-6 text-2xs text-muted">
-      <a href={href('/')} class="transition-colors hover:text-accent">{t.breadcrumbTools}</a>
+  <div class="mx-auto max-w-6xl px-4 pb-10 pt-1 sm:px-6 sm:pt-10">
+    <div class="sm:pointer-fine:hidden sm:pt-2">
+      {variant
+        ? <BackLink href={href(`/${id}`)} label={tool.name} locale={locale} />
+        : <BackLink href={href(`/${tool.category}`)} label={categoryLabel(tool.category, locale)} locale={locale} />}
+    </div>
+    <nav aria-label={t.breadcrumb} class="mb-6 text-2xs text-muted max-sm:hidden pointer-coarse:hidden">
+      <a href={href('/')} class="transition-colors hover:text-accent pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center">{t.breadcrumbTools}</a>
       <span aria-hidden="true"> / </span>
-      <a href={href(`/${tool.category}`)} class="transition-colors hover:text-accent">{categoryLabel(tool.category, locale)}</a>
+      <a href={href(`/${tool.category}`)} class="transition-colors hover:text-accent pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center">{categoryLabel(tool.category, locale)}</a>
       {variant && (
         <>
           <span aria-hidden="true"> / </span>
-          <a href={href(`/${id}`)} class="transition-colors hover:text-accent">{tool.name}</a>
+          <a href={href(`/${id}`)} class="transition-colors hover:text-accent pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center">{tool.name}</a>
         </>
       )}
     </nav>
 
-    <header class="mb-7 flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
+    {/* On a phone the favourite button is a star beside the title, where an
+        app puts its one page action, instead of a full-width row of its own. */}
+    <header class="mb-5 mt-1 flex items-start justify-between gap-x-3 gap-y-3 sm:mb-7 sm:mt-0 sm:flex-wrap sm:gap-x-6">
       <div class="min-w-0">
         <h1 class="text-2xl font-bold tracking-tight">{name}</h1>
         <p class="mt-1.5 text-sm text-muted">{variant?.blurb ?? tool.blurb}</p>
@@ -207,8 +215,8 @@ const wide = wideApp || filePane;
       {(variant?.about || tool.about) && (
         <section data-reveal>
           <h2 class="mb-2 text-sm font-semibold">{t.whatThisDoes}</h2>
-          {variant?.about && <p class="mb-3 text-sm leading-relaxed text-muted">{variant.about}</p>}
-          {tool.about && <p class="text-sm leading-relaxed text-muted">{tool.about}</p>}
+          {variant?.about && <p class="mb-3 text-sm leading-relaxed text-muted max-sm:text-base">{variant.about}</p>}
+          {tool.about && <p class="text-sm leading-relaxed text-muted max-sm:text-base">{tool.about}</p>}
         </section>
       )}
 
@@ -217,7 +225,7 @@ const wide = wideApp || filePane;
           <h2 class="mb-2 text-sm font-semibold">{t.limits}</h2>
           <ul class="space-y-1.5">
             {tool.limits.map((limit) => (
-              <li class="relative pl-4 text-sm leading-relaxed text-muted before:absolute before:left-0 before:top-[0.8em] before:h-px before:w-2 before:bg-border-strong">
+              <li class="relative pl-4 text-sm leading-relaxed text-muted max-sm:text-base before:absolute before:left-0 before:top-[0.8em] before:h-px before:w-2 before:bg-border-strong">
                 {limit}
               </li>
             ))}
@@ -230,8 +238,8 @@ const wide = wideApp || filePane;
           <h2 class="mb-2 text-sm font-semibold">{t.sources}</h2>
           <ul class="space-y-1.5">
             {Object.values(id === 'calc/cgpa' ? GRADE_SOURCES : PAYROLL_SOURCES).map((s) => (
-              <li class="text-sm leading-relaxed text-muted">
-                <a class="underline decoration-border underline-offset-2 transition-colors hover:text-accent" href={s.url} rel="noopener noreferrer">{s.title}</a>
+              <li class="text-sm leading-relaxed text-muted max-sm:text-base">
+                <a class="underline decoration-border underline-offset-2 transition-colors hover:text-accent pointer-coarse:inline-block pointer-coarse:py-3.5" href={s.url} rel="noopener noreferrer">{s.title}</a>
                 <span data-numeric class="text-2xs">, {t.checkedOn(s.checked)}</span>
               </li>
             ))}
@@ -241,7 +249,7 @@ const wide = wideApp || filePane;
 
       <section data-reveal>
         <h2 class="mb-2 text-sm font-semibold">{t.isPrivate}</h2>
-        <p class="text-sm leading-relaxed text-muted">{t.privateBody} {privacyNote}</p>
+        <p class="text-sm leading-relaxed text-muted max-sm:text-base">{t.privateBody} {privacyNote}</p>
       </section>
 
       {presets.length > 0 && (
@@ -250,14 +258,14 @@ const wide = wideApp || filePane;
           <ul class="flex flex-wrap gap-2">
             {variant && (
               <li>
-                <a href={href(`/${id}`)} class="inline-block rounded border border-border px-2.5 py-1 text-xs text-muted transition-colors hover:border-accent hover:text-accent">
+                <a href={href(`/${id}`)} class="inline-flex items-center rounded border border-border px-2.5 py-1 text-xs text-muted transition-colors hover:border-accent hover:text-accent pointer-coarse:min-h-11 pointer-coarse:px-3.5 pointer-coarse:text-sm">
                   {tool.name}
                 </a>
               </li>
             )}
             {presets.filter((p) => p.slug !== variant?.slug).map((p) => (
               <li>
-                <a href={href(`/${id}/${p.slug}`)} class="inline-block rounded border border-border px-2.5 py-1 text-xs text-muted transition-colors hover:border-accent hover:text-accent">
+                <a href={href(`/${id}/${p.slug}`)} class="inline-flex items-center rounded border border-border px-2.5 py-1 text-xs text-muted transition-colors hover:border-accent hover:text-accent pointer-coarse:min-h-11 pointer-coarse:px-3.5 pointer-coarse:text-sm">
                   {p.name}
                 </a>
               </li>
@@ -278,7 +286,7 @@ const wide = wideApp || filePane;
         <h2 class="mb-3 text-sm font-semibold">{t.relatedTools}</h2>
         <div class="grid gap-2.5 sm:grid-cols-3">
         {related.map((r) => (
-            <a href={href(`/${toolId(r)}`)} class="group rounded-lg border border-border bg-surface p-3 transition-colors duration-[120ms] hover:border-accent hover:bg-sunken">
+            <a href={href(`/${toolId(r)}`)} class="group rounded-lg border border-border bg-surface p-3 transition-colors duration-[120ms] hover:border-accent hover:bg-sunken active:bg-sunken">
               <span class="block text-sm font-medium transition-colors group-hover:text-accent">{r.name}</span>
               <span class="mt-0.5 block text-xs leading-snug text-muted">{r.blurb}</span>
             </a>

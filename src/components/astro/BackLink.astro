@@ -1,0 +1,28 @@
+---
+/**
+ * The touch screen's way up a level: "‹ PDF" at the top left, where every
+ * native app puts it. It stands in for the breadcrumb on a phone and on any
+ * touch screen, where the trail was a row of 12px links 14px tall, a third of
+ * the height a thumb needs. A mouse on a wide screen keeps the breadcrumb.
+ *
+ * It matters more once the site is installed: an app opened from the home
+ * screen on an iPhone has no browser back button at all, so without this a
+ * tool page would be a dead end short of the tab bar.
+ *
+ * It is a link to the parent, not `history.back()`: arriving from a search
+ * result or a shared link, "back" would leave the site, and "up" never does.
+ */
+import { ui, type Locale } from '../../i18n';
+
+interface Props { href: string; label: string; locale: Locale }
+const { href, label, locale } = Astro.props;
+const t = ui(locale);
+---
+<a
+  href={href}
+  aria-label={t.backTo(label)}
+  class="-ml-2.5 inline-flex h-11 items-center gap-0.5 rounded-md pl-1 pr-3 text-base text-accent transition-opacity active:opacity-50"
+>
+  <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linejoin="miter" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
+  {label}
+</a>

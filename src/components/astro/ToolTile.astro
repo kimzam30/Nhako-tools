@@ -21,9 +21,12 @@ interface Props {
   /** Why this tool appears here. Used by the Malaysia collection, where the
    *  portal context is the reason the entry earns its place. */
   context?: string;
+  /** The job group this card is filed under on the current page, for the
+   *  category page's filter chips. */
+  group?: string;
 }
 
-const { tool, href, presets = [], context } = Astro.props;
+const { tool, href, presets = [], context, group } = Astro.props;
 const locale = localeFromPath(Astro.url.pathname);
 ---
 {/*
@@ -55,6 +58,7 @@ const locale = localeFromPath(Astro.url.pathname);
   data-name={tool.name.toLowerCase()}
   data-keywords={tool.keywords.join(' ')}
   data-category={tool.category}
+  data-group-id={group}
   class="group/card relative flex flex-col rounded-lg border border-border bg-surface shadow-[inset_0_1px_0_var(--edge)] transition-colors duration-[120ms] hover:border-accent focus-within:border-accent"
 >
   <a href={href} class="flex flex-1 gap-2.5 rounded-lg p-3 pr-11">
@@ -62,10 +66,12 @@ const locale = localeFromPath(Astro.url.pathname);
     <ToolIcon tool={tool} class="mt-0.5 group-hover/card:text-accent" />
 
     <span class="flex min-w-0 flex-col gap-0.5">
-      <span class="text-sm font-medium transition-colors group-hover/card:text-accent">
+      {/* A size up on a phone, where the card becomes a list row and is read
+          at arm's length: 16/14 is close to a native list's 17/15. */}
+      <span class="text-sm font-medium transition-colors group-hover/card:text-accent max-sm:text-base">
         {tool.name}
       </span>
-      <span class="text-xs leading-snug text-muted">{context ?? tool.blurb}</span>
+      <span class="text-xs leading-snug text-muted max-sm:text-sm">{context ?? tool.blurb}</span>
     </span>
   </a>
 

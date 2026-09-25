@@ -17,7 +17,7 @@ const h2 = 'mb-2 text-sm font-semibold text-text';
   path="/privacy"
   locale={locale}
 >
-  <div class="mx-auto max-w-2xl px-4 py-12 sm:px-6">
+  <div class="mx-auto max-w-2xl px-4 pb-12 pt-5 sm:px-6 sm:pt-12">
     <h1 class="text-2xl font-bold tracking-tight">{t.privacy}</h1>
 
     {locale === 'ms' ? (
@@ -126,7 +126,10 @@ const h2 = 'mb-2 text-sm font-semibold text-text';
           <p>
             Satu entri <code class={code}>localStorage</code> yang merekodkan sama ada anda memilih
             tema cerah atau gelap, dan, jika anda menandakan bintang pada mana-mana alat, satu lagi
-            yang menyimpan senarai kegemaran anda. Jika anda menggunakan Teleprompter, skrip dan tetapannya juga
+            yang menyimpan senarai kegemaran anda. Dua lagi ialah untuk tawaran memasang laman ini
+            sebagai aplikasi: satu mengira halaman yang anda buka di sini, supaya tawaran itu menunggu
+            lawatan kedua, dan satu mengingati bila anda memilih Bukan sekarang, supaya ia tidak muncul
+            semula selama 14 hari. Jika anda menggunakan Teleprompter, skrip dan tetapannya juga
             disimpan dalam <code class={code}>localStorage</code>, dan rakamannya dalam storan fail
             peribadi pelayar, pada peranti ini sahaja. Selain itu, storan cache pelayar menyimpan salinan fail laman ini
             supaya ia berfungsi tanpa talian, serta enjin dan model yang telah digunakan oleh alat,
@@ -247,7 +250,10 @@ const h2 = 'mb-2 text-sm font-semibold text-text';
           <p>
             One <code class={code}>localStorage</code> entry recording whether
             you prefer the light or dark theme, and, if you star any tools, a second one holding
-            the list of your favourites. If you use the Teleprompter, its scripts and
+            the list of your favourites. Two more serve the offer to install the site as an app:
+            one counts the pages you open here, so the offer waits for a second visit, and one
+            remembers when you chose Not now, so it stays away for 14 days. If you use the
+            Teleprompter, its scripts and
             settings are kept in <code class={code}>localStorage</code> too, and its recordings in
             the browser's private file storage, on this device only. Beyond that, the browser's cache storage keeps copies
             of this site's own files so it works offline, plus the engines and models a tool has

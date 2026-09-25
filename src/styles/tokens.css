@@ -9,8 +9,21 @@
 @import 'tailwindcss';
 @import './motion.css';
 @import './nera.css';
+@import './app.css';
 
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+/* Where the site runs as an app shell (tab bar at the bottom, More sheet,
+   slim title bar): below 1024px, which is every phone and every tablet held
+   upright, up to an iPad Pro 11 (834px). Measured 2026-09-25: the header's
+   eight links and four controls need about 1290px, and below 1024px they
+   clipped by 138 to 280px however they were squeezed, hiding Malaysia,
+   Favourites and Feedback off the right edge. */
+@custom-variant app-shell {
+  @media (max-width: 1023.98px) {
+    @slot;
+  }
+}
 
 :root {
   /* --- Pink ramp -----------------------------------------------------------

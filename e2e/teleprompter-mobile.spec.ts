@@ -68,8 +68,9 @@ test.describe('teleprompter on a handheld', () => {
     await page.goto('/media/teleprompter');
     await page.getByTestId('start').click();
     const { vw, vh, hasMore } = await stageMetrics(page);
-    // Same rule the stage uses: room for everything, or hide the extras.
-    expect(hasMore).toBe(vw <= 700 || vh <= 520);
+    // Same rule the stage uses: room for everything, or hide the extras. Below
+    // 1180 (any iPad) Camera and Phone remote wait there; on a phone, more does.
+    expect(hasMore).toBe(vw < 1180 || vh <= 520);
 
     if (hasMore) {
       await expect(page.getByTestId('remote')).toBeHidden();
@@ -109,17 +110,24 @@ test.describe('teleprompter on a handheld', () => {
     await page.goto('/media/teleprompter');
     const layout = await page.evaluate(() => {
       const script = document.querySelector('[data-testid=script]')!.closest('.rounded-lg') as HTMLElement;
-      const rail = (document.querySelector('[data-testid=start]') as HTMLElement).parentElement!.parentElement as HTMLElement;
+      const rail = document.querySelector('[data-setting=fontSize]')!.closest('.rounded-lg') as HTMLElement;
+      const takes = [...document.querySelectorAll('h2')].find((h) => h.textContent === 'Recordings')!.parentElement as HTMLElement;
+      const start = document.querySelector('[data-testid=start]') as HTMLElement;
       const s = script.getBoundingClientRect();
       const r = rail.getBoundingClientRect();
+      const tk = takes.getBoundingClientRect();
+      const st = start.getBoundingClientRect();
       return {
         vw: innerWidth,
         sideBySide: r.left >= s.right - 1,
+        // Script, then the recordings, then Start, in one column at every width.
+        order: s.bottom <= tk.top && tk.bottom <= st.top && Math.abs(tk.left - s.left) < 1 && Math.abs(st.left - s.left) < 1,
         overflowX: document.documentElement.scrollWidth > innerWidth + 1,
       };
     });
     // The two-column rail is an lg-and-up layout: 1024 px.
     expect(layout.sideBySide).toBe(layout.vw >= 1024);
+    expect(layout.order).toBe(true);
     expect(layout.overflowX).toBe(false);
   });
 });

@@ -47,15 +47,16 @@ const t = ui(locale);
       data-fav={id}
       aria-pressed="false"
       class:list={[
-        'fav-btn inline-flex h-9 items-center gap-2 rounded-md border border-border bg-surface px-3 text-sm font-semibold text-muted transition-colors duration-[120ms] hover:border-accent hover:text-accent aria-pressed:border-accent aria-pressed:bg-accent-subtle aria-pressed:text-accent pointer-coarse:h-11',
+        'fav-btn inline-flex h-9 shrink-0 items-center gap-2 rounded-md border border-border bg-surface px-3 text-sm font-semibold text-muted transition-colors duration-[120ms] hover:border-accent hover:text-accent aria-pressed:border-accent aria-pressed:bg-accent-subtle aria-pressed:text-accent pointer-coarse:h-11 max-sm:size-11 max-sm:justify-center max-sm:px-0',
         className,
       ]}
     >
-      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round" aria-hidden="true">
+      <svg class="size-4 max-sm:size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round" aria-hidden="true">
         <path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" />
       </svg>
-      <span data-fav-off>{t.favSave}</span>
-      <span data-fav-on hidden>{t.favSaved}</span>
+      {/* Icon only on a phone; the words stay for a screen reader. */}
+      <span data-fav-off class="max-sm:sr-only">{t.favSave}</span>
+      <span data-fav-on hidden class="max-sm:sr-only">{t.favSaved}</span>
     </button>
   )}
 

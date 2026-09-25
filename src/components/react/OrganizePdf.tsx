@@ -1,3 +1,4 @@
+import { DropLabel } from './DropLabel';
 import { useEffect, useRef, useState } from 'react';
 import { assemble, type PagePick } from '../../tools/pdf/organize';
 import { openForPreview, renderPage } from '../../lib/pdf-render';
@@ -9,7 +10,7 @@ import { BusyLabel } from './NeraLoader';
 
 const TEXT = {
   en: {
-    drop: 'Drop PDFs here, or browse',
+    drop: 'Drop PDFs here, or browse', tap: 'Choose PDFs',
     dropSub: 'Every page appears as a thumbnail. Nothing is uploaded',
     add: 'Add another PDF',
     pages: (n: number) => `${n} page${n === 1 ? '' : 's'}`,
@@ -34,7 +35,7 @@ const TEXT = {
     position: (n: number) => `Position ${n}`,
   },
   ms: {
-    drop: 'Lepaskan PDF di sini, atau semak imbas',
+    drop: 'Lepaskan PDF di sini, atau semak imbas', tap: 'Pilih PDF',
     dropSub: 'Setiap halaman dipaparkan sebagai lakaran kecil. Tiada muat naik',
     add: 'Tambah PDF lain',
     pages: (n: number) => `${n} halaman`,
@@ -215,7 +216,7 @@ export default function OrganizePdf({ locale = 'en', accept }: { locale?: Locale
           onDrop={(e) => { e.preventDefault(); setDropZone(false); void add(e.dataTransfer?.files ?? null); }}
           className={`flex min-h-44 w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-6 py-10 text-center transition-colors duration-[120ms] ${dropZone ? 'border-accent bg-accent-subtle' : 'border-border bg-surface hover:border-border-strong'}`}
         >
-          <span className="text-sm font-medium">{t.drop}</span>
+          <span className="text-sm font-medium"><DropLabel drop={t.drop} tap={t.tap} /></span>
           <span className="text-xs text-muted">{t.dropSub}</span>
         </button>
         {error && <p data-status-message className="mt-4 rounded-lg border border-err bg-err-subtle px-4 py-3 text-sm text-err">{error}</p>}

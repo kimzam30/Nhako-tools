@@ -1,3 +1,4 @@
+import { DropLabel } from './DropLabel';
 import { useEffect, useRef, useState } from 'react';
 import '@fontsource/dancing-script/latin-400.css';
 import { stamp, type Placement } from '../../tools/pdf/sign';
@@ -9,7 +10,7 @@ import { BusyLabel } from './NeraLoader';
 
 const TEXT = {
   en: {
-    drop: 'Drop a PDF here, or browse', dropSub: 'Your signature never leaves this page',
+    drop: 'Drop a PDF here, or browse', tap: 'Choose a PDF', dropSub: 'Your signature never leaves this page',
     draw: 'Draw', type: 'Type', upload: 'Image',
     drawHint: 'Sign in the box with a mouse, finger or stylus.', clear: 'Clear',
     name: 'Your name', namePlaceholder: 'Nur Aisyah binti Ahmad',
@@ -24,7 +25,7 @@ const TEXT = {
     page: (n: number) => `Page ${n}`,
   },
   ms: {
-    drop: 'Lepaskan PDF di sini, atau semak imbas', dropSub: 'Tandatangan anda tidak pernah meninggalkan halaman ini',
+    drop: 'Lepaskan PDF di sini, atau semak imbas', tap: 'Pilih satu PDF', dropSub: 'Tandatangan anda tidak pernah meninggalkan halaman ini',
     draw: 'Lukis', type: 'Taip', upload: 'Imej',
     drawHint: 'Tandatangan dalam kotak dengan tetikus, jari atau stilus.', clear: 'Padam',
     name: 'Nama anda', namePlaceholder: 'Nur Aisyah binti Ahmad',
@@ -337,7 +338,7 @@ export default function SignPdf({ locale = 'en', accept }: { locale?: Locale; ac
           onDrop={(e) => { e.preventDefault(); setDropZone(false); void load(e.dataTransfer?.files?.[0]); }}
           className={`flex min-h-44 w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-6 py-10 text-center transition-colors duration-[120ms] ${dropZone ? 'border-accent bg-accent-subtle' : 'border-border bg-surface hover:border-border-strong'}`}
         >
-          <span className="text-sm font-medium">{t.drop}</span>
+          <span className="text-sm font-medium"><DropLabel drop={t.drop} tap={t.tap} /></span>
           <span className="text-xs text-muted">{t.dropSub}</span>
         </button>
         {error && <p data-status-message className="mt-4 rounded-lg border border-err bg-err-subtle px-4 py-3 text-sm text-err">{error}</p>}

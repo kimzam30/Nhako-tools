@@ -41,6 +41,11 @@ const rowsIn = (groupId: string): ToolMeta[] => [
 // nothing. groupsIn() is empty for those categories, which is the signal.
 const grouped = hasGroups(category);
 const groups = groupsIn(category);
+/** Every row on the page, in job order, each tagged with the job it is filed
+ *  under here, which is what the filter chips match on. */
+const rows: { tool: ToolMeta; group?: string }[] = grouped
+  ? groups.flatMap((g) => rowsIn(g.id).map((tool) => ({ tool, group: g.id })))
+  : own.map((tool) => ({ tool }));
 
 // The count labels the category, not the page. Image owns 11 tools and shows
 // 14 rows, because three are cross-listed in from PDF and Developer. Counting
@@ -63,7 +68,7 @@ const jsonLd = {
     ],
   },
 };
-import { GROUP, PACK, PACK_XL, span } from '../components/astro/pack';
+import BackLink from '../components/astro/BackLink.astro';
 ---
 
 <BaseLayout
@@ -76,76 +81,89 @@ import { GROUP, PACK, PACK_XL, span } from '../components/astro/pack';
   jsonLd={jsonLd}
 >
   <div class="mx-auto max-w-6xl px-4 sm:px-6">
-    <nav aria-label={t.breadcrumb} class="pt-8 text-2xs text-muted">
-      <a href={href('/')} class="transition-colors hover:text-accent">{t.breadcrumbTools}</a>
+    <div class="pt-1 sm:pt-6 sm:pointer-fine:hidden"><BackLink href={href('/')} label={t.breadcrumbTools} locale={locale} /></div>
+    <nav aria-label={t.breadcrumb} class="pt-8 text-2xs text-muted max-sm:hidden pointer-coarse:hidden">
+      <a href={href('/')} class="transition-colors hover:text-accent pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center">{t.breadcrumbTools}</a>
       <span aria-hidden="true"> / </span>
       <span class="text-text">{label}</span>
     </nav>
 
-    <header class="mb-8 mt-4">
+    <header class="mb-5 mt-1 sm:mb-8 sm:mt-4">
       <div class="flex items-baseline gap-2.5">
         <h1 class="text-2xl font-bold tracking-tight">{label}</h1>
         <span data-numeric class="ml-auto font-mono text-2xs text-muted">{count}</span>
       </div>
-      <p class="mt-3 max-w-2xl text-sm leading-relaxed text-muted">{t.categoryIntro[category]}</p>
+      <p class="mt-2 max-w-2xl text-sm leading-relaxed text-muted sm:mt-3">{t.categoryIntro[category]}</p>
     </header>
 
-    {/* Section shortcuts, so a category that keeps growing stays one tap
-        deep: the reader sees every job the category covers before scrolling. */}
+    {/*
+      Filter chips, not headings. Each job group used to be a heading over its
+      own block of tools, plus a row of jump links to reach them. The headings
+      are gone (Kim, 2026-09-25: they cost a phone a screen and a half of
+      scrolling to repeat what the tool names say), and the chips now narrow
+      the one list in place instead of scrolling to a heading. On a phone the
+      row scrolls sideways rather than wrapping into three ragged lines.
+
+      Buttons that only work with JavaScript, so they arrive `hidden` and the
+      script below shows them. Without it the full list is simply there.
+    */}
     {grouped && (
-      <nav aria-label={t.jumpToGroup} class="-mt-3 mb-8">
-        <ul class="flex flex-wrap gap-2">
-          {groups.map((group) => (
-            <li>
-              <a
-                href={`#group-${group.id}`}
-                class="inline-flex items-center gap-2 rounded border border-border bg-surface px-3 py-1.5 text-xs text-text transition-colors duration-[120ms] hover:border-accent hover:text-accent pointer-coarse:min-h-11"
-              >
-                {groupLabel(category, group.id, locale)}
-                <span data-numeric class="text-muted">{rowsIn(group.id).length}</span>
-              </a>
-            </li>
-          ))}
-        </ul>
-      </nav>
+      <div data-filter hidden role="group" aria-label={t.filterBy} class="chip-scroller -mt-1 mb-5 flex gap-2 sm:mb-8 sm:flex-wrap">
+        {[{ id: '', label: t.filterAll, n: undefined }, ...groups.map((g) => ({ id: g.id, label: groupLabel(category, g.id, locale), n: rowsIn(g.id).length }))].map((chip) => (
+          <button
+            type="button"
+            data-filter-group={chip.id}
+            aria-pressed={chip.id === '' ? 'true' : 'false'}
+            class="inline-flex shrink-0 items-center gap-2 rounded-full border border-border bg-surface px-3.5 py-1.5 text-xs font-medium text-text transition-colors duration-[120ms] hover:border-accent hover:text-accent aria-pressed:border-accent aria-pressed:bg-accent-subtle aria-pressed:text-accent pointer-coarse:min-h-11 pointer-coarse:text-sm"
+          >
+            {chip.label}
+            {/* No count on All: it would say 14 on /image, where the header
+                rightly says 11 (three rows are cross-listed in). */}
+            {chip.n !== undefined && <span data-numeric class="text-muted">{chip.n}</span>}
+          </button>
+        ))}
+      </div>
     )}
 
-    {grouped
-      ? (
-        <div class={`${PACK} ${PACK_XL} mb-9`}>
-          {groups.map((group) => {
-            const rows = rowsIn(group.id);
-            return (
-              <section id={`group-${group.id}`} class={`${GROUP} ${span(rows.length)} scroll-mt-20`}>
-                <h2 class="col-span-full text-2xs font-semibold uppercase tracking-[0.14em] text-muted">
-                  {groupLabel(category, group.id, locale)}
-                </h2>
-                {rows.map((tool) => (
-                  <ToolTile
-                    tool={localizeTool(tool, locale)}
-                    href={href(`/${toolId(tool)}`)}
-                    presets={presetsFor(tool)}
-                  />
-                ))}
-              </section>
-            );
-          })}
-        </div>
-      )
-      : (
-        <div class="mb-9 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {own.map((tool) => (
-            <ToolTile
-              tool={localizeTool(tool, locale)}
-              href={href(`/${toolId(tool)}`)}
-              presets={presetsFor(tool)}
-            />
-          ))}
-        </div>
-      )}
+    <div class="tool-list mb-9 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {rows.map(({ tool, group }) => (
+        <ToolTile
+          tool={localizeTool(tool, locale)}
+          href={href(`/${toolId(tool)}`)}
+          presets={presetsFor(tool)}
+          group={group}
+        />
+      ))}
+    </div>
 
     <p class="mb-16 text-xs text-muted">
-      <a href={href('/')} class="transition-colors hover:text-accent">{t.allTools(TOOLS.length)}</a>
+      <a href={href('/')} class="transition-colors hover:text-accent pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center">{t.allTools(TOOLS.length)}</a>
     </p>
   </div>
 </BaseLayout>
+
+<script is:inline>
+  (() => {
+    const bar = document.querySelector('[data-filter]');
+    if (!bar) return;
+    const chips = [...bar.querySelectorAll('[data-filter-group]')];
+    const cards = [...document.querySelectorAll('main [data-tool-card]')];
+    const apply = (id) => {
+      for (const chip of chips) chip.setAttribute('aria-pressed', String(chip.dataset.filterGroup === id));
+      for (const card of cards) card.hidden = id !== '' && card.dataset.groupId !== id;
+    };
+    bar.addEventListener('click', (event) => {
+      const chip = event.target instanceof Element ? event.target.closest('[data-filter-group]') : null;
+      if (!chip) return;
+      apply(chip.dataset.filterGroup);
+      // Keep the address shareable, and the old #group-… links working.
+      history.replaceState(null, '', chip.dataset.filterGroup ? `#group-${chip.dataset.filterGroup}` : location.pathname);
+    });
+    bar.hidden = false;
+    const fromHash = location.hash.startsWith('#group-') ? location.hash.slice(7) : '';
+    if (fromHash && chips.some((c) => c.dataset.filterGroup === fromHash)) {
+      apply(fromHash);
+      bar.querySelector('[aria-pressed="true"]')?.scrollIntoView({ block: 'nearest', inline: 'center' });
+    }
+  })();
+</script>

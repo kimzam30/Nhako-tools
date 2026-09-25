@@ -165,7 +165,7 @@ export default function CgpaCalculator({ locale = 'en' }: { locale?: Locale }) {
         </div>
 
         <details className="rounded-lg border border-border bg-surface p-4">
-          <summary className="cursor-pointer text-2xs font-semibold uppercase tracking-wider text-muted">{t.scale}</summary>
+          <summary className="cursor-pointer text-2xs font-semibold uppercase tracking-wider text-muted pointer-coarse:-my-3.5 pointer-coarse:py-3.5">{t.scale}</summary>
           <p className="mt-2 text-xs text-muted">{t.scaleHelp}</p>
           <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
             {UM_SCALE.map((g) => (
@@ -179,11 +179,11 @@ export default function CgpaCalculator({ locale = 'en' }: { locale?: Locale }) {
               </label>
             ))}
           </div>
-          <button type="button" onClick={() => setPoints(Object.fromEntries(UM_SCALE.map((g) => [g.grade, g.point])))} className="mt-3 text-xs text-muted underline decoration-border underline-offset-2 hover:text-accent">
+          <button type="button" onClick={() => setPoints(Object.fromEntries(UM_SCALE.map((g) => [g.grade, g.point])))} className="mt-3 text-xs text-muted underline decoration-border underline-offset-2 hover:text-accent pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center">
             {t.reset}
           </button>
           <p className="mt-2 text-xs text-muted">
-            {t.source}: <a className="underline decoration-border underline-offset-2 hover:text-accent" href={SOURCES.um.url} rel="noopener noreferrer">{SOURCES.um.title}</a>
+            {t.source}: <a className="underline decoration-border underline-offset-2 hover:text-accent pointer-coarse:inline-block pointer-coarse:py-3.5" href={SOURCES.um.url} rel="noopener noreferrer">{SOURCES.um.title}</a>
           </p>
         </details>
       </div>

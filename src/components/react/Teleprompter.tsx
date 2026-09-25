@@ -18,6 +18,9 @@ import { filesBeforeHydration, valueBeforeHydration } from './hydration';
 
 const hasSpeech = () => typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
 
+/** Recordings listed before "Show all": enough for a morning's retakes, few enough that Start stays put. */
+const TAKES_SHOWN = 3;
+
 /** Common slot lengths: a short ad, then the usual social and briefing cuts. */
 const TARGETS = [30, 60, 120, 180, 300];
 
@@ -40,6 +43,7 @@ export default function Teleprompter({ locale = 'en' }: { locale?: Locale }) {
   const [stage, setStage] = useState<{ record: boolean } | null>(null);
   const [takes, setTakes] = useState<(Take & { url: string | null })[]>([]);
   const [playingTake, setPlayingTake] = useState<string | null>(null);
+  const [allTakes, setAllTakes] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
   const [speechOk, setSpeechOk] = useState(true);
   // No Wake Lock means the screen dims mid-take with no explanation. Firefox
@@ -256,7 +260,7 @@ export default function Teleprompter({ locale = 'en' }: { locale?: Locale }) {
   const label = 'text-2xs font-semibold uppercase tracking-wider text-muted';
   const card = 'rounded-lg border border-border bg-surface p-4';
   const field = 'rounded border border-border bg-surface px-2.5 py-1.5 text-sm';
-  const small = 'rounded border border-border px-2.5 py-1 text-xs text-muted transition-colors hover:border-accent hover:text-text';
+  const small = 'rounded border border-border px-2.5 py-1 text-xs text-muted transition-colors hover:border-accent hover:text-text pointer-coarse:min-h-11 pointer-coarse:px-3.5 pointer-coarse:text-sm';
   const range = (k: 'wpm' | 'fontSize' | 'lineHeight' | 'margin' | 'guide', name: string, min: number, max: number, step: number, show: (v: number) => string, help?: string) => (
     <label className="flex flex-col gap-1.5">
       <span className="flex items-baseline justify-between gap-2">
@@ -270,10 +274,12 @@ export default function Teleprompter({ locale = 'en' }: { locale?: Locale }) {
 
   return (
     <section className="flex flex-col gap-4">
-      {/* The script and the settings sit side by side once there is room for
-          both, so the page is a screen shorter and the speed you are setting
-          is next to the words it applies to. Below lg they stack as before. */}
-      <div className="gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_21rem] lg:items-start">
+      {/* Two columns once there is room. The left one is everything you do in
+          order: write, check what you have recorded, start. The settings rail
+          sits beside it, so the page is about as tall as the rail and Start
+          lands on the first screen. Below lg the same order simply stacks. */}
+      <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_21rem] lg:items-start">
+      <div className="flex min-w-0 flex-col gap-4">
       {/* Script */}
       <div className={card}>
         <div className="mb-3 flex flex-wrap items-end gap-2">
@@ -307,17 +313,64 @@ export default function Teleprompter({ locale = 'en' }: { locale?: Locale }) {
           {', '}{t.savedHere}
         </p>
         <details className="mt-3 text-sm">
-          <summary className="cursor-pointer text-xs font-medium text-muted hover:text-text">{t.formatHelp}</summary>
+          <summary className="cursor-pointer text-xs font-medium text-muted hover:text-text pointer-coarse:py-3.5">{t.formatHelp}</summary>
           <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs">
             {t.formatRows.map(([k, v]) => (<Fragment key={k}><dt className="font-mono">{k}</dt><dd className="text-muted">{v}</dd></Fragment>))}
           </dl>
         </details>
       </div>
 
-      {/* Display, speed and Start: one rail beside the script. It keeps its
-          natural height. Capping it and scrolling inside only hid settings,
-          because the rail is usually the taller of the two columns. */}
-      <div className="mt-4 flex flex-col gap-4 lg:mt-0">
+      {/* Takes */}
+      <div className={card}>
+        <h2 className="mb-3 text-sm font-semibold">{t.takes}</h2>
+        {takes.length === 0 ? (
+          <p className="text-sm text-muted">{t.noTakes}</p>
+        ) : (
+          <ul className="flex flex-col gap-3" data-testid="takes">
+            {(allTakes ? takes : takes.slice(0, TAKES_SHOWN)).map((tk) => (
+              <li key={tk.name} className="rounded border border-border px-3 py-2">
+                {/* One line where it fits: the name, where it is kept, then the actions. */}
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <span className="min-w-48 flex-1 text-xs">
+                    <span className="font-mono">{tk.name}</span>
+                    <span className={`block sm:inline ${tk.saved ? 'text-muted' : 'text-warn'}`}><span className="hidden sm:inline"> · </span>{tk.saved ? t.onDevice : t.inMemory}</span>
+                  </span>
+                  <span data-numeric className="text-xs text-muted">{bytes(tk.size)}</span>
+                  {tk.url && <button type="button" onClick={() => setPlayingTake(playingTake === tk.name ? null : tk.name)} className={small}>{t.play}</button>}
+                  {tk.url && <a href={tk.url} download={tk.name} className={small}>{t.download}</a>}
+                  <button type="button" onClick={() => void removeTake(tk.name)} className={small}>{t.deleteTake}</button>
+                </div>
+                {playingTake === tk.name && tk.url && <video src={tk.url} controls playsInline className="mt-2 w-full rounded bg-black" />}
+              </li>
+            ))}
+          </ul>
+        )}
+        {takes.length > TAKES_SHOWN && (
+          <button type="button" onClick={() => setAllTakes((a) => !a)} aria-expanded={allTakes} className={`${small} mt-3`} data-testid="takes-all">
+            {allTakes ? t.takesFewer : t.takesAll(takes.length)}
+          </button>
+        )}
+      </div>
+
+      {/* Start, under the takes and beside each other: the two ways into the stage. */}
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <button type="button" onClick={() => setStage({ record: false })} className="min-h-12 flex-1 rounded-lg bg-accent px-5 py-3 text-base font-semibold text-accent-on hover:bg-accent-hover" data-testid="start">
+          {t.start}
+        </button>
+        <button type="button" onClick={() => setStage({ record: true })} className="min-h-12 flex-1 rounded-lg border border-border bg-surface px-5 py-3 text-base font-semibold hover:border-accent" data-testid="start-record">
+          ● {t.startRecord}
+        </button>
+      </div>
+      {!wakeOk && <p className="text-xs leading-snug text-warn" data-testid="screen-sleep">{t.screenSleep}</p>}
+      <details className="text-sm">
+        <summary className="cursor-pointer text-xs font-medium text-muted hover:text-text pointer-coarse:py-3.5">{t.keysTitle}</summary>
+        <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs">
+          {t.keys.map(([k, v]) => (<Fragment key={k}><dt className="font-mono">{k}</dt><dd className="text-muted">{v}</dd></Fragment>))}
+        </dl>
+        <p className="mt-2 text-xs text-muted">{t.keysNote}</p>
+      </details>
+      </div>
+
       {/* Settings */}
       <div className={card}>
         <h2 className="mb-3 text-sm font-semibold">{t.settings}</h2>
@@ -362,7 +415,7 @@ export default function Teleprompter({ locale = 'en' }: { locale?: Locale }) {
                   <button
                     key={secs} type="button" aria-pressed={targetSeconds === secs}
                     onClick={() => { setTargetM(String(Math.floor(secs / 60))); setTargetS(String(secs % 60)); }}
-                    className={`rounded border px-2 py-0.5 font-mono text-2xs tabular-nums transition-colors ${targetSeconds === secs ? 'border-accent text-accent' : 'border-border text-muted hover:border-accent hover:text-text'}`}
+                    className={`rounded border px-2 py-0.5 font-mono text-2xs tabular-nums transition-colors pointer-coarse:min-h-11 pointer-coarse:min-w-11 pointer-coarse:text-sm ${targetSeconds === secs ? 'border-accent text-accent' : 'border-border text-muted hover:border-accent hover:text-text'}`}
                   >{clock(secs)}</button>
                 ))}
               </div>
@@ -397,14 +450,14 @@ export default function Teleprompter({ locale = 'en' }: { locale?: Locale }) {
           </div>
         </div>
         <div className="mt-4 flex flex-col gap-2">
-          <label className="flex items-center gap-2 text-sm">
+          <label className="flex items-center gap-2 text-sm pointer-coarse:min-h-11">
             <input type="checkbox" checked={settings.mirrorX} onChange={(e) => set('mirrorX', e.target.checked)} /> {t.mirrorX}
           </label>
-          <label className="flex items-center gap-2 text-sm">
+          <label className="flex items-center gap-2 text-sm pointer-coarse:min-h-11">
             <input type="checkbox" checked={settings.mirrorY} onChange={(e) => set('mirrorY', e.target.checked)} /> {t.mirrorY}
           </label>
           <div className="mt-2 rounded border border-border p-3">
-            <label className="flex items-center gap-2 text-sm font-medium">
+            <label className="flex items-center gap-2 text-sm font-medium pointer-coarse:min-h-11">
               <input type="checkbox" checked={settings.voice} disabled={!speechOk} onChange={(e) => set('voice', e.target.checked)} data-testid="voice" /> {t.voice}
             </label>
             <p className="mt-1.5 text-xs leading-snug text-muted">{speechOk ? t.voiceHelp : t.voiceNone}</p>
@@ -421,50 +474,6 @@ export default function Teleprompter({ locale = 'en' }: { locale?: Locale }) {
           </div>
         </div>
       </div>
-
-      {/* Start. Side by side where the row is wide, stacked in the rail. */}
-      <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
-        <button type="button" onClick={() => setStage({ record: false })} className="min-h-12 flex-1 rounded-lg bg-accent px-5 py-3 text-base font-semibold text-accent-on hover:bg-accent-hover" data-testid="start">
-          {t.start}
-        </button>
-        <button type="button" onClick={() => setStage({ record: true })} className="min-h-12 flex-1 rounded-lg border border-border bg-surface px-5 py-3 text-base font-semibold hover:border-accent" data-testid="start-record">
-          ● {t.startRecord}
-        </button>
-      </div>
-      {!wakeOk && <p className="text-xs leading-snug text-warn" data-testid="screen-sleep">{t.screenSleep}</p>}
-      </div>
-      </div>
-
-      <details className="text-sm">
-        <summary className="cursor-pointer text-xs font-medium text-muted hover:text-text">{t.keysTitle}</summary>
-        <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs">
-          {t.keys.map(([k, v]) => (<Fragment key={k}><dt className="font-mono">{k}</dt><dd className="text-muted">{v}</dd></Fragment>))}
-        </dl>
-        <p className="mt-2 text-xs text-muted">{t.keysNote}</p>
-      </details>
-
-      {/* Takes */}
-      <div className={card}>
-        <h2 className="mb-3 text-sm font-semibold">{t.takes}</h2>
-        {takes.length === 0 ? (
-          <p className="text-sm text-muted">{t.noTakes}</p>
-        ) : (
-          <ul className="flex flex-col gap-3" data-testid="takes">
-            {takes.map((tk) => (
-              <li key={tk.name} className="rounded border border-border p-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="flex-1 font-mono text-xs">{tk.name}</span>
-                  <span data-numeric className="text-xs text-muted">{bytes(tk.size)}</span>
-                  {tk.url && <button type="button" onClick={() => setPlayingTake(playingTake === tk.name ? null : tk.name)} className={small}>{t.play}</button>}
-                  {tk.url && <a href={tk.url} download={tk.name} className={small}>{t.download}</a>}
-                  <button type="button" onClick={() => void removeTake(tk.name)} className={small}>{t.deleteTake}</button>
-                </div>
-                <p className={`mt-1 text-xs ${tk.saved ? 'text-muted' : 'text-warn'}`}>{tk.saved ? t.onDevice : t.inMemory}</p>
-                {playingTake === tk.name && tk.url && <video src={tk.url} controls playsInline className="mt-2 w-full rounded bg-black" />}
-              </li>
-            ))}
-          </ul>
-        )}
       </div>
 
       {stage && (

@@ -176,8 +176,9 @@ Things this project does **not** do, stated here rather than discovered later:
 No backend of our own, no database, no cookies, no account. Page views are counted with
 [Vercel Web Analytics](https://vercel.com/docs/analytics/privacy-policy), which is
 cookieless and served from this same domain; it records the page, referrer,
-approximate location and browser/device type, never files or tool input. One `localStorage`
-entry records your theme preference; cache storage holds the site's own files for offline
+approximate location and browser/device type, never files or tool input. `localStorage`
+holds your theme, your favourites, and two small entries for the install offer (a page-view
+count and a "not now" date); cache storage holds the site's own files for offline
 use, plus the ffmpeg core and Whisper model once a tool has needed them. The teleprompter
 keeps its scripts and settings in `localStorage` and its recordings in the Origin Private
 File System, on the device only.
@@ -259,6 +260,7 @@ to inline if a worker cannot start.
 | Media | `ffmpeg.wasm` (self-hosted) |
 | Transcription | `transformers.js` (Whisper `tiny.en`) |
 | Offline | Service worker, app shell precached, big binaries cached on use |
+| Install | Web app manifest (maskable icons, shortcuts, screenshots); installs from Chrome, Edge and Android in one tap, with Share-sheet steps on iPhone and iPad and File, Add to Dock on Safari for Mac |
 | Tests | Vitest + Playwright + axe-core |
 | Hosting | Vercel |
 

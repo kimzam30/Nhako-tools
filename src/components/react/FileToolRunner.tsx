@@ -1,3 +1,4 @@
+import { DropLabel } from './DropLabel';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { FileToolResult, OptionSpec, OptionValues, ToolMeta } from '../../tools/types';
 import { defaultOptions, ToolError } from '../../tools/types';
@@ -249,7 +250,7 @@ export default function FileToolRunner({ tool, locale = 'en', initialOptions }: 
         } aria-disabled:cursor-wait`}
       >
         <span className="text-sm font-medium">
-          {dragging ? t.dropToStart : files.length > 0 ? t.filesSelected(files.length) : t.dropHere(Boolean(tool.multiple))}
+          {dragging ? t.dropToStart : files.length > 0 ? t.filesSelected(files.length) : <DropLabel drop={t.dropHere(Boolean(tool.multiple))} tap={t.tapToChoose(Boolean(tool.multiple))} />}
         </span>
         <span className="text-xs text-muted">
           {files.length > 0

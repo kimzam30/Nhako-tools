@@ -16,30 +16,38 @@ const index = buildSearchIndex(locale);
 <button
   type="button"
   id="palette-open"
-  class="flex h-8 items-center gap-2 rounded border border-border px-2.5 text-xs text-muted transition-colors duration-[120ms] hover:border-border-strong hover:text-text pointer-coarse:h-11 pointer-coarse:px-3"
+  class="flex size-8 items-center justify-center gap-2 rounded border border-border text-xs text-muted transition-colors duration-[120ms] hover:border-border-strong hover:text-text pointer-coarse:size-11 xl:pointer-fine:w-auto xl:pointer-fine:px-2.5 app-shell:size-11 app-shell:border-transparent"
   aria-label={t.searchTools}
   aria-keyshortcuts="Control+K Meta+K"
   aria-haspopup="dialog"
 >
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+  <svg class="size-[13px] app-shell:size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
     <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" stroke-linecap="round" />
   </svg>
-  <span class="hidden sm:inline">{t.search}</span>
+  <span class="hidden xl:pointer-fine:inline">{t.search}</span>
   {/* The name starts with the visible word "Search" (WCAG 2.5.3), and the
       shortcut hint is hidden from screen readers, which read "⌘" as "place
       of interest sign". aria-keyshortcuts states it properly instead. */}
-  <kbd id="palette-shortcut" aria-hidden="true" class="hidden rounded border border-border px-1 font-mono text-2xs sm:inline">Ctrl K</kbd>
+  <kbd id="palette-shortcut" aria-hidden="true" class="hidden rounded border border-border px-1 font-mono text-2xs xl:pointer-fine:inline">Ctrl K</kbd>
 </button>
 
-<div id="palette" hidden class="fixed inset-0 z-50 flex items-start justify-center bg-black/40 p-4 pt-[12vh]">
-  <div role="dialog" aria-modal="true" aria-label={t.paletteLabel} class="w-full max-w-lg overflow-hidden rounded-lg border border-border bg-bg shadow-[var(--shadow-overlay)]">
-    <label class="sr-only" for="palette-input">{t.searchTools}</label>
-    <input
-      id="palette-input" type="text" autocomplete="off" placeholder={t.searchPlaceholder(TOOLS.length)}
-      role="combobox" aria-expanded="true" aria-controls="palette-list"
-      class="w-full border-b border-border bg-transparent px-4 py-3 text-sm outline-none placeholder:text-muted"
-    />
-    <ul id="palette-list" role="listbox" aria-label={t.paletteResults} data-empty={t.paletteEmpty} class="max-h-80 overflow-y-auto p-1.5"></ul>
+{/*
+  On a phone the palette is a full screen, as search is in a native app: the
+  field pinned at the top under the safe area, results filling the rest, and a
+  Cancel button, because a phone has no Escape key and no margin to tap.
+*/}
+<div id="palette" hidden class="fixed inset-0 z-50 flex items-start justify-center bg-black/40 p-4 pt-[12vh] max-sm:bg-bg max-sm:p-0">
+  <div role="dialog" aria-modal="true" aria-label={t.paletteLabel} class="w-full max-w-lg overflow-hidden rounded-lg border border-border bg-bg shadow-[var(--shadow-overlay)] max-sm:flex max-sm:h-dvh max-sm:max-w-none max-sm:flex-col max-sm:rounded-none max-sm:border-0 max-sm:pt-[env(safe-area-inset-top)] max-sm:shadow-none">
+    <div class="flex items-center border-b border-border max-sm:gap-1 max-sm:px-3 max-sm:py-2">
+      <label class="sr-only" for="palette-input">{t.searchTools}</label>
+      <input
+        id="palette-input" type="text" autocomplete="off" placeholder={t.searchPlaceholder(TOOLS.length)}
+        role="combobox" aria-expanded="true" aria-controls="palette-list" enterkeyhint="go"
+        class="min-w-0 flex-1 bg-transparent px-4 py-3 text-sm outline-none placeholder:text-muted max-sm:h-11 max-sm:rounded-lg max-sm:bg-sunken max-sm:px-3 max-sm:py-0"
+      />
+      <button type="button" id="palette-cancel" class="hidden h-11 shrink-0 px-2 text-base font-semibold text-accent max-sm:block">{t.close}</button>
+    </div>
+    <ul id="palette-list" role="listbox" aria-label={t.paletteResults} data-empty={t.paletteEmpty} class="max-h-80 overflow-y-auto p-1.5 max-sm:max-h-none max-sm:flex-1 max-sm:overscroll-contain"></ul>
   </div>
 </div>
 
@@ -81,7 +89,7 @@ const index = buildSearchIndex(locale);
             aria-selected="${i === active}"
             data-index="${i}"
             data-href="${escape(t.href)}"
-            class="flex cursor-pointer items-baseline gap-3 rounded px-3 py-2 ${i === active ? 'bg-sunken' : ''}"
+            class="flex min-h-11 cursor-pointer items-center gap-3 rounded px-3 py-2 active:bg-sunken ${i === active ? 'bg-sunken' : ''}"
           >
             <span class="text-sm font-medium">${escape(t.name)}</span>
             <span class="min-w-0 flex-1 truncate text-xs text-muted">${escape(t.blurb)}</span>
@@ -117,6 +125,7 @@ const index = buildSearchIndex(locale);
   }
 
   openBtn?.addEventListener('click', () => setOpen(true));
+  document.getElementById('palette-cancel')?.addEventListener('click', () => setOpen(false));
   overlay?.addEventListener('mousedown', (e) => { if (e.target === overlay) setOpen(false); });
   input?.addEventListener('input', render);
 

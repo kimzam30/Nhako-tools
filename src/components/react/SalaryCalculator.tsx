@@ -222,7 +222,7 @@ function Row({ label, value, note, strong, testId }: { label: string; value: str
 function Counter({ id, label: text, help, value, onChange, less, more }: {
   id: string; label: string; help?: string; value: number; onChange: (n: number) => void; less: string; more: string;
 }) {
-  const btn = 'grid size-7 place-items-center rounded border border-border text-sm transition-colors hover:border-border-strong disabled:opacity-40';
+  const btn = 'grid size-7 place-items-center rounded border border-border text-sm transition-colors hover:border-border-strong disabled:opacity-40 pointer-coarse:size-11';
   return (
     <div>
       <div className="flex items-center justify-between gap-3">
@@ -244,7 +244,7 @@ function Counter({ id, label: text, help, value, onChange, less, more }: {
 
 function Check({ id, label: text, checked, onChange }: { id: string; label: string; checked: boolean; onChange: (b: boolean) => void }) {
   return (
-    <label htmlFor={id} className="flex cursor-pointer items-center gap-2.5 text-sm">
+    <label htmlFor={id} className="flex cursor-pointer items-center gap-2.5 text-sm pointer-coarse:min-h-11">
       <input id={id} type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="size-4 accent-[var(--accent)]" />
       {text}
     </label>

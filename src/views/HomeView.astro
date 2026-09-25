@@ -5,9 +5,8 @@ import ToolIcon from '../components/astro/ToolIcon.astro';
 import { TOOLS, toolsIn } from '../tools/registry';
 import { popularLinks } from '../tools/popular';
 import { CATEGORIES, toolId } from '../tools/types';
-import { groupsIn, hasGroups } from '../tools/groups';
-import { GROUP, PACK, PACK_XL, span } from '../components/astro/pack';
-import { LANG, categoryLabel, groupLabel, localizeTool, localePath, ui, type Locale } from '../i18n';
+import { groupsIn } from '../tools/groups';
+import { LANG, categoryLabel, localizeTool, localePath, ui, type Locale } from '../i18n';
 
 interface Props { locale: Locale }
 const { locale } = Astro.props;
@@ -44,8 +43,11 @@ const jsonLd = {
       terminal readout; with that gone (2026-09-25) the hero is one column, and
       the space goes to getting someone to their tool, not to decoration.
     */}
-    <section class="pt-10 pb-4 sm:pt-14 sm:pb-6">
-      <h1 class="max-w-3xl text-3xl font-bold leading-[1.12] tracking-tight sm:text-4xl">
+    {/* On a phone the hero is an app's large title: the promise in two
+        lines and the search right under it, so the first screen reaches a
+        tool rather than a paragraph. The paragraph returns from 640px. */}
+    <section class="pt-5 pb-3 sm:pt-14 sm:pb-6">
+      <h1 class="max-w-3xl text-balance text-[1.75rem] font-bold leading-[1.12] tracking-tight sm:text-4xl">
         {/* The wedge leads and carries full strength. The mechanism, which is
             what the tool count describes, supports it. The brief is explicit
             that privacy-as-mechanism is never the headline, and for a year
@@ -53,9 +55,9 @@ const jsonLd = {
         {t.heroSubtitle}
         <span class="block text-muted">{t.heroTitle(TOOLS.length)}</span>
       </h1>
-      <p class="mt-4 max-w-2xl text-base text-muted">{t.heroBody}</p>
+      <p class="mt-4 max-w-2xl text-base text-muted max-sm:hidden">{t.heroBody}</p>
 
-      <div class="mt-7 max-w-2xl">
+      <div class="mt-5 max-w-2xl sm:mt-7">
         <label for="tool-search" class="sr-only">{t.searchAll}</label>
         <div class="relative">
           <svg class="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -69,7 +71,7 @@ const jsonLd = {
             class="h-12 w-full rounded-lg border border-border-strong bg-surface pl-11 pr-4 text-base outline-none transition-colors placeholder:text-muted hover:border-accent focus:border-accent"
           />
         </div>
-        <p id="search-status" role="status" class="mt-2 h-4 text-2xs text-muted" data-template={t.searchCount(1111, 2222)}></p>
+        <p id="search-status" role="status" class="mt-2 h-4 text-2xs text-muted max-sm:mt-1.5" data-template={t.searchCount(1111, 2222)}></p>
       </div>
     </section>
 
@@ -81,18 +83,18 @@ const jsonLd = {
       on a desktop and 2 x 4 on a phone, so no row ends ragged.
     */}
     <section aria-labelledby="popular-heading" class="pb-6" data-popular>
-      <div class="mb-4">
+      <div class="mb-3 sm:mb-4">
         <h2 id="popular-heading" class="text-base font-bold tracking-tight">{t.popular}</h2>
-        <p class="mt-0.5 text-sm text-muted">{t.popularHint}</p>
+        <p class="mt-0.5 text-sm text-muted max-sm:hidden">{t.popularHint}</p>
       </div>
       <ul class="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">
         {popularLinks(locale).map((p) => (
           <li class="flex">
             <a
               href={p.href}
-              class="popular-card group/pop relative flex w-full items-start gap-3 rounded-xl border border-border bg-surface p-3 shadow-[inset_0_1px_0_var(--edge)] transition-[border-color,transform,background-color] duration-150 hover:-translate-y-0.5 hover:border-accent hover:bg-bg focus-visible:border-accent sm:p-3.5"
+              class="popular-card group/pop relative flex w-full items-start gap-3 rounded-xl border border-border bg-surface p-3 shadow-[inset_0_1px_0_var(--edge)] transition-[border-color,transform,background-color] duration-150 hover:-translate-y-0.5 hover:border-accent hover:bg-bg focus-visible:border-accent active:bg-sunken max-sm:items-center max-sm:gap-2.5 max-sm:p-2.5 sm:p-3.5"
             >
-              <span class="grid size-10 shrink-0 place-items-center rounded-lg border border-border bg-bg transition-colors duration-150 group-hover/pop:border-accent/30 group-hover/pop:bg-accent-subtle sm:size-11">
+              <span class="grid size-9 shrink-0 place-items-center rounded-lg border border-border bg-bg transition-colors duration-150 group-hover/pop:border-accent/30 group-hover/pop:bg-accent-subtle sm:size-11">
                 <ToolIcon tool={p.tool} />
               </span>
               <span class="flex min-w-0 flex-1 flex-col">
@@ -108,7 +110,7 @@ const jsonLd = {
         <li class="flex">
           <a
             href={`#${CATEGORIES[0]}`}
-            class="group/pop flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border-strong p-3 text-sm font-semibold text-muted transition-colors duration-150 hover:border-accent hover:bg-accent-subtle hover:text-accent sm:p-3.5"
+            class="group/pop flex min-h-[3.75rem] w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border-strong p-3 text-sm font-semibold text-muted transition-colors duration-150 hover:border-accent hover:bg-accent-subtle hover:text-accent active:bg-sunken sm:p-3.5"
           >
             {t.allTools(TOOLS.length)}
             <svg class="size-4 transition-transform duration-150 group-hover/pop:translate-y-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -124,43 +126,38 @@ const jsonLd = {
       category) are a category-page affordance only: on the catalogue itself a
       row appearing twice would make the count disagree with the heading and
       read as a bug.
-    */}
-    {CATEGORIES.map((category) => (
-      <section id={category} class="scroll-mt-20 pb-4 pt-8" data-category-section={category}>
-        <div class="mb-4 flex items-baseline gap-2.5">
-          <h2 class="text-2xs font-semibold uppercase tracking-[0.14em] text-muted">
-            <a href={localePath(locale, `/${category}`)} class="transition-colors hover:text-accent">
-              {categoryLabel(category, locale)}
-            </a>
-          </h2>
-          <span data-numeric class="ml-auto font-mono text-2xs text-muted">{toolsIn(category).length}</span>
-        </div>
 
-        {hasGroups(category)
-          ? (
-            <div class={`${PACK} ${PACK_XL}`}>
-              {groupsIn(category).map((group) => {
-                const members = toolsIn(category).filter((tool) => tool.group === group.id);
-                return (
-                  <section data-group class={`${GROUP} ${span(members.length)}`}>
-                    <h3 class="col-span-full text-2xs font-medium tracking-wide text-muted">{groupLabel(category, group.id, locale)}</h3>
-                    {members.map((tool) => (
-                      <ToolTile tool={localizeTool(tool, locale)} href={localePath(locale, `/${toolId(tool)}`)} />
-                    ))}
-                  </section>
-                );
-              })}
-            </div>
-          )
-          : (
-            <div class="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {toolsIn(category).map((tool) => (
-                <ToolTile tool={localizeTool(tool, locale)} href={localePath(locale, `/${toolId(tool)}`)} />
-              ))}
-            </div>
-          )}
-      </section>
-    ))}
+      One heading per category and no more. Each category used to carry a
+      second tier of job headings ("Organise pages", "Convert to and from
+      PDF"...), fifteen of them, which cost a phone about 600px of scrolling
+      to say what the tool names beside them already say (Kim, 2026-09-25).
+      The tools keep their job order, so "Merge" still sits beside "Split",
+      and a category page can still filter by job.
+    */}
+    {CATEGORIES.map((category) => {
+      const groups = groupsIn(category);
+      const tools = groups.length > 0
+        ? groups.flatMap((group) => toolsIn(category).filter((tool) => tool.group === group.id))
+        : toolsIn(category);
+      return (
+        <section id={category} class="scroll-mt-20 pb-4 pt-6 sm:pt-8" data-category-section={category}>
+          <div class="mb-2.5 flex items-baseline gap-2.5 px-1 sm:mb-4 sm:px-0">
+            <h2 class="text-2xs font-semibold uppercase tracking-[0.14em] text-muted">
+              <a href={localePath(locale, `/${category}`)} class="transition-colors hover:text-accent pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:min-w-11 pointer-coarse:items-center pointer-coarse:-my-3.5">
+                {categoryLabel(category, locale)}
+              </a>
+            </h2>
+            <span data-numeric class="ml-auto font-mono text-2xs text-muted">{toolsIn(category).length}</span>
+          </div>
+
+          <div class="tool-list grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {tools.map((tool) => (
+              <ToolTile tool={localizeTool(tool, locale)} href={localePath(locale, `/${toolId(tool)}`)} />
+            ))}
+          </div>
+        </section>
+      );
+    })}
 
     {/*
       `data-search-empty`, not `data-empty`: the command palette's list already
@@ -182,7 +179,6 @@ const jsonLd = {
   const empty = document.querySelector<HTMLElement>('[data-search-empty]');
   const popular = document.querySelector<HTMLElement>('[data-popular]');
   const cards = [...document.querySelectorAll<HTMLElement>('[data-tool-card]')];
-  const groups = [...document.querySelectorAll<HTMLElement>('[data-group]')];
   const sections = [...document.querySelectorAll<HTMLElement>('[data-category-section]')];
   const anyVisible = (el: HTMLElement) =>
     [...el.querySelectorAll<HTMLElement>('[data-tool-card]')].some((c) => !c.hidden);
@@ -198,10 +194,7 @@ const jsonLd = {
       if (match) visible++;
     }
 
-    // Groups before sections: a category is empty only once every group in it
-    // is. A job heading left standing over nothing is a dead end for whoever
-    // reads it.
-    for (const group of groups) group.hidden = !anyVisible(group);
+    // A category heading left standing over nothing is a dead end.
     for (const section of sections) section.hidden = !anyVisible(section);
 
     if (empty) empty.hidden = visible > 0;

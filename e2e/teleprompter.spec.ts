@@ -337,6 +337,95 @@ test.describe('recording', () => {
     await page.getByTestId('takes').getByRole('button', { name: 'Delete' }).click();
     await expect(page.getByText('Recordings you make appear here.', { exact: false })).toBeVisible();
   });
+
+  test('Record records without scrolling, and Play scrolls without touching the recording', async ({ page }) => {
+    await fresh(page);
+    await page.goto('/media/teleprompter');
+    await writeScript(page, Array.from({ length: 20 }, () => lorem(12)).join('\n\n'));
+    await page.getByTestId('start-record').click();
+    await page.getByTestId('record').click();
+    await expect(page.getByTestId('rec-badge')).toBeVisible();
+    await expect(page.getByTestId('ready-hint')).toBeHidden();
+    const before = (await scrolled(page)).offset;
+    await page.waitForTimeout(1000);
+    expect((await scrolled(page)).offset).toBe(before);
+    await expect(page.getByTestId('play')).toHaveText('Play');
+
+    await page.getByTestId('play').click();
+    await expect.poll(async () => (await scrolled(page)).offset).toBeLessThan(before - 5);
+    // Stopping the recording leaves the script running.
+    await page.getByTestId('record').click();
+    await expect(page.getByText(/^Saved take-.* on this device\.$/)).toBeVisible();
+    await expect(page.getByTestId('rec-badge')).toBeHidden();
+    await expect(page.getByTestId('play')).toHaveText('Pause');
+  });
+
+  test('Play and record starts the recording and the scroll together, after the countdown', async ({ page }) => {
+    await fresh(page, { countdown: 3 });
+    await page.goto('/media/teleprompter');
+    await writeScript(page, Array.from({ length: 20 }, () => lorem(12)).join('\n\n'));
+    await page.getByTestId('start-record').click();
+    await expect(page.getByTestId('ready-hint')).toContainText('Play and record');
+    // Timestamps from inside the page: when the REC badge appears, and the
+    // first frame the text moves.
+    await page.evaluate(() => {
+      const w = window as unknown as { marks: Record<string, number> };
+      w.marks = {};
+      const text = document.querySelector('[data-testid=prompter-text]') as HTMLElement;
+      const start = text.style.transform;
+      new MutationObserver(() => {
+        if (!w.marks.badge && document.querySelector('[data-testid=rec-badge]')) w.marks.badge = performance.now();
+      }).observe(document.body, { childList: true, subtree: true });
+      const watch = () => {
+        if (text.style.transform !== start) { w.marks.scroll = performance.now(); return; }
+        requestAnimationFrame(watch);
+      };
+      requestAnimationFrame(watch);
+    });
+    await page.getByTestId('play-record').click();
+    await expect(page.getByTestId('countdown')).toBeVisible();
+    await expect(page.getByTestId('play-record')).toHaveText('Stop');
+    // Nothing is recorded during the countdown.
+    await expect(page.getByTestId('rec-badge')).toBeHidden();
+    await expect(page.getByTestId('rec-badge')).toBeVisible({ timeout: 6000 });
+    await expect(page.getByTestId('countdown')).toBeHidden();
+    await expect(page.getByTestId('play')).toHaveText('Pause');
+    const marks = await page.waitForFunction(() => {
+      const m = (window as unknown as { marks: Record<string, number> }).marks;
+      return m.badge && m.scroll ? m : null;
+    }).then((h) => h.jsonValue());
+    // The same tick starts both; allow a couple of frames for React and paint.
+    expect(Math.abs(marks!.scroll! - marks!.badge!)).toBeLessThan(100);
+
+    await page.waitForTimeout(1500);
+    await page.getByTestId('play-record').click();
+    await expect(page.getByText(/^Saved take-.* on this device\.$/)).toBeVisible();
+    await expect(page.getByTestId('rec-badge')).toBeHidden();
+    await expect(page.getByTestId('play')).toHaveText('Play');
+    await expect(page.getByTestId('play-record')).toHaveText('Play and record');
+  });
+
+  test('stopping Play and record during the countdown leaves no empty take behind', async ({ page }) => {
+    await fresh(page, { countdown: 5 });
+    await page.goto('/media/teleprompter');
+    await page.getByTestId('start-record').click();
+    await page.getByTestId('play-record').click();
+    await expect(page.getByTestId('countdown')).toBeVisible();
+    await page.getByTestId('play-record').click();
+    await expect(page.getByTestId('countdown')).toBeHidden();
+    await expect(page.getByTestId('play-record')).toHaveText('Play and record');
+    await page.waitForTimeout(500);
+    await expect(page.getByTestId('rec-badge')).toBeHidden();
+    await page.getByTestId('close').click();
+    const files = await page.evaluate(async () => {
+      const d = await (await navigator.storage.getDirectory()).getDirectoryHandle('teleprompter-takes', { create: true });
+      const names: string[] = [];
+      for await (const k of (d as unknown as { keys(): AsyncIterable<string> }).keys()) names.push(k);
+      return names;
+    });
+    expect(files).toEqual([]);
+    await expect(page.getByText('Recordings you make appear here.', { exact: false })).toBeVisible();
+  });
 });
 
 test.describe('phone remote (live relay)', () => {

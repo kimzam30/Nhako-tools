@@ -22,13 +22,14 @@ const year = new Date().getFullYear();
     back up into the catalogue belongs on a page that is otherwise about a
     single job.
   */}
-  <nav aria-label={t.browseAll} class="mx-auto max-w-6xl px-4 pt-8 sm:px-6">
+  {/* In the app shell the tab bar and the More sheet already are this. */}
+  <nav aria-label={t.browseAll} class="mx-auto max-w-6xl px-4 pt-8 app-shell:hidden sm:px-6">
     <ul class="flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted">
       {NAV_CATEGORIES.map((c) => (
-        <li><a class="inline-flex items-center transition-colors hover:text-accent pointer-coarse:min-h-11" href={localePath(locale, `/${c}`)}>{categoryLabel(c, locale)}</a></li>
+        <li><a class="inline-flex items-center transition-colors hover:text-accent pointer-coarse:min-h-11 pointer-coarse:min-w-11 pointer-coarse:justify-center" href={localePath(locale, `/${c}`)}>{categoryLabel(c, locale)}</a></li>
       ))}
-      <li><a class="inline-flex items-center transition-colors hover:text-accent pointer-coarse:min-h-11" href={localePath(locale, '/calc')}>{categoryLabel('calc', locale)}</a></li>
-      <li><a class="inline-flex items-center transition-colors hover:text-accent pointer-coarse:min-h-11" href={localePath(locale, '/malaysia')}>{t.malaysia}</a></li>
+      <li><a class="inline-flex items-center transition-colors hover:text-accent pointer-coarse:min-h-11 pointer-coarse:min-w-11 pointer-coarse:justify-center" href={localePath(locale, '/calc')}>{categoryLabel('calc', locale)}</a></li>
+      <li><a class="inline-flex items-center transition-colors hover:text-accent pointer-coarse:min-h-11 pointer-coarse:min-w-11 pointer-coarse:justify-center" href={localePath(locale, '/malaysia')}>{t.malaysia}</a></li>
     </ul>
   </nav>
 
@@ -39,12 +40,20 @@ const year = new Date().getFullYear();
       <span>{t.footerLine}</span>
     </p>
     <ul class="flex flex-wrap items-center gap-x-5 gap-y-2">
-      <li><a class="transition-colors hover:text-accent" href={localePath(locale, '/feedback')}>{c.feedback}</a></li>
+      {/* Shown only where the browser can actually install the site; see
+          InstallPrompt.astro, which reveals it. */}
+      <li data-install-row hidden>
+        <button type="button" data-install-open class="inline-flex items-center gap-1.5 font-semibold text-accent transition-colors hover:text-accent-hover pointer-coarse:min-h-11 pointer-coarse:min-w-11 pointer-coarse:justify-center">
+          <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3.5v11M7.5 10l4.5 4.5 4.5-4.5M4.5 16v4.5h15V16" /></svg>
+          {t.installApp}
+        </button>
+      </li>
+      <li><a class="inline-flex items-center transition-colors hover:text-accent pointer-coarse:min-h-11 pointer-coarse:min-w-11 pointer-coarse:justify-center" href={localePath(locale, '/feedback')}>{c.feedback}</a></li>
       <li><CoffeeButton locale={locale} variant="text" /></li>
-      <li><a class="transition-colors hover:text-accent" href={localePath(locale, '/about')}>{t.about}</a></li>
-      <li><a class="transition-colors hover:text-accent" href={localePath(locale, '/privacy')}>{t.privacy}</a></li>
+      <li><a class="inline-flex items-center transition-colors hover:text-accent pointer-coarse:min-h-11 pointer-coarse:min-w-11 pointer-coarse:justify-center" href={localePath(locale, '/about')}>{t.about}</a></li>
+      <li><a class="inline-flex items-center transition-colors hover:text-accent pointer-coarse:min-h-11 pointer-coarse:min-w-11 pointer-coarse:justify-center" href={localePath(locale, '/privacy')}>{t.privacy}</a></li>
       <li>
-        <a class="transition-colors hover:text-accent" href="https://github.com/kimzam30/Nhako-tools" rel="noopener noreferrer">
+        <a class="inline-flex items-center transition-colors hover:text-accent pointer-coarse:min-h-11 pointer-coarse:min-w-11 pointer-coarse:justify-center" href="https://github.com/kimzam30/Nhako-tools" rel="noopener noreferrer">
           {t.source}
         </a>
       </li>

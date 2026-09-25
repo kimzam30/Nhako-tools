@@ -26,7 +26,7 @@ import { BusyLabel } from './NeraLoader';
 
 const TEXT = {
   en: {
-    drop: 'Drop a PDF here, or browse',
+    drop: 'Drop a PDF here, or browse', tap: 'Choose a PDF',
     dropSub: 'Every page appears with a tick box. Nothing is uploaded',
     drawing: 'Drawing the pages…',
     selected: (n: number, of: number) => `${n} of ${of} pages selected`,
@@ -49,7 +49,7 @@ const TEXT = {
     bad: (f: string) => `"${f}" could not be read as a PDF.`,
   },
   ms: {
-    drop: 'Lepaskan satu PDF di sini, atau semak imbas',
+    drop: 'Lepaskan satu PDF di sini, atau semak imbas', tap: 'Pilih satu PDF',
     dropSub: 'Setiap halaman dipaparkan dengan kotak tanda. Tiada muat naik',
     drawing: 'Melukis halaman…',
     selected: (n: number, of: number) => `${n} daripada ${of} halaman dipilih`,
@@ -237,7 +237,7 @@ export default function SplitPdf({ locale = 'en', accept }: { locale?: Locale; a
     return (
       <section className="flex flex-col gap-4">
         {fileInput}
-        <DropZone onPick={() => inputRef.current?.click()} onFiles={accept_} title={t.drop} subtitle={t.dropSub} />
+        <DropZone onPick={() => inputRef.current?.click()} onFiles={accept_} title={t.drop} tap={t.tap} subtitle={t.dropSub} />
         {error && <ErrorBar message={error} onClear={() => setError(null)} t={ui} />}
       </section>
     );

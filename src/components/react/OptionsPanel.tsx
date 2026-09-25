@@ -29,7 +29,7 @@ export default function OptionsPanel({
         return (
           <div key={spec.key} className={spec.kind === 'toggle' ? 'sm:col-span-2' : ''}>
             {spec.kind === 'toggle' ? (
-              <label htmlFor={id} className="flex cursor-pointer items-center gap-2.5">
+              <label htmlFor={id} className="flex cursor-pointer items-center gap-2.5 pointer-coarse:min-h-11">
                 <input
                   id={id} type="checkbox" disabled={disabled}
                   checked={Boolean(value)}
