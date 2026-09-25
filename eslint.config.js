@@ -24,7 +24,7 @@ export default [
     languageOptions: { globals: globals.node },
   },
   {
-    // The launch video's scene runs in the browser that render.mjs drives.
+    // The launch scenes and posters run in the browser that render.mjs drives.
     files: ['launch/**/*.js'],
     languageOptions: { globals: globals.browser },
   },

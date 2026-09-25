@@ -3,7 +3,12 @@
  * electronic bed in C major at 120 BPM, plus quiet interface sounds on the
  * cues in timeline.mjs. No samples, no recordings, nothing licensed.
  *
- *   node launch/video/audio.mjs   ->  launch/video/out/soundtrack.wav
+ *   node launch/video/audio.mjs                           ->  launch/video/out/soundtrack.wav
+ *   node launch/video/audio.mjs launch/film/timeline.mjs  ->  launch/film/out/soundtrack.wav
+ *
+ * The timeline decides the length, the breakdown (DARK), the end chord
+ * (END.icon) and every interface sound; the sections before those (intro to
+ * 4 s, beat at 4 s, full groove from 8 s) are shared by both films.
  *
  * Voices:
  *   pad    three detuned band-limited saws per note, low-passed, ducked by the kick
@@ -18,8 +23,11 @@
  * breakdown for dark mode (42 to 45 s), and a held chord for the end card (50 s).
  */
 import { writeFileSync, mkdirSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { BPM, DURATION, DARK, END, soundCues } from './timeline.mjs';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { resolve } from 'node:path';
+
+const TIMELINE = process.argv[2] ? pathToFileURL(resolve(process.argv[2])) : new URL('./timeline.mjs', import.meta.url);
+const { BPM, DURATION, DARK, END, soundCues } = await import(TIMELINE.href);
 
 const RATE = 44100;
 const N = Math.ceil(DURATION * RATE);
@@ -279,7 +287,7 @@ for (let i = 0; i < N; i++) {
   pcm.writeInt16LE(Math.round(L[i] * norm * 32767), 44 + i * 4);
   pcm.writeInt16LE(Math.round(R[i] * norm * 32767), 46 + i * 4);
 }
-const out = fileURLToPath(new URL('./out/', import.meta.url));
+const out = fileURLToPath(new URL('./out/', TIMELINE));
 mkdirSync(out, { recursive: true });
 writeFileSync(`${out}soundtrack.wav`, pcm);
 console.log(`  out/soundtrack.wav  ${DURATION}s, ${RATE} Hz stereo, peak normalised to -1 dBFS`);

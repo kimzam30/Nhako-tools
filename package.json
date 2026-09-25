@@ -20,7 +20,8 @@
     "og": "node scripts/og-images.mjs",
     "screenshots": "node scripts/screenshots.mjs",
     "test:e2e:mobile": "playwright test --project=android --project=ios --project=ios-landscape --project=ipados --project=ipados-landscape",
-    "launch:video": "node launch/video/capture.mjs && node launch/video/audio.mjs && node launch/video/render.mjs"
+    "launch:video": "node launch/video/capture.mjs && node launch/video/audio.mjs && node launch/video/render.mjs",
+    "launch:film": "node launch/film/capture.mjs && node launch/video/audio.mjs launch/film/timeline.mjs && node launch/film/check.mjs && node launch/film/render.mjs && node launch/film/render.mjs --posters && node launch/film/render.mjs --banner"
   },
   "dependencies": {
     "@astrojs/preact": "^4.1.3",

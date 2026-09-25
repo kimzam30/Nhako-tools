@@ -1,4 +1,8 @@
-# The launch video
+# The launch video (vertical, phone)
+
+> The main launch piece is now the widescreen film for laptop and tablet,
+> with its posters: see [launch-film.md](launch-film.md). This vertical cut
+> stays for Reels, TikTok and Shorts.
 
 `launch/nhako-tools-launch.mp4`: 58 seconds, vertical 1080 x 1920 at 30 fps,
 H.264 + AAC stereo. Made for Reels, TikTok, Shorts and a Play Store listing.

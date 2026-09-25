@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Nhako Tools posters</title>
+<!--
+  The launch posters, one per ?p= (see posters.config.mjs for the list and
+  sizes). The same stage, devices and butterflies as the film: an off-white
+  ground, SF Pro Display, one pink accent, real captures on a drawn laptop and
+  tablet, and pixel butterflies placed in the air around them, never on a
+  screen. `node launch/film/render.mjs --posters` writes them to launch/posters/.
+-->
+<link rel="stylesheet" href="devices.css">
+<style>
+  :root { --ink: #1d1d1f; --ink-2: #6e6e73; --bg: #fbfbfd; --accent: #c7009b;
+    --sf: 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif; }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { overflow: hidden; background: var(--bg); }
+  body { position: relative; font-family: var(--sf); color: var(--ink); -webkit-font-smoothing: antialiased; }
+  .abs { position: absolute; }
+  .copy { text-align: center; z-index: 30; }
+  .copy.left { text-align: left; }
+  .eyebrow { font-weight: 600; letter-spacing: -0.01em; color: var(--accent); }
+  .head { font-weight: 700; letter-spacing: -0.04em; word-spacing: 0.05em; line-height: 1.04; text-wrap: balance; }
+  .sub { font-weight: 500; letter-spacing: -0.015em; color: var(--ink-2); line-height: 1.28; text-wrap: balance; }
+  .foot { display: flex; align-items: center; justify-content: center; gap: 16px; z-index: 30; }
+  .foot img, .icon img { image-rendering: pixelated; display: block; width: 100%; height: 100%; }
+  .foot .ic, .icon { overflow: hidden; box-shadow: 0 8px 20px rgba(40, 24, 70, 0.16), 0 0 0 1px rgba(0, 0, 0, 0.05); }
+  .foot b { font-weight: 600; letter-spacing: -0.02em; }
+  .foot span { color: var(--ink-2); font-weight: 500; letter-spacing: -0.01em; }
+  .chips { display: flex; gap: 8px; }
+  .chip { font-weight: 500; letter-spacing: -0.01em; padding: 7px 16px; border-radius: 999px; background: #fff; border: 1px solid #e4e4e8; }
+  .url b { color: var(--accent); font-weight: 600; }
+  .laptop, .tablet { z-index: 20; }
+  .flies { position: absolute; inset: 0; z-index: 26; pointer-events: none; }
+</style>
+</head>
+<body>
+<script type="module" src="posters.js"></script>
+</body>
+</html>

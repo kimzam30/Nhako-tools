@@ -9,3 +9,5 @@ playwright-report
 public/vendor
 launch/video/shots
 launch/video/out
+launch/film/shots
+launch/film/out
