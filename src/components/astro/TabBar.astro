@@ -6,15 +6,15 @@
  * Below 768px the header's row of category links used to scroll sideways,
  * showing three of eight items with nothing to say the rest existed, 14px
  * from the top of a screen a thumb cannot reach. This is the pattern every
- * native app on the same phone uses instead: five tabs, 49px tall, labelled
- * icons, the current one tinted. Everything under 1024px gets it, an upright
+ * native app on the same phone uses instead: five labelled tabs in a 64px
+ * floating pill, the current one tinted. Everything under 1024px gets it, an upright
  * iPad included (see the app-shell variant in tokens.css); wider screens keep
  * the header row.
  *
  * Almost no JavaScript. The tabs are links; More is a popover opened by
  * `popovertarget`, so it opens, closes on Escape and closes on a tap outside
- * with the browser doing all of it. The one script makes a tap on the current
- * tab scroll to the top.
+ * with the browser doing all of it. The scripts slide the current-tab capsule
+ * and make a tap on the current tab scroll to the top.
  */
 import ThemeToggle from './ThemeToggle.astro';
 import { COFFEE_URL } from '../../lib/community';
@@ -72,48 +72,67 @@ const chevron = '<path d="M9 5l7 7-7 7"/>';
 ---
 
 <nav
+  id="tabbar"
   data-tabbar
   aria-label={t.tabBar}
-  class="vt-tabbar fixed inset-x-0 bottom-0 z-40 border-t border-border bg-bg/90 pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] backdrop-blur-md hidden app-shell:block"
+  class="vt-tabbar tabbar hidden app-shell:block"
 >
-  {/* On a tablet the five tabs gather in the middle with the label beside
-      the icon, as iPadOS lays out a tab bar, instead of five lonely columns
-      spread across 800px. */}
-  <ul class="mx-auto flex sm:max-w-xl">
+  {/*
+    A floating pill (Kim, 2026-09-25), as iOS 26 and the newer Android apps
+    draw their tab bars: inset from the screen edges, clear of the home
+    indicator, the page scrolling underneath it. Solid rather than frosted:
+    a backdrop-filter on a bar that also has a view-transition-name smeared
+    the bar for several frames after every tab change, and a blur behind a
+    bar that sits over scrolling content is repainted on every scroll frame.
+
+    The tinted capsule behind the current tab is one element that slides from
+    the tab you left to the tab you arrived at (window.nhakoIndicator in
+    BaseLayout), the way the native capsule does. On a tablet the five tabs
+    lay the label beside the icon, as iPadOS does.
+  */}
+  <ul data-ind-list="tabs" class="ind-list relative isolate flex h-16 items-stretch rounded-full border border-border bg-bg p-1.5 dark:bg-surface">
+    <li data-ind role="none" aria-hidden="true" class="ind">
+      <span class="ind-pill rounded-full bg-accent-subtle"></span>
+    </li>
     {tabs.map((tab) => (
-      <li class="flex-1">
+      <li class="flex flex-1">
         <a
           href={tab.href}
           aria-current={tab.current ? 'page' : undefined}
           data-tab={tab.key}
+          data-ind-key={tab.key}
           class:list={[
-            'tab relative flex h-12 flex-col items-center justify-center gap-0.5 text-2xs font-medium transition-colors duration-[120ms] sm:flex-row sm:gap-2 sm:text-sm',
-            tab.current ? 'text-accent' : 'text-muted active:text-text',
+            'tab relative flex flex-1 flex-col items-center justify-center gap-1 rounded-full text-2xs font-semibold leading-none transition-[color,opacity] duration-[120ms] active:opacity-60 sm:flex-row sm:gap-2 sm:text-sm',
+            tab.current ? 'text-accent' : 'text-muted',
           ]}
         >
-          <span class="relative">
+          {/* Side by side on a tablet, the count badge would sit on the label:
+              the icon takes a little more room while the badge shows. */}
+          <span class="relative sm:has-[>[data-fav-count]:not([hidden])]:mr-3">
             <svg class="size-6" viewBox="0 0 24 24" fill={tab.current && tab.key !== 'pdf' && tab.key !== 'image' ? 'currentColor' : 'none'} fill-opacity={tab.current ? '0.16' : undefined} stroke="currentColor" stroke-width="1.5" stroke-linejoin="miter" aria-hidden="true" set:html={tab.icon} />
             {tab.key === 'favourites' && (
               <span data-fav-count hidden class="absolute -right-2.5 -top-1 min-w-4 rounded-full bg-accent px-1 text-center text-2xs leading-4 font-semibold text-accent-on tabular-nums"></span>
             )}
           </span>
-          <span class="leading-none">{tab.label}</span>
+          <span>{tab.label}</span>
         </a>
       </li>
     ))}
-    <li class="flex-1">
+    <li class="flex flex-1">
       <button
         type="button"
         popovertarget="more-sheet"
         aria-haspopup="dialog"
         data-tab="more"
+        data-ind-key="more"
+        data-ind-current={inMore ? '' : undefined}
         class:list={[
-          'tab flex h-12 w-full flex-col items-center justify-center gap-0.5 text-2xs font-medium transition-colors duration-[120ms] sm:flex-row sm:gap-2 sm:text-sm',
-          inMore ? 'text-accent' : 'text-muted active:text-text',
+          'tab flex flex-1 flex-col items-center justify-center gap-1 rounded-full text-2xs font-semibold leading-none transition-[color,opacity] duration-[120ms] active:opacity-60 sm:flex-row sm:gap-2 sm:text-sm',
+          inMore ? 'text-accent' : 'text-muted',
         ]}
       >
         <svg class="size-6" viewBox="0 0 24 24" fill={inMore ? 'currentColor' : 'none'} fill-opacity={inMore ? '0.16' : undefined} stroke="currentColor" stroke-width="1.5" aria-hidden="true" set:html={MORE_ICON} />
-        <span class="leading-none">{t.navMore}</span>
+        <span>{t.navMore}</span>
       </button>
     </li>
   </ul>
@@ -189,6 +208,8 @@ const chevron = '<path d="M9 5l7 7-7 7"/>';
 </nav>
 
 <script is:inline>
+  window.nhakoIndicator?.(document.querySelector('[data-tabbar]'));
+
   // Tapping the tab you are already on scrolls back to the top, as it does in
   // every iOS app, instead of reloading the page you are halfway down.
   document.querySelector('[data-tabbar]')?.addEventListener('click', (event) => {

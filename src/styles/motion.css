@@ -30,15 +30,32 @@
     navigation: auto;
   }
 
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
-    animation-duration: 140ms;
-    animation-timing-function: var(--ease-out);
+  /* The page swaps with a quick dip, not a crossfade. Two different pages
+     overlapping at half opacity is the double exposure the 2026-09-25 screen
+     recording showed: both active pills, two sets of cards. The old page is
+     gone in 90ms, before the new one is more than faint, and the exit is
+     faster than the entrance. */
+  ::view-transition-old(root) {
+    animation: 90ms var(--ease-out) both vt-fade-out;
   }
+  ::view-transition-new(root) {
+    animation: 180ms var(--ease-out) 40ms both vt-fade-in;
+  }
+  @keyframes vt-fade-out { to { opacity: 0; } }
+  @keyframes vt-fade-in { from { opacity: 0; } }
 
-  /* The chrome persists across navigations instead of flashing. */
+  /* The chrome does not transition at all. The old header and tab bar are
+     dropped and the new ones are shown live from the first frame, so the
+     only thing that moves in them is the current-item pill sliding across
+     (window.nhakoIndicator in BaseLayout). A crossfade here is what put two
+     pills on screen at once. */
   .vt-nav { view-transition-name: nav; }
-  .vt-logo { view-transition-name: logo; }
+  ::view-transition-old(nav),
+  ::view-transition-old(tabbar) { display: none; }
+  ::view-transition-group(nav),
+  ::view-transition-group(tabbar),
+  ::view-transition-new(nav),
+  ::view-transition-new(tabbar) { animation: none; }
   /* The footer is deliberately not named. Promoting a below-the-fold element
      to its own layer buys nothing visible and confuses full-page capture. */
 

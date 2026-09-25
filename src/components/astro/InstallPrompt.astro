@@ -117,8 +117,16 @@ const shareIcon = '<svg class="inline size-[1.15em] -translate-y-px align-middle
     const hide = () => { if (card.matches(':popover-open')) card.hidePopover(); };
     const snooze = (days) => set(SNOOZE, String(Date.now() + days * DAY));
 
-    const views = Number(get(VIEWS) || 0) + 1;
-    set(VIEWS, String(views));
+    // A page prerendered on hover is not a page view until it is shown.
+    const whenShown = (fn) => {
+      if (document.prerendering) document.addEventListener('prerenderingchange', fn, { once: true });
+      else fn();
+    };
+    let views = 1;
+    whenShown(() => {
+      views = Number(get(VIEWS) || 0) + 1;
+      set(VIEWS, String(views));
+    });
     let timer = 0;
     const scheduleAuto = () => {
       if (standalone || Number(get(SNOOZE) || 0) > Date.now()) return;
@@ -165,6 +173,6 @@ const shareIcon = '<svg class="inline size-[1.15em] -translate-y-px align-middle
     });
 
     reveal();
-    if (mode() === 'ios' || mode() === 'mac') scheduleAuto();
+    whenShown(() => { if (mode() === 'ios' || mode() === 'mac') scheduleAuto(); });
   })();
 </script>

@@ -5,6 +5,7 @@ import ToolIcon from '../components/astro/ToolIcon.astro';
 import { TOOLS, toolsIn } from '../tools/registry';
 import { CATEGORIES, toolId } from '../tools/types';
 import { categoryLabel, localizeTool, localePath, ui, type Locale } from '../i18n';
+import { FAVORITES_KEY } from '../lib/favorites';
 
 interface Props { locale: Locale }
 const { locale } = Astro.props;
@@ -58,6 +59,24 @@ const star = 'M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1
         </span>
         <p class="max-w-md text-sm text-muted">{t.favoritesEmpty}</p>
       </div>
+      {/* The first render, before the first paint. The bundled script below
+          only runs once the page has loaded, so on its own the page painted
+          "Nothing here yet" and then swapped in the cards a few frames later
+          (screen recording, 2026-09-25). It re-renders the same way after. */}
+      <script is:inline define:vars={{ KEY: FAVORITES_KEY }}>
+        (() => {
+          let list = [];
+          try { const v = JSON.parse(localStorage.getItem(KEY) || '[]'); if (Array.isArray(v)) list = v; } catch { /* none */ }
+          const grid = document.querySelector('[data-fav-grid]');
+          const shown = list.map((id) => grid.querySelector(`[data-fav-slot="${CSS.escape(String(id))}"]`)).filter(Boolean);
+          for (const slot of shown) { slot.hidden = false; grid.append(slot); }
+          grid.hidden = shown.length === 0;
+          document.querySelector('[data-fav-empty]').hidden = shown.length > 0;
+          document.querySelector('[data-fav-clear]').hidden = shown.length === 0;
+          const total = document.querySelector('[data-fav-total]');
+          if (shown.length) total.textContent = shown.length === 1 ? total.dataset.one : total.dataset.many.replace('2222', String(shown.length));
+        })();
+      </script>
     </section>
 
     <section aria-labelledby="pick-heading" class="mt-10 border-t border-border pt-8 sm:mt-14 sm:pt-10">
@@ -141,6 +160,8 @@ const star = 'M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1
   clear.addEventListener('click', () => writeFavorites([]));
   window.addEventListener(FAVORITES_EVENT, render);
   window.addEventListener('storage', (e) => { if (e.key === FAVORITES_KEY) render(); });
+  // Prerendered on hover: a star tapped before the page is shown still counts.
+  document.addEventListener('prerenderingchange', render);
   render();
 
   const filter = document.querySelector<HTMLInputElement>('#fav-filter')!;

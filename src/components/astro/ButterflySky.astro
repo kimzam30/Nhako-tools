@@ -51,11 +51,26 @@ const rows = SPRITES.butterfly;
 
     const count = 7, minScale = 2, maxScale = 4, speed = 0.55;
     let W = innerWidth, H = innerHeight;
+
+    // The sky carries over from page to page. Every page used to scatter the
+    // butterflies to fresh random spots, so each navigation made all seven
+    // jump at once, and the page transition showed both sets. The page being
+    // left writes where each one is; the next page picks them up there.
+    const KEY = 'nhako:sky';
+    const saved = () => {
+      try {
+        const v = JSON.parse(sessionStorage.getItem(KEY) || 'null');
+        return Array.isArray(v) && v.length === count ? v : null;
+      } catch { return null; }
+    };
+    const start = saved();
     const flies = [];
     for (let i = 0; i < count; i++) {
+      const s = start?.[i];
       const wrap = document.createElement('div');
       wrap.className = 'bfly flap';
-      const scale = Math.round(rand(minScale, maxScale));
+      const scale = s?.s ?? Math.round(rand(minScale, maxScale));
+      const flap = s?.d ?? rand(0.3, 0.55).toFixed(2);
       const img = new Image();
       img.src = spriteURL(colors[i % colors.length]);
       img.width = rows[0].length * scale;
@@ -63,15 +78,33 @@ const rows = SPRITES.butterfly;
       img.className = 'px';
       img.alt = '';
       img.draggable = false;
-      img.style.animationDuration = rand(0.3, 0.55).toFixed(2) + 's';
+      img.style.animationDuration = flap + 's';
       wrap.appendChild(img);
       sky.appendChild(wrap);
-      flies.push({ el: wrap, x: rand(0, W), y: rand(0, H), a: rand(0, Math.PI * 2), v: rand(0.5, 1) * speed, phase: rand(0, 10) });
+      flies.push({ el: wrap, s: scale, d: flap, x: s?.x ?? rand(0, W), y: s?.y ?? rand(0, H), a: s?.a ?? rand(0, Math.PI * 2), v: s?.v ?? rand(0.5, 1) * speed, phase: s?.phase ?? rand(0, 10) });
     }
+
+    const save = () => {
+      try {
+        sessionStorage.setItem(KEY, JSON.stringify(flies.map(({ s, d, x, y, a, v, phase }) => ({ s, d, x, y, a, v, phase }))));
+      } catch { /* storage blocked: the next page scatters them afresh */ }
+    };
+    // pageswap runs on the page being left, before the next one is shown;
+    // pagehide is the fallback where it does not exist.
+    addEventListener('onpageswap' in window ? 'pageswap' : 'pagehide', save);
+    // A page prerendered on hover built its sky back then. By the time it is
+    // shown the butterflies have flown on, so it takes up the latest spots.
+    addEventListener('pagereveal', () => {
+      const now = saved();
+      if (now) flies.forEach((f, i) => Object.assign(f, { x: now[i].x, y: now[i].y, a: now[i].a }));
+    });
 
     addEventListener('resize', () => { W = innerWidth; H = innerHeight; });
 
-    const tick = (t) => {
+    // Wall-clock time, not time since this page loaded, so the bob carries on
+    // in phase across a navigation instead of restarting.
+    const tick = (frame) => {
+      const t = performance.timeOrigin + frame;
       for (const f of flies) {
         f.a += (Math.random() - 0.5) * 0.12;
         f.x += Math.cos(f.a) * f.v;

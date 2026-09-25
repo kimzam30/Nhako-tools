@@ -7,8 +7,8 @@
      - every control is at least 44 x 44 on a touch screen;
      - no text field is below 16px, which is the size under which iOS
        Safari zooms the whole page in when the field takes focus;
-     - the tab bar is 49px (48 + its hairline) plus the home indicator's
-       safe area, as UIKit's is;
+     - the tab bar is a 64px floating pill, clear of the home indicator
+       (iOS 26's shape; an edge-to-edge UIKit-style bar until 2026-09-25);
      - nothing sits under a notch, a rounded corner or the home indicator.
    Colours are the tokens'. Nothing here introduces a new one.
    ========================================================================== */
@@ -35,11 +35,20 @@
     padding-right: env(safe-area-inset-right);
   }
 
+  /* The floating tab bar's geometry, shared with everything that has to
+     clear it (the page's last row, the install card). The gap sits the pill
+     just above the home indicator on an iPhone, 12px up anywhere else. */
+  :root {
+    --tabbar-h: 64px;
+    --tabbar-gap: max(12px, calc(env(safe-area-inset-bottom) - 8px));
+    --tabbar-clear: calc(var(--tabbar-h) + var(--tabbar-gap));
+  }
+
   /* Room for the tab bar, so the last row of a page and the footer are
      never trapped behind it. */
   /* Same condition as the app-shell variant in tokens.css. */
   @media (max-width: 1023.98px) {
-    body { padding-bottom: calc(49px + env(safe-area-inset-bottom)); }
+    body { padding-bottom: calc(var(--tabbar-clear) + 16px); }
   }
 
   /* Installed and opened from the home screen there is no browser UI at all,
@@ -62,6 +71,59 @@
 }
 
 @layer components {
+  /* --- Floating tab bar ---------------------------------------------------- */
+  .tabbar {
+    position: fixed;
+    z-index: 40;
+    left: max(12px, env(safe-area-inset-left));
+    right: max(12px, env(safe-area-inset-right));
+    bottom: var(--tabbar-gap);
+    margin-inline: auto;
+    max-width: 440px;
+  }
+  @media (min-width: 640px) { .tabbar { max-width: 560px; } }
+  .tabbar > ul { box-shadow: var(--shadow-float); }
+
+  /* --- Sliding "you are here" indicator -----------------------------------
+     Header row and tab bar alike. window.nhakoIndicator (BaseLayout) measures
+     the current link into --ind-x/-w/-y/-h; the element only moves by
+     transform and its own width, so nothing else on the page reflows. */
+  .ind {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: -1;
+    width: var(--ind-w, 0px);
+    transform: translateX(var(--ind-x, 0px));
+    pointer-events: none;
+    visibility: hidden;
+  }
+  .ind-list[data-ind-ready] > .ind { visibility: visible; }
+  .ind-list[data-ind-anim] > .ind {
+    transition: transform 300ms var(--ease-out), width 300ms var(--ease-out);
+  }
+  .ind-pill {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: var(--ind-y, 0px);
+    height: var(--ind-h, 100%);
+  }
+  .ind-bar {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: 0;
+    height: 2px;
+    border-radius: var(--radius-full);
+    background: var(--accent);
+  }
+  /* No JavaScript, so no measured pill: the current link tints itself. */
+  .ind-list:not([data-ind-ready]) :is([aria-current='page'], [data-ind-current]) {
+    background: var(--accent-subtle);
+  }
+
   /* --- Bottom sheet ----------------------------------------------------------
      A popover, so it opens with no JavaScript at all (popovertarget), closes
      on Escape and on a tap outside, and sits in the top layer above the tab
@@ -165,7 +227,7 @@
      a tablet or laptop, where a toast would be. */
   .install-card[popover] {
     position: fixed;
-    inset: auto max(12px, env(safe-area-inset-right)) calc(49px + env(safe-area-inset-bottom) + 12px) max(12px, env(safe-area-inset-left));
+    inset: auto max(12px, env(safe-area-inset-right)) calc(var(--tabbar-clear) + 12px) max(12px, env(safe-area-inset-left));
     margin: 0;
     width: auto;
     max-width: none;
@@ -195,7 +257,7 @@
     }
   }
   @media (min-width: 768px) and (max-width: 1023.98px) {
-    .install-card[popover] { bottom: calc(49px + env(safe-area-inset-bottom) + 16px); }
+    .install-card[popover] { bottom: calc(var(--tabbar-clear) + 16px); }
   }
   .install-steps { display: grid; gap: 10px; font-size: var(--text-sm); }
   .install-steps > li { display: flex; align-items: center; gap: 10px; }

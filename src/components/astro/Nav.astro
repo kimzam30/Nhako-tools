@@ -16,18 +16,22 @@ const home = localePath(locale, '/');
 // category: /pdf/merge is still somewhere inside PDF.
 const active = (segment: string) => path === `/${segment}` || path.startsWith(`/${segment}/`);
 
-const items: { href: string; label: string; current: boolean; star?: boolean }[] = [
-  { href: home, label: t.navHome, current: path === '/' },
-  ...NAV_CATEGORIES.map((c) => ({ href: localePath(locale, `/${c}`), label: categoryLabel(c, locale), current: active(c) })),
-  { href: localePath(locale, '/malaysia'), label: t.malaysia, current: path === '/malaysia' },
-  { href: localePath(locale, '/favourites'), label: t.favorites, current: path === '/favourites', star: true },
-  { href: localePath(locale, '/feedback'), label: t.navFeedback, current: path === '/feedback' },
+const items: { key: string; href: string; label: string; current: boolean; star?: boolean }[] = [
+  { key: 'home', href: home, label: t.navHome, current: path === '/' },
+  ...NAV_CATEGORIES.map((c) => ({ key: c, href: localePath(locale, `/${c}`), label: categoryLabel(c, locale), current: active(c) })),
+  { key: 'malaysia', href: localePath(locale, '/malaysia'), label: t.malaysia, current: path === '/malaysia' },
+  { key: 'favourites', href: localePath(locale, '/favourites'), label: t.favorites, current: path === '/favourites', star: true },
+  { key: 'feedback', href: localePath(locale, '/feedback'), label: t.navFeedback, current: path === '/feedback' },
 ];
 ---
 
-<header class="vt-nav sticky top-0 z-40 border-b border-border bg-bg/85 backdrop-blur-sm">
+{/* Solid, not frosted. A backdrop-filter on a bar that also carries a
+    view-transition-name is what smeared the whole header for two or three
+    frames after every page change (screen recording, 2026-09-25). A solid bar
+    costs nothing to scroll and does not repaint behind itself. */}
+<header class="vt-nav sticky top-0 z-40 border-b border-border bg-bg">
   <nav class="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4 app-shell:h-13 sm:px-6" aria-label={t.mainNav}>
-    <a href={home} aria-label={t.home} class="vt-logo flex h-11 min-w-11 shrink-0 items-center gap-2 text-base font-bold tracking-tight">
+    <a href={home} aria-label={t.home} class="flex h-11 min-w-11 shrink-0 items-center gap-2 text-base font-bold tracking-tight">
       <Logo class="size-6 rounded-md" />
       {/* In the app shell the category row lives in the tab bar at the bottom,
           so the header has room for the name again, as an app's title bar
@@ -52,23 +56,29 @@ const items: { href: string; label: string; current: boolean; star?: boolean }[]
       and `ml-auto` still holds the controls to the right.
     */}
     {/* In the app shell (phones, upright touch tablets) the tab bar carries these instead. */}
-    <ul data-nav-list class="-mx-1 flex min-w-0 app-shell:hidden flex-1 items-stretch gap-0.5 self-stretch overflow-x-auto px-1 [scrollbar-width:none] pointer-coarse:gap-1 [&::-webkit-scrollbar]:hidden">
+    <ul data-nav-list data-ind-list="header" class="ind-list relative isolate -mx-1 flex min-w-0 app-shell:hidden flex-1 items-stretch gap-0.5 self-stretch overflow-x-auto px-1 [scrollbar-width:none] pointer-coarse:gap-1 [&::-webkit-scrollbar]:hidden">
+      {/*
+        Where you are, said three ways so no one of them has to carry it: the
+        label turns accent, a tinted pill sits behind it, and a bar sits on
+        the header's bottom edge like a tab. aria-current says it to a screen
+        reader. The pill and bar are one element that slides from the last
+        page's item to this one's (window.nhakoIndicator in BaseLayout). It is
+        drawn inside the list because the list scrolls.
+      */}
+      <li data-ind role="none" aria-hidden="true" class="ind">
+        <span class="ind-pill rounded-md bg-accent-subtle"></span>
+        <span class="ind-bar"></span>
+      </li>
       {items.map((item) => (
-        <li class="relative flex shrink-0 items-center">
-          {/*
-            Where you are, said three ways so no one of them has to carry it:
-            the label turns accent, a tinted pill sits behind it, and a bar
-            sits on the header's bottom edge like a tab. aria-current says it
-            to a screen reader. The bar is drawn inside the <li> because the
-            list scrolls, and anything outside a scroll box gets clipped.
-          */}
+        <li class="flex shrink-0 items-center">
           <a
             href={item.href}
             aria-current={item.current ? 'page' : undefined}
+            data-ind-key={item.key}
             class:list={[
               'nav-link flex scroll-mx-4 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-semibold transition-colors duration-[120ms]',
               'pointer-coarse:min-h-11 pointer-coarse:px-3',
-              item.current ? 'bg-accent-subtle text-accent' : 'text-muted hover:bg-sunken hover:text-text',
+              item.current ? 'text-accent' : 'text-muted hover:bg-sunken hover:text-text',
             ]}
           >
             {item.star && (
@@ -81,13 +91,6 @@ const items: { href: string; label: string; current: boolean; star?: boolean }[]
               <span data-fav-count hidden class="min-w-4 rounded-full bg-accent px-1 text-center text-2xs leading-4 font-semibold text-accent-on tabular-nums"></span>
             )}
           </a>
-          <span
-            aria-hidden="true"
-            class:list={[
-              'pointer-events-none absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-accent transition-transform duration-200',
-              item.current ? 'scale-x-100' : 'scale-x-0',
-            ]}
-          ></span>
         </li>
       ))}
     </ul>
@@ -123,4 +126,6 @@ const items: { href: string; label: string; current: boolean; star?: boolean }[]
       list.scrollLeft = Math.max(0, current.offsetLeft - (list.clientWidth - current.offsetWidth) / 2);
     }
   })();
+  // After the scroll above, so the pill is measured where the link now sits.
+  window.nhakoIndicator?.(document.querySelector('.vt-nav'));
 </script>

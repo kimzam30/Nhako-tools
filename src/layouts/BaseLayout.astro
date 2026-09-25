@@ -7,6 +7,7 @@ import TabBar from '../components/astro/TabBar.astro';
 import InstallPrompt from '../components/astro/InstallPrompt.astro';
 import { LANG, LOCALES, localePath, ui, type Locale } from '../i18n';
 import { FAVORITES_EVENT, FAVORITES_KEY } from '../lib/favorites';
+import { CATEGORIES } from '../tools/types';
 
 interface Props {
   title: string;
@@ -43,6 +44,12 @@ const tabTitle = documentTitle ?? (title === 'Nhako Tools' ? title : `${title} |
 // Social cards have no such context, so they keep the brand.
 const socialTitle = title === 'Nhako Tools' ? title : `${title} | Nhako Tools`;
 const ogImage = new URL(`/og/${category ?? 'default'}.png`, site);
+
+// Pages the header and tab bar lead to, in both languages: the ones worth
+// prerendering on hover (see the speculation rules in <head>).
+const SECTION_PATHS = LOCALES.flatMap((l) =>
+  ['/', ...CATEGORIES.map((c) => `/${c}`), '/malaysia', '/favourites', '/feedback', '/about', '/privacy'].map((p) => localePath(l, p)),
+);
 
 ---
 
@@ -100,11 +107,143 @@ const ogImage = new URL(`/og/${category ?? 'default'}.png`, site);
       It records page views, never files or tool input. See /privacy.
     */}
     {import.meta.env.PROD && (
-      <>
-        <script is:inline>window.va = window.va || function (...args) { (window.vaq = window.vaq || []).push(args); };</script>
-        <script is:inline defer src="/_vercel/insights/script.js"></script>
-      </>
+      <script is:inline>
+        window.va = window.va || function (...args) { (window.vaq = window.vaq || []).push(args); };
+        // A prerendered page (see the speculation rules below) is one somebody
+        // hovered, not one they opened, so the view only counts once it is
+        // actually shown.
+        (() => {
+          const load = () => {
+            const s = document.createElement('script');
+            s.src = '/_vercel/insights/script.js';
+            s.defer = true;
+            document.head.append(s);
+          };
+          if (document.prerendering) document.addEventListener('prerenderingchange', load, { once: true });
+          else load();
+        })();
+      </script>
     )}
+
+    {/*
+      Instant section switches with no JavaScript bundle: Chrome and Edge
+      prerender a section page while the pointer rests on its link (or from
+      the moment a finger lands on a tab), so the page is already painted
+      when the click arrives. Only the section pages: a tool page starts
+      engines and workers, which is not worth doing for a hover. Everything
+      else gets a plain prefetch of its HTML. Browsers without speculation
+      rules ignore the block.
+    */}
+    <script type="speculationrules" is:inline set:html={JSON.stringify({
+      prerender: [{ where: { or: SECTION_PATHS.map((p) => ({ href_matches: p })) }, eagerness: 'moderate' }],
+      prefetch: [{ where: { and: [{ href_matches: '/*' }, { not: { or: SECTION_PATHS.map((p) => ({ href_matches: p })) } }] }, eagerness: 'moderate' }],
+    })} />
+
+    {/*
+      Coming from another page of this site, hold the first paint until the
+      tab bar has been parsed (the header comes before it). A page change
+      captures the incoming page at its first paint; without this, that could
+      land before either bar had been parsed, and at random: the same click
+      kept the bars solid on one run and blanked them for four frames on the
+      next (both reproduced 2026-09-25).
+
+      Added by script, and only for such a navigation, because the hold is not
+      free: always on, first paint came ~135ms later at 4x CPU throttling
+      (largest paint unchanged). A visit from a search result or a typed
+      address has nothing to transition from, so it paints at once. It names
+      the tab bar, not <main>: the hold lasts until the element's end tag, and
+      pointed at <main> it held the paint for the whole page (+130 to +590ms).
+      Chrome and Edge; elsewhere this does nothing.
+    */}
+    <script is:inline>
+      (() => {
+        const from = window.navigation?.activation?.from;
+        if (!from || !from.url || new URL(from.url).origin !== location.origin) return;
+        const hold = document.createElement('link');
+        hold.rel = 'expect';
+        hold.href = '#tabbar';
+        hold.setAttribute('blocking', 'render');
+        document.head.append(hold);
+      })();
+    </script>
+
+    {/*
+      The sliding "you are here" pill in the header and the tab bar. Defined
+      once, here, and called from an inline script right after each list, so
+      it is placed before the first paint and never jumps.
+
+      Moving between pages, the pill starts where it was on the page just
+      left and slides to its new place: the page being left writes its own
+      position on the way out (pageswap, or a link click where pageswap is
+      missing), and the new page reads it back in pagereveal, which runs
+      after a prerendered page is activated and before its first frame.
+      With no JavaScript the current link is still tinted by app.css.
+    */}
+    {/* The favourites count beside Favourites, filled in before the first
+        paint. Left to the script at the end of <body>, the first frame of
+        every page drew the header without it and then shifted Feedback 20px
+        right a frame later, and the pill was measured before the shift. */}
+    <script is:inline define:vars={{ FAV_KEY: FAVORITES_KEY }}>
+      window.nhakoFavBadges = (root) => {
+        let n = 0;
+        try { const v = JSON.parse(localStorage.getItem(FAV_KEY) || '[]'); if (Array.isArray(v)) n = v.filter((x) => typeof x === 'string').length; } catch { /* none */ }
+        for (const badge of root?.querySelectorAll('[data-fav-count]') ?? []) {
+          badge.textContent = String(n);
+          badge.hidden = n === 0;
+        }
+      };
+    </script>
+    <script is:inline>
+      window.nhakoIndicator = (root) => {
+        window.nhakoFavBadges?.(root);
+        const list = root.querySelector('[data-ind-list]');
+        const ind = list?.querySelector('[data-ind]');
+        const current = list?.querySelector('[data-ind-key][aria-current="page"], [data-ind-key][data-ind-current]');
+        if (!ind || !current) return;
+        const KEY = 'nhako:ind:' + list.dataset.indList;
+
+        const place = (el) => {
+          const a = el.getBoundingClientRect();
+          const l = list.getBoundingClientRect();
+          // Relative to the list's padding box, where the pill is positioned:
+          // the tab bar's pill has a 1px border.
+          list.style.setProperty('--ind-x', (a.left - l.left - list.clientLeft + list.scrollLeft).toFixed(1) + 'px');
+          list.style.setProperty('--ind-w', a.width.toFixed(1) + 'px');
+          list.style.setProperty('--ind-y', (a.top - l.top - list.clientTop).toFixed(1) + 'px');
+          list.style.setProperty('--ind-h', a.height.toFixed(1) + 'px');
+        };
+        const settle = () => { delete list.dataset.indAnim; place(current); list.dataset.indReady = ''; };
+
+        const arrive = () => {
+          let from = null;
+          try {
+            const saved = JSON.parse(sessionStorage.getItem(KEY) || 'null');
+            sessionStorage.removeItem(KEY);
+            if (saved && Date.now() - saved.t < 10000) from = list.querySelector('[data-ind-key="' + saved.k + '"]');
+          } catch { /* storage blocked: no slide, the pill is simply there */ }
+          if (!from || from === current || !list.offsetWidth) return settle();
+          delete list.dataset.indAnim;
+          place(from);
+          list.dataset.indReady = '';
+          void ind.offsetWidth;
+          list.dataset.indAnim = '';
+          place(current);
+        };
+
+        const leave = () => {
+          try { sessionStorage.setItem(KEY, JSON.stringify({ k: current.dataset.indKey, t: Date.now() })); } catch { /* fine */ }
+        };
+
+        settle();
+        if ('onpagereveal' in window) addEventListener('pagereveal', arrive);
+        if ('onpageswap' in window) addEventListener('pageswap', leave);
+        else document.addEventListener('click', (e) => {
+          const a = e.target instanceof Element ? e.target.closest('a[href]') : null;
+          if (a && !e.defaultPrevented && a.origin === location.origin && !a.target) leave();
+        });
+        addEventListener('resize', () => requestAnimationFrame(settle));
+      };
+    </script>
 
     {/*
       Blocking, inline, before first paint. The old build resolved the theme in
@@ -138,11 +277,17 @@ const ogImage = new URL(`/og/${category ?? 'default'}.png`, site);
       {t.skip}
     </a>
     <Nav locale={locale} path={path} alternates={alternates} />
+    {/* The tab bar is fixed to the bottom of the screen but sits here, before
+        the page, on purpose. A page change captures the new page as soon as
+        it can paint, which can be before the parser reaches the end of a long
+        page: at the end of <body> the bar was missing from that capture, so
+        it vanished for a few frames, faded back in with the page and never
+        slid its current-tab capsule (screen recording, 2026-09-25). */}
+    <TabBar locale={locale} path={path} alternates={alternates} />
     <main id="main" class="flex-1 w-full">
       <slot />
     </main>
     <Footer locale={locale} />
-    <TabBar locale={locale} path={path} alternates={alternates} />
     <InstallPrompt locale={locale} />
 
     {/*
@@ -190,6 +335,8 @@ const ogImage = new URL(`/og/${category ?? 'default'}.png`, site);
         });
         addEventListener(EVENT, sync);
         addEventListener('storage', (e) => { if (e.key === KEY) sync(); });
+        // Prerendered on hover, shown later: a star tapped in between counts.
+        document.addEventListener('prerenderingchange', sync);
         sync();
       })();
     </script>
