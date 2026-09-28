@@ -5,6 +5,7 @@ import { surface, toBlob } from '../../lib/canvas';
 import { fitToSize, kbToBytes, exactBytes, targetLabel } from '../../lib/fit-size';
 import { sayer, type Say } from '../say';
 import { openPdf } from './load';
+import { shrinkImages, type ShrinkReport } from './shrink-images';
 
 /**
  * Two genuinely different strategies, named honestly.
@@ -59,6 +60,43 @@ async function buildPdf(pages: Awaited<ReturnType<typeof renderPages>>, quality:
 
 const baseName = (file: File) => file.name.replace(/\.pdf$/i, '') + '-compressed.pdf';
 
+/** 1754 px is the long side of an A4 page at 150 dpi: sharp on screen and on paper. */
+const IMAGE_SIDE = 1754;
+
+/**
+ * Structural repack: pdf-lib's object streams, then qpdf's full recompression
+ * (every Flate stream re-deflated at level 9, unused resources dropped).
+ * pdf-lib alone made the IRS Publication 17 (142 pages) 9% LARGER, and the
+ * old code handed that back as "already optimally packed". qpdf is only
+ * fetched here, the first time a PDF is compressed.
+ */
+async function repack(bytes: Uint8Array): Promise<Uint8Array> {
+  try {
+    const { qpdf } = await import('../../lib/qpdf');
+    const out = await qpdf(bytes, [
+      '--object-streams=generate', '--compress-streams=y', '--recompress-flate',
+      '--compression-level=9', '--remove-unreferenced-resources=yes',
+      '/in.pdf', '/out.pdf',
+    ]);
+    if ((out.code === 0 || out.code === 3) && out.bytes && out.bytes.byteLength < bytes.byteLength) return out.bytes;
+  } catch { /* qpdf unavailable: the pdf-lib save stands */ }
+  return bytes;
+}
+
+/**
+ * The smallest of the candidates, or the original file itself.
+ *
+ * iLovePDF, Smallpdf and Acrobat never hand back a file bigger than the one
+ * given, and neither does this: when nothing helps, the original comes back
+ * untouched with a plain note, rather than a "compressed" copy that weighs more.
+ */
+function smallest(file: File, candidates: Uint8Array[]): Uint8Array | null {
+  const best = candidates.reduce<Uint8Array | null>((a, b) => (!a || b.byteLength < a.byteLength ? b : a), null);
+  return best && best.byteLength < file.size ? best : null;
+}
+
+const pct = (from: number, to: number) => Math.max(1, Math.round((1 - to / from) * 100));
+
 export const run: FileRun = async (files, opts, ctx) => {
   const ms = opts.locale === 'ms';
   const say = sayer(opts);
@@ -66,40 +104,61 @@ export const run: FileRun = async (files, opts, ctx) => {
   if (!file) throw new ToolError(ms ? 'Tiada fail dipilih.' : 'No file selected.');
   const original = file.size;
   const targetKb = Number(opts.target ?? 0);
+  const mode = opts.mode === 'lossless' || opts.mode === 'strong' ? opts.mode : 'images';
+  const quality = Math.min(0.95, Math.max(0.3, Number(opts.quality ?? 70) / 100));
 
-  if (targetKb > 0 || opts.mode !== 'strong') {
-    ctx.onProgress(0.1);
+  if (targetKb > 0) return toTarget(file, kbToBytes(targetKb), ms, say, ctx);
+
+  if (mode !== 'strong') {
+    ctx.onProgress(0.05, say('Reading the PDF', 'Membaca PDF'));
     const doc = await openPdf(file, say);
-    ctx.onProgress(0.2);
-    const bytes = await doc.save({ useObjectStreams: true });
-
-    if (targetKb > 0) return toTarget(file, bytes, kbToBytes(targetKb), ms, say, ctx);
-
+    let report: ShrinkReport | null = null;
+    if (mode === 'images') {
+      report = await shrinkImages(doc, {
+        quality, maxSide: IMAGE_SIDE,
+        onImage: (i, n) => ctx.onProgress(0.1 + (n ? (i / n) * 0.6 : 0.6), say(`Shrinking images (${i} of ${n})`, `Mengecilkan imej (${i} daripada ${n})`)),
+      });
+    }
+    ctx.onProgress(0.75, say('Repacking', 'Memadatkan semula'));
+    const saved = await doc.save({ useObjectStreams: true });
+    const best = smallest(file, [saved, await repack(saved)]);
     ctx.onProgress(1);
-    const saved = original - bytes.byteLength;
+    if (!best) {
+      return {
+        blob: file,
+        filename: file.name,
+        summary: mode === 'images' && report && report.images === 0
+          ? say('No images to shrink and the structure is already tight, so the original is unchanged. Extreme mode flattens pages for a real saving', 'Tiada imej untuk dikecilkan dan strukturnya sudah padat, jadi fail asal tidak diubah. Mod Ekstrem meratakan halaman untuk penjimatan sebenar')
+          : say('Already as small as it gets without losing quality, so the original is unchanged', 'Sudah sekecil mungkin tanpa kehilangan kualiti, jadi fail asal tidak diubah'),
+      };
+    }
+    const shrunk = report?.replaced
+      ? say(`, ${report.replaced} image${report.replaced === 1 ? '' : 's'} downsized`, `, ${report.replaced} imej dikecilkan`)
+      : '';
     return {
-      blob: bytesToBlob(bytes, 'application/pdf'),
+      blob: bytesToBlob(best, 'application/pdf'),
       filename: baseName(file),
-      summary: saved > 0
-        ? (ms ? `${Math.round((saved / original) * 100)}% lebih kecil, teks masih boleh dipilih` : `${Math.round((saved / original) * 100)}% smaller, text still selectable`)
-        : (ms ? 'Sudah dipadatkan sebaiknya. Cuba mod Kuat untuk pengurangan sebenar' : 'Already optimally packed. Try Strong mode for a real reduction'),
+      summary: say(`${pct(original, best.byteLength)}% smaller${shrunk}, text still selectable`, `${pct(original, best.byteLength)}% lebih kecil${shrunk}, teks masih boleh dipilih`),
     };
   }
 
-  // Strong: render each page and re-encode it as a JPEG. Shrinks scans
-  // dramatically; the cost is that text stops being selectable.
+  // Extreme: render each page and re-encode it as a JPEG. Shrinks scans
+  // and vector-heavy files hardest; the cost is that text stops being selectable.
   const source = await loadDocument(file, say);
   const pages = await renderPages(source, RENDER_SCALE, ms, (i) => ctx.onProgress((i / source.numPages) * 0.9));
-  const bytes = await buildPdf(pages, Number(opts.quality ?? 70) / 100);
+  const bytes = await buildPdf(pages, quality);
   ctx.onProgress(1);
-  const saved = original - bytes.byteLength;
-
+  if (bytes.byteLength >= original) {
+    return {
+      blob: file,
+      filename: file.name,
+      summary: say('Flattening would not make this PDF any smaller, so the original is unchanged', 'Meratakan tidak akan menjadikan PDF ini lebih kecil, jadi fail asal tidak diubah'),
+    };
+  }
   return {
     blob: bytesToBlob(bytes, 'application/pdf'),
     filename: baseName(file),
-    summary: saved > 0
-      ? (ms ? `${Math.round((saved / original) * 100)}% lebih kecil, teks tidak lagi boleh dipilih` : `${Math.round((saved / original) * 100)}% smaller, text is no longer selectable`)
-      : (ms ? 'Tidak lebih kecil daripada asal kerana PDF ini sudah cekap. Teks tidak lagi boleh dipilih.' : `No smaller than the original, because this PDF was already efficient. Text is no longer selectable.`),
+    summary: say(`${pct(original, bytes.byteLength)}% smaller, text is no longer selectable`, `${pct(original, bytes.byteLength)}% lebih kecil, teks tidak lagi boleh dipilih`),
   };
 };
 
@@ -111,21 +170,43 @@ export const run: FileRun = async (files, opts, ctx) => {
  * highest quality and resolution that still fits.
  */
 async function toTarget(
-  file: File, lossless: Uint8Array, target: number, ms: boolean, say: Say, ctx: Parameters<FileRun>[2],
+  file: File, target: number, ms: boolean, say: Say, ctx: Parameters<FileRun>[2],
 ): ReturnType<FileRun> {
   const label = targetLabel(target / 1000);
+  const underText = (size: number, extra = '') => (ms
+    ? `Di bawah ${label}: ${exactBytes(size)}${extra}, teks masih boleh dipilih`
+    : `Under ${label}: ${exactBytes(size)}${extra}, text still selectable`);
 
-  if (Math.min(file.size, lossless.byteLength) <= target) {
-    const useOriginal = file.size <= lossless.byteLength;
-    const size = useOriginal ? file.size : lossless.byteLength;
+  if (file.size <= target) {
     ctx.onProgress(1);
-    return {
-      blob: useOriginal ? file : bytesToBlob(lossless, 'application/pdf'),
-      filename: useOriginal ? file.name : baseName(file),
-      summary: ms
-        ? `Di bawah ${label}: ${exactBytes(size)}, teks masih boleh dipilih`
-        : `Under ${label}: ${exactBytes(size)}, text still selectable`,
-    };
+    return { blob: file, filename: file.name, summary: underText(file.size) };
+  }
+
+  ctx.onProgress(0.05, say('Repacking', 'Memadatkan semula'));
+  const lossless = await repack(await (await openPdf(file, say)).save({ useObjectStreams: true }));
+  if (lossless.byteLength <= target) {
+    ctx.onProgress(1);
+    return { blob: bytesToBlob(lossless, 'application/pdf'), filename: baseName(file), summary: underText(lossless.byteLength) };
+  }
+
+  // Next, the images inside, stepping down quality then resolution. Text
+  // and vector drawings are never touched on this path.
+  const ladder: Array<[number, number]> = [[0.75, 1754], [0.6, 1754], [0.5, 1240], [0.4, 1000]];
+  for (const [n, [q, side]] of ladder.entries()) {
+    ctx.onProgress(0.1 + n * 0.08, say('Shrinking images to fit', 'Mengecilkan imej supaya muat'));
+    const doc = await openPdf(file, say);
+    const report = await shrinkImages(doc, { quality: q, maxSide: side });
+    if (report.replaced === 0) break; // nothing left that images can give
+    const bytes = await repack(await doc.save({ useObjectStreams: true }));
+    if (bytes.byteLength <= target) {
+      ctx.onProgress(1);
+      const dpi = Math.round((side / 11.69));
+      return {
+        blob: bytesToBlob(bytes, 'application/pdf'),
+        filename: baseName(file),
+        summary: underText(bytes.byteLength, ms ? `, imej kira-kira ${dpi} dpi` : `, images at about ${dpi} dpi`),
+      };
+    }
   }
 
   const source = await loadDocument(file, say);

@@ -89,6 +89,7 @@ const index = buildSearchIndex(locale);
             aria-selected="${i === active}"
             data-index="${i}"
             data-href="${escape(t.href)}"
+            style="--i:${i}"
             class="flex min-h-11 cursor-pointer items-center gap-3 rounded px-3 py-2 active:bg-sunken ${i === active ? 'bg-sunken' : ''}"
           >
             <span class="text-sm font-medium">${escape(t.name)}</span>
@@ -112,14 +113,28 @@ const index = buildSearchIndex(locale);
     input?.setAttribute('aria-activedescendant', results.length ? `cmd-opt-${active}` : '');
   }
 
+  let closing = 0;
   function setOpen(open: boolean) {
-    overlay?.toggleAttribute('hidden', !open);
+    clearTimeout(closing);
     if (open) {
+      overlay?.removeAttribute('data-closing');
+      overlay?.toggleAttribute('hidden', false);
       if (input) input.value = '';
       active = 0;
+      // The first results rise in one after another; later re-renders
+      // (typing, hovering) replace the list in place and must not replay it.
+      list?.classList.add('m-stagger');
       render();
+      setTimeout(() => list?.classList.remove('m-stagger'), 600);
       requestAnimationFrame(() => input?.focus());
     } else {
+      // Fades out rather than vanishing; motion.css times it at 140ms.
+      const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      overlay?.setAttribute('data-closing', '');
+      closing = window.setTimeout(() => {
+        overlay?.toggleAttribute('hidden', true);
+        overlay?.removeAttribute('data-closing');
+      }, reduced ? 0 : 140);
       openBtn?.focus();
     }
   }

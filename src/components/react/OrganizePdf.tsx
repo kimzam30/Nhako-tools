@@ -5,6 +5,7 @@ import { openForPreview, renderPage } from '../../lib/pdf-render';
 import { bytes } from '../../lib/format';
 import { filesBeforeHydration } from './hydration';
 import { useDragOrder, dragClass, DROP_GAP } from './drag-order';
+import { useFlip } from './flip';
 import type { Locale } from '../../i18n/paths';
 import { BusyLabel } from './NeraLoader';
 
@@ -204,6 +205,10 @@ export default function OrganizePdf({ locale = 'en', accept }: { locale?: Locale
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Pages spring to their new places when the order changes.
+  const gridRef = useRef<HTMLOListElement>(null);
+  useFlip(gridRef);
+
   if (sources.length === 0) {
     return (
       <section>
@@ -214,7 +219,7 @@ export default function OrganizePdf({ locale = 'en', accept }: { locale?: Locale
           onDragOver={(e) => { e.preventDefault(); setDropZone(true); }}
           onDragLeave={() => setDropZone(false)}
           onDrop={(e) => { e.preventDefault(); setDropZone(false); void add(e.dataTransfer?.files ?? null); }}
-          className={`flex min-h-44 w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-6 py-10 text-center transition-colors duration-[120ms] ${dropZone ? 'border-accent bg-accent-subtle' : 'border-border bg-surface hover:border-border-strong'}`}
+          className={`drop-zone flex min-h-44 w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-6 py-10 text-center ${dropZone ? 'border-accent bg-accent-subtle' : 'border-border bg-surface hover:border-border-strong'}`}
         >
           <span className="text-sm font-medium"><DropLabel drop={t.drop} tap={t.tap} /></span>
           <span className="text-xs text-muted">{t.dropSub}</span>
@@ -260,11 +265,12 @@ export default function OrganizePdf({ locale = 'en', accept }: { locale?: Locale
       {error && <p data-status-message className="rounded-lg border border-err bg-err-subtle px-4 py-3 text-sm text-err">{error}</p>}
       {items.length === 0 && <p className="text-sm text-muted">{t.empty}</p>}
 
-      <ol className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4" aria-label={t.pages(items.length)}>
+      <ol ref={gridRef} className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4" aria-label={t.pages(items.length)}>
         {items.map((it, i) => (
           <li
             key={it.id}
             data-card={it.id}
+            data-flip={it.id}
             {...drag.props(it)}
             className={`relative flex cursor-grab flex-col gap-2 rounded-lg border bg-surface p-2 transition-[border-color,opacity,box-shadow] duration-150 active:cursor-grabbing ${dragClass(drag.dragId === it.id, drag.landed === it.id)}`}
           >

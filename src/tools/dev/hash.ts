@@ -1,9 +1,11 @@
 import type { TextRun } from '../types';
 import { sayer } from '../say';
+import { md5 } from './md5';
 
-export type Algo = 'SHA-1' | 'SHA-256' | 'SHA-384' | 'SHA-512';
+export type Algo = 'MD5' | 'SHA-1' | 'SHA-256' | 'SHA-384' | 'SHA-512';
 
 export async function hash(text: string, algo: Algo): Promise<string> {
+  if (algo === 'MD5') return md5(new TextEncoder().encode(text));
   const digest = await crypto.subtle.digest(algo, new TextEncoder().encode(text));
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }

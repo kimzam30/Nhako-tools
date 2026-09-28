@@ -2,13 +2,13 @@ import { ToolError, type FileRun } from '../types';
 import { sayer, type Say } from '../say';
 import { decode, draw, toBlob, replaceExtension, formatOf, EXTENSION, type Encodable } from '../../lib/canvas';
 import { fitToSize, kbToBytes, exactBytes, targetLabel } from '../../lib/fit-size';
+import { lossyPng } from '../../lib/png-quant';
 
 /**
  * Output format for "Keep original format".
  *
- * PNG stays PNG: it is lossless, so the browser's encoder ignores the quality
- * setting and usually writes a LARGER file than a PNG that was optimised
- * elsewhere. Formats a canvas cannot write (GIF, BMP, HEIC...) become JPG.
+ * PNG stays PNG, and is shrunk by reducing it to a palette (see run below),
+ * because the browser's own PNG encoder ignores the quality setting. Formats a canvas cannot write (GIF, BMP, HEIC...) become JPG.
  */
 function outputFormat(file: File, choice: string): Encodable {
   if (choice !== 'auto') return `image/${choice}` as Encodable;
@@ -36,11 +36,28 @@ export const run: FileRun = async (files, opts, ctx) => {
   const choice = String(opts.format ?? 'auto');
 
   const encoded: { name: string; blob: Blob; before: number; kept: boolean }[] = [];
+  const paletteNotes = new Set<string>();
   for (const [i, file] of files.entries()) {
     const bitmap = await decode(file, say);
     const mime = outputFormat(file, choice);
-    const blob = await toBlob(draw(bitmap, bitmap.width, bitmap.height, mime), mime, quality, say);
+    const canvas = draw(bitmap, bitmap.width, bitmap.height, mime);
     bitmap.close();
+    let blob: Blob;
+    if (mime === 'image/png') {
+      // PNG is lossless, so a canvas re-encode has no quality to trade and
+      // was never smaller: this used to hand every PNG back untouched with
+      // "choose WebP". A palette PNG is what TinyPNG makes instead: on real
+      // files, 60 to 70% smaller, still a PNG, transparency intact.
+      const ctx2d = canvas.getContext('2d') as OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D;
+      const pixels = ctx2d.getImageData(0, 0, canvas.width, canvas.height).data;
+      const out = await lossyPng(pixels, canvas.width, canvas.height, quality >= 0.7 ? 256 : quality >= 0.5 ? 128 : 64);
+      blob = new Blob([out.bytes as BlobPart], { type: 'image/png' });
+      if (out.lossless) paletteNotes.add('lossless');
+      else paletteNotes.add(`${out.colours}`);
+      for (let p = 3; p < pixels.length; p += 4) if (pixels[p]! < 255) { paletteNotes.add('alpha'); break; }
+    } else {
+      blob = await toBlob(canvas, mime, quality, say);
+    }
 
     // A "compressed" file must never be bigger than what went in. When the
     // re-encode loses and the format is unchanged, hand back the original.
@@ -58,7 +75,13 @@ export const run: FileRun = async (files, opts, ctx) => {
   const after = encoded.reduce((n, e) => n + e.blob.size, 0);
   const change = before ? Math.round((1 - after / before) * 100) : 0;
   const keptCount = encoded.filter((e) => e.kept).length;
-  const pngKept = encoded.some((e) => e.kept && e.name.toLowerCase().endsWith('.png'));
+  const pngShrunk = encoded.some((e) => !e.kept && e.name.toLowerCase().endsWith('.png'));
+  const palette = [...paletteNotes];
+  const colours = palette.filter((p) => /^\d+$/.test(p)).sort((a, b) => Number(b) - Number(a))[0];
+  const alpha = paletteNotes.has('alpha');
+  const paletteLine = !pngShrunk ? null : !colours
+    ? { en: 'PNG repacked losslessly', ms: 'PNG dipadatkan tanpa kehilangan' }
+    : { en: `${colours}-colour PNG${alpha ? ', transparency kept' : ''}`, ms: `PNG ${colours} warna${alpha ? ', ketelusan dikekalkan' : ''}` };
 
   const ms = opts.locale === 'ms';
   const parts = ms
@@ -67,14 +90,14 @@ export const run: FileRun = async (files, opts, ctx) => {
       ...(keptCount > 0
         ? [`${keptCount === encoded.length ? 'asal' : `${keptCount} asal`} dikekalkan, pengekodan semula tidak lebih kecil`]
         : []),
-      ...(pngKept ? ['pilih WebP untuk mengecilkan PNG'] : []),
+      ...(paletteLine ? [paletteLine.ms] : []),
     ]
     : [
       change > 0 ? `${change}% smaller` : change < 0 ? `${-change}% larger` : 'Same size',
       ...(keptCount > 0
         ? [`${keptCount === encoded.length ? (encoded.length === 1 ? 'original' : 'originals') : `${keptCount} original${keptCount === 1 ? '' : 's'}`} kept, re-encoding was not smaller`]
         : []),
-      ...(pngKept ? ['choose WebP to shrink PNGs'] : []),
+      ...(paletteLine ? [paletteLine.en] : []),
     ];
   const summary = parts.join(', ');
 

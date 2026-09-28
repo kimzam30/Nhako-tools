@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { PDFDocument, PDFName, PDFDict, type PDFRawStream } from 'pdf-lib';
+import { PDFDocument, PDFArray, decodePDFRawStream, type PDFRawStream } from 'pdf-lib';
 import JSZip from 'jszip';
 
 /**
@@ -72,29 +72,20 @@ test.describe('Extract pages', () => {
 });
 
 test.describe('Grayscale PDF', () => {
-  test('every pixel of the converted page is grey', async ({ page }) => {
+  test('converts the colours in the PDF itself, so the text stays text', async ({ page }) => {
     test.setTimeout(90_000);
     await page.goto('/pdf/grayscale');
     await page.locator('input[type=file]').setInputFiles(threePages());
-    await expect(await done(page, 60_000)).toContainText('3 pages in grayscale at 150 dpi');
+    await expect(await done(page, 60_000)).toContainText('3 pages in grayscale, text still selectable');
     const doc = await PDFDocument.load(await saved(page));
     expect(doc.getPageCount()).toBe(3);
-    // The page picture is the one JPEG in page 1's resources.
-    const xobjects = doc.getPage(0).node.Resources()!.lookup(PDFName.of('XObject'), PDFDict);
-    const image = xobjects.lookup(xobjects.keys()[0]!) as PDFRawStream;
-    const jpeg = Buffer.from(image.getContents()).toString('base64');
-    const worst = await page.evaluate(async (b64) => {
-      const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
-      const bmp = await createImageBitmap(new Blob([bytes], { type: 'image/jpeg' }));
-      const c = new OffscreenCanvas(bmp.width, bmp.height);
-      const x = c.getContext('2d')!; x.drawImage(bmp, 0, 0);
-      const d = x.getImageData(0, 0, bmp.width, bmp.height).data;
-      let max = 0;
-      for (let i = 0; i < d.length; i += 4) max = Math.max(max, Math.abs(d[i]! - d[i + 1]!), Math.abs(d[i + 1]! - d[i + 2]!));
-      return max;
-    }, jpeg);
-    // JPEG chroma rounding allows a hair of difference; colour would be far more.
-    expect(worst).toBeLessThanOrEqual(3);
+    // Page 1's drawing instructions: no colour operator left, text still drawn as text.
+    const contents = doc.getPage(0).node.Contents()!;
+    const streams = contents instanceof PDFArray ? contents.asArray().map((r) => doc.context.lookup(r)) : [contents];
+    const ops = streams.map((st) => new TextDecoder('latin1').decode(decodePDFRawStream(st as PDFRawStream).decode())).join('\n');
+    expect(ops).not.toMatch(/(^|\s)[\d.]+\s+[\d.]+\s+[\d.]+\s+(rg|RG)(\s|$)/);
+    expect(ops).not.toMatch(/(^|\s)[\d.]+\s+[\d.]+\s+[\d.]+\s+[\d.]+\s+(k|K)(\s|$)/);
+    expect(ops).toMatch(/\s(Tj|TJ)(\s|$)/);
   });
 });
 

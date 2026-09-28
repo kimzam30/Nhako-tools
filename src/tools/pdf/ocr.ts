@@ -1,6 +1,6 @@
 import { ToolError, type FileRun } from '../types';
 import { bytesToBlob } from '../../lib/format';
-import { isOcrLanguage, recognize } from '../../lib/ocr';
+import { isOcrLanguage, recognizeUpright } from '../../lib/ocr';
 import { loadDocument } from '../../lib/pdfjs';
 import { normalizeRotation, uprightAnchor, visualSize } from '../../lib/pdf-geometry';
 import { sayer } from '../say';
@@ -31,6 +31,7 @@ export const run: FileRun = async (files, opts, ctx) => {
   const texts: string[] = [];
   let read = 0;
   let skipped = 0;
+  let turned = 0;
   let confidence = 0;
   let words = 0;
   for (let i = 0; i < pages.length; i++) {
@@ -55,21 +56,31 @@ export const run: FileRun = async (files, opts, ctx) => {
     await src.render({ canvas, canvasContext: c, viewport }).promise;
     src.cleanup();
 
-    const result = await recognize(canvas, lang, {
+    const result = await recognizeUpright(canvas, lang, {
       pdf: 'text',
       onProgress: (f, status) => tick(status.startsWith('recognizing') ? f : 0,
         status.startsWith('recognizing') ? say(`Reading page ${i + 1} of ${pages.length}`, `Membaca halaman ${i + 1} daripada ${pages.length}`) : say('Loading the OCR engine (once)', 'Memuatkan enjin OCR (sekali)')),
+      onProbe: () => tick(0.5, say(`Page ${i + 1} looks sideways, turning it`, `Halaman ${i + 1} kelihatan senget, memusingkannya`)),
     });
     canvas.width = canvas.height = 0;
+    result.canvas.width = result.canvas.height = 0;
     texts.push(`--- ${say('Page', 'Halaman')} ${i + 1} ---\n\n${result.text}`);
     confidence += result.confidence * result.words;
     words += result.words;
     read++;
+    const page = pages[i]!;
+    // A page scanned sideways or upside down is turned upright, the way
+    // Acrobat and OCRmyPDF do it. /Rotate is metadata, so nothing is
+    // re-encoded, and the text layer below is laid over the page as it now
+    // displays, which is exactly the picture Tesseract read.
+    if (result.turned) {
+      page.setRotation(degrees(normalizeRotation(page.getRotation().angle + result.turned)));
+      turned++;
+    }
     if (!result.pdf || result.words === 0) continue;
 
     // Lay the invisible text over the page as the reader sees it, mapped into
     // the page's own space so sideways-stored scans line up too.
-    const page = pages[i]!;
     const [layer] = await doc.embedPdf(result.pdf);
     const box = page.getCropBox();
     const rotation = normalizeRotation(page.getRotation().angle);
@@ -88,6 +99,7 @@ export const run: FileRun = async (files, opts, ctx) => {
   const summary = [
     say(`${read} page${read === 1 ? '' : 's'} read`, `${read} halaman dibaca`),
     skipped ? say(`${skipped} already had text`, `${skipped} sudah ada teks`) : '',
+    turned ? say(`${turned} turned upright`, `${turned} dipusingkan tegak`) : '',
     say(`${words.toLocaleString()} words, ${accuracy}% confidence`, `${words.toLocaleString()} perkataan, keyakinan ${accuracy}%`),
   ].filter(Boolean).join(', ');
 

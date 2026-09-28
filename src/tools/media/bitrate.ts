@@ -39,12 +39,17 @@ export function planBitrate(durationSeconds: number, targetMB: number, audioKbps
     throw new ToolError(say('Invalid audio bitrate.', 'Kadar bit audio tidak sah.'));
   }
 
-  // 1 MB = 1024 * 1024 bytes = 8192 kilobits.
-  const totalKbps = (targetMB * 8192) / durationSeconds;
+  // 1 MB = 1,000,000 bytes = 8000 kilobits: the way upload portals, chat
+  // apps and the other tools here count, so a file for "under 8 MB" passes
+  // however the other end counts. It used to be 1024 x 1024, and a real
+  // 60 s clip for an 8 MB target came out at 8,340,000 bytes.
+  // HEADROOM covers the container and the encoder's rate control, which
+  // overshoots a single-pass bitrate by a few percent.
+  const totalKbps = (targetMB * 8000 * HEADROOM) / durationSeconds;
   const videoKbps = Math.floor(totalKbps - audioKbps);
 
   if (videoKbps < MIN_VIDEO_KBPS) {
-    const minMB = ((MIN_VIDEO_KBPS + audioKbps) * durationSeconds) / 8192;
+    const minMB = ((MIN_VIDEO_KBPS + audioKbps) * durationSeconds) / (8000 * HEADROOM);
     throw new ToolError(say(
       `${targetMB} MB is too small for ${Math.round(durationSeconds)}s of video. ` +
       `The smallest workable target here is about ${Math.ceil(minMB)} MB.`,
@@ -56,6 +61,35 @@ export function planBitrate(durationSeconds: number, targetMB: number, audioKbps
   return {
     videoKbps,
     audioKbps,
-    predictedMB: ((videoKbps + audioKbps) * durationSeconds) / 8192,
+    predictedMB: ((videoKbps + audioKbps) * durationSeconds) / 8000,
   };
+}
+
+/** Share of the target the encode aims at; see planBitrate. */
+export const HEADROOM = 0.96;
+
+/**
+ * Below about this many bits per pixel per frame, H.264 turns to mush, and a
+ * smaller picture at the same bitrate looks better than a blocky big one.
+ * 720p at 30 fps and 1 Mbps sits right at it.
+ */
+const MIN_BPP = 0.035;
+const HEIGHTS = [2160, 1440, 1080, 720, 540, 480, 360, 240];
+
+/**
+ * The largest standard size, no bigger than the source, that the bitrate can
+ * fill: what 8mb.video and HandBrake's presets do instead of starving a 4K
+ * frame. Dimensions stay even, which 4:2:0 needs.
+ */
+export function fitResolution(width: number, height: number, fps: number, videoKbps: number): { width: number; height: number } {
+  const even = (n: number) => Math.max(2, Math.round(n / 2) * 2);
+  const short = Math.min(width, height);
+  const rate = Number.isFinite(fps) && fps > 0 ? Math.min(fps, 60) : 30;
+  for (const h of HEIGHTS) {
+    if (h > short) continue;
+    const k = h / short;
+    const bpp = (videoKbps * 1000) / (width * k * height * k * rate);
+    if (bpp >= MIN_BPP || h === HEIGHTS[HEIGHTS.length - 1]) return { width: even(width * k), height: even(height * k) };
+  }
+  return { width: even(width), height: even(height) };
 }

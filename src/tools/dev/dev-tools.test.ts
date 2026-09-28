@@ -358,3 +358,36 @@ describe('CSS shadow generator', () => {
     expect(r.preview).toMatch(/^box-shadow: /);
   });
 });
+
+describe('md5 (RFC 1321), against Node crypto', async () => {
+  const { md5 } = await import('./md5');
+  const { createHash } = await import('node:crypto');
+  it('matches the RFC test suite', () => {
+    expect(md5(new TextEncoder().encode(''))).toBe('d41d8cd98f00b204e9800998ecf8427e');
+    expect(md5(new TextEncoder().encode('abc'))).toBe('900150983cd24fb0d6963f7d28e17f72');
+    expect(md5(new TextEncoder().encode('12345678901234567890123456789012345678901234567890123456789012345678901234567890'))).toBe('57edf4a22be3c955ac49da2e2107b67a');
+  });
+  it('matches Node on unicode, block edges (55, 56, 63, 64, 65 bytes) and 1 MB', () => {
+    const cases = ['héllo 🎉 wörld', 'a'.repeat(55), 'a'.repeat(56), 'a'.repeat(63), 'a'.repeat(64), 'a'.repeat(65)];
+    const big = new Uint8Array(1 << 20).map((_, i) => (i * 31) & 0xff);
+    for (const c of cases) expect(md5(new TextEncoder().encode(c)), c.slice(0, 10)).toBe(createHash('md5').update(c).digest('hex'));
+    expect(md5(big)).toBe(createHash('md5').update(big).digest('hex'));
+  });
+});
+
+describe('uuid v7 (RFC 9562)', async () => {
+  const { uuidv7, generate } = await import('./uuid');
+  it('has version 7, the RFC variant, and the time up front', () => {
+    const id = uuidv7(0x0189_3c2a_8b00);
+    expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+    expect(id.replace(/-/g, '').slice(0, 12)).toBe('01893c2a8b00');
+  });
+  it('sorts in creation order across milliseconds', () => {
+    const ids = [uuidv7(1_700_000_000_000), uuidv7(1_700_000_000_001), uuidv7(1_700_000_005_000)];
+    expect([...ids].sort()).toEqual(ids);
+  });
+  it('bulk generation honours the version', () => {
+    expect(generate(5, { version: '7' }).every((id) => id[14] === '7')).toBe(true);
+    expect(generate(5, { version: '4' }).every((id) => id[14] === '4')).toBe(true);
+  });
+});

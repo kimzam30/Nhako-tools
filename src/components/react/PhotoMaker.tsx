@@ -387,7 +387,7 @@ export default function PhotoMaker({ locale = 'en', accept }: { locale?: Locale;
           onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
           onDragLeave={() => setDragging(false)}
           onDrop={(e) => { e.preventDefault(); setDragging(false); void load(e.dataTransfer?.files?.[0]); }}
-          className={`flex min-h-44 w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-6 py-10 text-center transition-colors duration-[120ms] ${
+          className={`drop-zone flex min-h-44 w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-6 py-10 text-center ${
             dragging ? 'border-accent bg-accent-subtle' : 'border-border bg-surface hover:border-border-strong'
           }`}
         >

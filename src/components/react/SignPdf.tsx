@@ -336,7 +336,7 @@ export default function SignPdf({ locale = 'en', accept }: { locale?: Locale; ac
           onDragOver={(e) => { e.preventDefault(); setDropZone(true); }}
           onDragLeave={() => setDropZone(false)}
           onDrop={(e) => { e.preventDefault(); setDropZone(false); void load(e.dataTransfer?.files?.[0]); }}
-          className={`flex min-h-44 w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-6 py-10 text-center transition-colors duration-[120ms] ${dropZone ? 'border-accent bg-accent-subtle' : 'border-border bg-surface hover:border-border-strong'}`}
+          className={`drop-zone flex min-h-44 w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-6 py-10 text-center ${dropZone ? 'border-accent bg-accent-subtle' : 'border-border bg-surface hover:border-border-strong'}`}
         >
           <span className="text-sm font-medium"><DropLabel drop={t.drop} tap={t.tap} /></span>
           <span className="text-xs text-muted">{t.dropSub}</span>
@@ -385,9 +385,9 @@ export default function SignPdf({ locale = 'en', accept }: { locale?: Locale; ac
               <span className="mb-1 block text-2xs font-semibold uppercase tracking-wider text-muted">{t.image}</span>
               <input type="file" accept="image/*" onChange={(e) => void uploadSignature(e.target.files?.[0])} className="text-xs" />
             </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={whiteOut} onChange={(e) => setWhiteOut(e.target.checked)} className="accent-[var(--accent)]" />
+            <label data-no-press className="flex items-center justify-between gap-3 text-sm">
               {t.whiteOut}
+              <input type="checkbox" role="switch" checked={whiteOut} onChange={(e) => setWhiteOut(e.target.checked)} className="switch" />
             </label>
           </div>
         )}

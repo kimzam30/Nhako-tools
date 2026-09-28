@@ -249,6 +249,239 @@ const SECTION_PATHS = LOCALES.flatMap((l) =>
     </script>
 
     {/*
+      Inside the Android app (the Trusted Web Activity in plan.md), the page
+      is told so by its start URL (?source=twa) or by the referrer Android
+      sets (android-app://com.nhako.tools/, verified on the emulator
+      2026-09-29), and remembers it for the session so every later page knows
+      too. Google Play's Payments policy exempts only "tax exempt donations"
+      from Play billing, so the coffee links are hidden there (app.css).
+    */}
+    <script is:inline>
+      try {
+        if (document.referrer.startsWith('android-app://com.nhako.tools') || new URLSearchParams(location.search).get('source') === 'twa') sessionStorage.setItem('nhako:app', 'android');
+        if (sessionStorage.getItem('nhako:app') === 'android') document.documentElement.dataset.app = 'android';
+      } catch { /* storage blocked: treated as the website */ }
+    </script>
+
+    {/*
+      TOUCH AND MOTION (Kim, 2026-09-29: "smooth like Apple apps, every touch
+      and swipe has an animation cue, every slide moves, nothing just
+      appears").
+
+      1. Every touchable thing answers the finger: it sinks as it is pressed
+         and springs back on release, the way UIKit controls do. Sized to the
+         element (a tab icon sinks further than a whole card). Done with the
+         Web Animations API on the separate `scale` property, so it never
+         fights a Tailwind transition or an element's own transform, and it
+         needs no class on anything. A touch that turns into a scroll never
+         shows it: the press waits 50ms, and a move or pointercancel drops it.
+      2. Page changes are told which way they go (see motion.css): deeper is a
+         push from the right, shallower or Back is a pop, and switching tabs
+         is a quick dip, as in a native tab bar.
+      3. The More sheet follows a finger dragged down and is flung away.
+
+      Inline and in <head> because pagereveal fires before the first frame.
+      All of it stands down under prefers-reduced-motion.
+    */}
+    <script is:inline>
+      (() => {
+        const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+        const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        // Velocity at the moment of release (px/ms), from the last 80ms of
+        // movement, and where that would carry the thing: UIKit decides a
+        // fling by projection, not by the average speed of the whole drag.
+        const track = (s, at) => { const now = performance.now(); s.push([at, now]); while (s.length > 2 && now - s[0][1] > 80) s.shift(); };
+        const flingV = (s) => (s.length < 2 ? 0 : (s[s.length - 1][0] - s[0][0]) / Math.max(1, s[s.length - 1][1] - s[0][1]));
+        // UIScrollView.DecelerationRate.fast (0.99 per ms): coasting adds v x 99 px.
+        const projected = (at, v) => at + (v * 0.99) / (1 - 0.99);
+
+        // --- 1. Press feedback ------------------------------------------------
+        const PRESSABLE = 'a[href], button, [role="button"], [role="tab"], [role="option"], summary, label[for], [data-press]';
+        let held = null;
+        let pending = 0;
+        let origin = null;
+        const sink = (el) => {
+          const r = el.getBoundingClientRect();
+          const m = Math.max(r.width, r.height);
+          return m < 56 ? 0.86 : m < 140 ? 0.94 : m < 360 ? 0.97 : 0.985;
+        };
+        const skip = (el) => el.matches(':disabled, [aria-disabled="true"], [data-no-press], [data-no-press] *')
+          || /(^|\s)active:scale/.test(el.className?.baseVal ?? el.className ?? '')
+          || getComputedStyle(el).display === 'inline';
+        const down = (el) => {
+          el.animate([{ scale: String(sink(el)) }], { duration: 110, easing: 'cubic-bezier(0.2, 0, 0, 1)', fill: 'forwards', id: 'nhako-press' });
+        };
+        const up = () => {
+          clearTimeout(pending);
+          const el = held;
+          const tapped = origin && el && !el.getAnimations().some((a) => a.id === 'nhako-press');
+          held = null;
+          origin = null;
+          if (!el) return;
+          const from = getComputedStyle(el).scale;
+          for (const a of el.getAnimations()) if (a.id === 'nhako-press') a.cancel();
+          const spring = css('--spring-press') || 'ease-out';
+          // A tap quicker than the 50ms wait still gets the whole sink and spring.
+          if (tapped) el.animate([{ scale: '1' }, { scale: String(sink(el)), offset: 0.25 }, { scale: '1' }], { duration: 480, easing: 'ease-out', id: 'nhako-release' });
+          else el.animate([{ scale: from === 'none' ? '1' : from }, { scale: '1' }], { duration: 450, easing: spring, id: 'nhako-release' });
+        };
+        const cancel = () => {
+          // A touch that became a scroll: let go without the pulse.
+          clearTimeout(pending);
+          const el = held;
+          held = null;
+          origin = null;
+          if (!el) return;
+          const from = getComputedStyle(el).scale;
+          for (const a of el.getAnimations()) if (a.id === 'nhako-press') a.cancel();
+          if (from !== 'none' && from !== '1') el.animate([{ scale: from }, { scale: '1' }], { duration: 300, easing: 'ease-out' });
+        };
+        addEventListener('pointerdown', (e) => {
+          if (reduced.matches || e.button > 0) return;
+          const el = e.target instanceof Element ? e.target.closest(PRESSABLE) : null;
+          if (!el || skip(el)) return;
+          cancel();
+          held = el;
+          origin = { x: e.clientX, y: e.clientY };
+          // A finger that is about to scroll should not make the card it
+          // landed on flinch; a mouse press has no such ambiguity.
+          if (e.pointerType === 'mouse') down(el);
+          else pending = setTimeout(() => { if (held === el) down(el); }, 50);
+        }, { passive: true, capture: true });
+        addEventListener('pointermove', (e) => {
+          if (origin && Math.hypot(e.clientX - origin.x, e.clientY - origin.y) > 10) cancel();
+        }, { passive: true, capture: true });
+        addEventListener('pointerup', up, { passive: true, capture: true });
+        for (const type of ['pointercancel', 'dragstart', 'blur']) addEventListener(type, cancel, { passive: true, capture: true });
+        // The keyboard gets the same answer: Enter or Space gives a quick pulse.
+        addEventListener('keydown', (e) => {
+          if (reduced.matches || e.repeat || (e.key !== 'Enter' && e.key !== ' ')) return;
+          const el = document.activeElement?.closest?.(PRESSABLE);
+          if (!el || skip(el) || el.matches('input, textarea, select')) return;
+          el.animate([{ scale: '1' }, { scale: String(sink(el)) }, { scale: '1' }], { duration: 320, easing: 'ease-out' });
+        });
+
+        // --- 2. Which way the page change goes --------------------------------
+        const depth = (href) => {
+          try {
+            const p = new URL(href, location.href).pathname.replace(/^\/ms(?=\/|$)/, '').replace(/\/+$/, '');
+            return p ? p.split('/').filter(Boolean).length : 0;
+          } catch { return 0; }
+        };
+        // The tab bar's own destinations: moving between these is a tab switch.
+        const TABS = /^\/(?:ms\/?)?(?:pdf|image|favourites|media|dev|calc|malaysia)?\/?$/;
+        addEventListener('pagereveal', (e) => {
+          const vt = e.viewTransition;
+          if (!vt) return;
+          if (reduced.matches) { vt.skipTransition(); return; }
+          const act = window.navigation?.activation;
+          const from = act?.from?.url;
+          const to = act?.entry?.url ?? location.href;
+          let type = 'tab';
+          try {
+            if (sessionStorage.getItem('nhako:swiped')) { sessionStorage.removeItem('nhako:swiped'); type = 'swiped'; }
+          } catch { /* storage blocked */ }
+          if (type !== 'swiped' && from) {
+            const a = depth(from);
+            const b = depth(to);
+            if (act.navigationType === 'traverse') type = (act.entry?.index ?? 0) < (act.from?.index ?? 0) ? 'pop' : 'push';
+            else if (b > a) type = 'push';
+            else if (b < a) type = 'pop';
+            else type = TABS.test(new URL(to).pathname) && TABS.test(new URL(from).pathname) ? 'tab' : 'push';
+          }
+          vt.types?.add(type);
+          document.documentElement.dataset.arrive = type;
+          vt.finished.finally(() => setTimeout(() => { delete document.documentElement.dataset.arrive; }, 700));
+        });
+
+        // --- 3. Drag the More sheet down to dismiss ---------------------------
+        // Touch events, not pointer events: the browser takes a touch that
+        // starts to scroll and sends pointercancel, and only a non-passive
+        // touchmove can claim the gesture for the sheet instead.
+        let drag = null;
+        addEventListener('touchstart', (e) => {
+          const sheet = e.target instanceof Element ? e.target.closest('.sheet[popover]') : null;
+          if (!sheet || reduced.matches || innerWidth >= 768 || e.touches.length > 1) return;
+          // From the grabber and title, or anywhere once the list is at its top.
+          if (sheet.scrollTop > 0 && !e.target.closest('[data-sheet-handle]')) return;
+          drag = { sheet, y0: e.touches[0].clientY, dy: 0, on: false, s: [] };
+        }, { passive: true });
+        addEventListener('touchmove', (e) => {
+          if (!drag) return;
+          drag.dy = e.touches[0].clientY - drag.y0;
+          if (!drag.on) {
+            if (drag.dy < 6) { if (drag.dy < -6) drag = null; return; }
+            drag.on = true;
+            drag.sheet.style.transition = 'none';
+            cancel();
+          }
+          e.preventDefault();
+          track(drag.s, drag.dy);
+          drag.sheet.style.transform = 'translateY(' + Math.max(0, drag.dy) + 'px)';
+        }, { passive: false });
+        const letGo = () => {
+          const d = drag;
+          drag = null;
+          if (!d?.on) return;
+          d.sheet.style.transition = '';
+          d.sheet.style.transform = '';
+          // Where the release would carry it: past half the sheet, it goes.
+          // Otherwise it springs back up.
+          if (projected(d.dy, flingV(d.s)) > d.sheet.offsetHeight * 0.5) d.sheet.hidePopover();
+        };
+        addEventListener('touchend', letGo, { passive: true });
+        addEventListener('touchcancel', letGo, { passive: true });
+
+        // --- 4. Swipe from the left edge to go back (iOS home-screen app) ----
+        // Safari draws this gesture itself, and Android has system Back, but a
+        // web app opened from the iPhone home screen has no browser around it
+        // and so no way back but the on-page link. The page follows the thumb
+        // and is flung off to the right, as UINavigationController's is.
+        const standaloneIOS = navigator.standalone === true;
+        let edge = null;
+        addEventListener('touchstart', (e) => {
+          if (!standaloneIOS || reduced.matches || e.touches.length > 1 || history.length < 2 || depth(location.href) === 0) return;
+          const t = e.touches[0];
+          if (t.clientX > 24) return;
+          edge = { x0: t.clientX, y0: t.clientY, dx: 0, on: false, s: [], main: document.getElementById('main') };
+        }, { passive: true });
+        addEventListener('touchmove', (e) => {
+          if (!edge) return;
+          const t = e.touches[0];
+          edge.dx = t.clientX - edge.x0;
+          if (!edge.on) {
+            if (Math.abs(t.clientY - edge.y0) > 12 && Math.abs(t.clientY - edge.y0) > edge.dx) { edge = null; return; }
+            if (edge.dx < 8) return;
+            edge.on = true;
+            cancel();
+          }
+          e.preventDefault();
+          track(edge.s, edge.dx);
+          edge.main.style.transition = 'none';
+          edge.main.style.transform = 'translateX(' + Math.max(0, edge.dx) + 'px)';
+          edge.main.style.boxShadow = '-12px 0 32px rgb(0 0 0 / 0.14)';
+        }, { passive: false });
+        addEventListener('touchend', () => {
+          const d = edge;
+          edge = null;
+          if (!d?.on) return;
+          const go = projected(d.dx, flingV(d.s)) > innerWidth * 0.5;
+          d.main.style.transition = 'transform ' + (go ? 220 : 450) + 'ms ' + (go ? 'cubic-bezier(0.2, 0, 0, 1)' : css('--spring-snappy'));
+          d.main.style.transform = go ? 'translateX(100%)' : '';
+          if (!go) { setTimeout(() => { d.main.style.boxShadow = ''; d.main.style.transition = ''; }, 460); return; }
+          try { sessionStorage.setItem('nhako:swiped', '1'); } catch { /* the pop plays instead */ }
+          setTimeout(() => history.back(), 200);
+        }, { passive: true });
+        // Coming forward again from the back/forward cache, the page must not
+        // still be where the thumb flung it.
+        addEventListener('pageshow', () => {
+          const main = document.getElementById('main');
+          if (main?.style.transform) { main.style.transform = ''; main.style.transition = ''; main.style.boxShadow = ''; }
+        });
+      })();
+    </script>
+
+    {/*
       Blocking, inline, before first paint. The old build resolved the theme in
       a useEffect that only ever ran on the homepage, so loading a tool page
       directly ignored the saved theme entirely, and even on the homepage the

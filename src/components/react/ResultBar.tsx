@@ -138,8 +138,11 @@ function AfterDone() {
   return (
     <p data-after-done className="basis-full text-xs text-muted">
       {c.afterDone}{' '}
-      <a className={link} href={feedback}>{c.afterDoneFeedback}</a>{' '}{c.afterDoneOr}{' '}
-      <a className={link} href={COFFEE_URL} rel="noopener noreferrer" target="_blank">{c.afterDoneCoffee}</a>.
+      <a className={link} href={feedback}>{c.afterDoneFeedback}</a>
+      {/* The whole "or buy a coffee" clause, so the Android app (which may not
+          link to outside payments) can drop it without leaving a dangling "or". */}
+      <span data-coffee>{' '}{c.afterDoneOr}{' '}
+        <a className={link} href={COFFEE_URL} rel="noopener noreferrer" target="_blank">{c.afterDoneCoffee}</a></span>.
     </p>
   );
 }

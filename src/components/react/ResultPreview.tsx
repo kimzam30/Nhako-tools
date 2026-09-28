@@ -77,6 +77,10 @@ export default function ResultPreview({ blob, locale = 'en' }: { blob: Blob; loc
   // "next" both ask for page 2, and a slow render could land after a newer
   // one and put the older page back.
   const wanted = useRef(1);
+  /** Which way the last page turn went, so the new page slides in from that side. */
+  const heading = useRef(0);
+  /** Where a finger or pointer went down on the page, to read a swipe from. */
+  const swipe = useRef<{ x: number; y: number } | null>(null);
 
   const track = (url: string) => { urls.current.push(url); return url; };
   const release = () => {
@@ -120,6 +124,7 @@ export default function ResultPreview({ blob, locale = 'en' }: { blob: Blob; loc
     const n = Math.min(Math.max(wanted.current + by, 1), view.pages);
     if (n === wanted.current) return;
     wanted.current = n;
+    heading.current = by > 0 ? 1 : -1;
     const mine = ticket.current;
     const { renderPage } = await import('../../lib/pdf-render');
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -185,11 +190,28 @@ export default function ResultPreview({ blob, locale = 'en' }: { blob: Blob; loc
 
   return (
     <Shell t={t} kind="pdf" note={view.pages > 1 ? t.page(view.page, view.pages) : undefined}>
-      <div className="grid place-items-center overflow-hidden rounded bg-sunken p-2">
+      {/* A horizontal swipe turns the page, as in Files or Books; vertical
+          movement is left to the page scroll (touch-action: pan-y). */}
+      <div
+        className="grid touch-pan-y place-items-center overflow-hidden rounded bg-sunken p-2"
+        onPointerDown={(e) => { swipe.current = { x: e.clientX, y: e.clientY }; }}
+        onPointerUp={(e) => {
+          const s = swipe.current;
+          swipe.current = null;
+          if (!s || view.pages < 2) return;
+          const dx = e.clientX - s.x;
+          if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(e.clientY - s.y) * 1.5) void step(dx < 0 ? 1 : -1);
+        }}
+        onPointerCancel={() => { swipe.current = null; }}
+      >
+        {/* Keyed by page, so each new page slides in from the side it came
+            from instead of swapping in place. */}
         <img
+          key={view.page}
           src={view.url}
           alt=""
-          className="max-h-[30rem] max-w-full object-contain shadow-sm"
+          draggable={false}
+          className={`max-h-[30rem] max-w-full select-none object-contain shadow-sm ${heading.current > 0 ? 'm-page-next' : heading.current < 0 ? 'm-page-prev' : ''}`}
           // Held at the page's own aspect ratio so paging between a portrait
           // and a landscape page does not jump the panel's height around.
           style={{ aspectRatio: `${view.width} / ${view.height}` }}

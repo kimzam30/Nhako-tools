@@ -135,7 +135,9 @@ test.describe('install prompt', () => {
       await expect(card).toBeVisible();
       await expect(card.getByRole('listitem')).toHaveCount(3);
       await expect(card.getByRole('listitem').nth(1)).toContainText('Add to Home Screen');
-      // Sits above the tab bar, not over it.
+      // Sits above the tab bar, not over it: measured once the card has
+      // finished sliding up, or a busy machine catches it 3px short of home.
+      await card.evaluate((el) => Promise.all(el.getAnimations({ subtree: true }).map((a) => a.finished)));
       const [cardBox, barBox] = await Promise.all([card.boundingBox(), page.locator('[data-tabbar]').boundingBox()]);
       expect(cardBox!.y + cardBox!.height).toBeLessThanOrEqual(barBox!.y);
     });

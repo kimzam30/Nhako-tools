@@ -100,8 +100,10 @@
     visibility: hidden;
   }
   .ind-list[data-ind-ready] > .ind { visibility: visible; }
+  /* The capsule glides on a spring and settles with a hair of overshoot, as
+     the iOS tab bar's selection does. */
   .ind-list[data-ind-anim] > .ind {
-    transition: transform 300ms var(--ease-out), width 300ms var(--ease-out);
+    transition: transform 600ms var(--spring-snappy), width 600ms var(--spring-snappy);
   }
   .ind-pill {
     position: absolute;
@@ -144,10 +146,12 @@
     color: var(--text);
     box-shadow: var(--shadow-overlay);
     transform: translateY(100%);
+    /* UIKit's sheet curve: fast out of the gate, a long soft landing. The
+       sheet can also be dragged down and flung away (BaseLayout). */
     transition:
-      transform 280ms var(--ease-out),
-      overlay 280ms allow-discrete,
-      display 280ms allow-discrete;
+      transform 440ms var(--ease-ios),
+      overlay 440ms allow-discrete,
+      display 440ms allow-discrete;
   }
   [data-theme='dark'] .sheet[popover] { background: var(--bg); }
   .sheet[popover]:popover-open { transform: translateY(0); }
@@ -156,8 +160,18 @@
   }
   .sheet[popover]::backdrop {
     background: rgb(0 0 0 / 0);
-    transition: background-color 280ms var(--ease-out), overlay 280ms allow-discrete, display 280ms allow-discrete;
+    transition: background-color 440ms var(--ease-ios), overlay 440ms allow-discrete, display 440ms allow-discrete;
   }
+  /* The grabber: says "this can be dragged down", as on every iOS sheet. */
+  .sheet-grabber {
+    display: block;
+    width: 36px;
+    height: 5px;
+    margin: 6px auto 0;
+    border-radius: var(--radius-full);
+    background: var(--border-strong);
+  }
+  @media (min-width: 768px) { .sheet-grabber { display: none; } }
   .sheet[popover]:popover-open::backdrop { background: rgb(0 0 0 / 0.4); }
   @starting-style {
     .sheet[popover]:popover-open::backdrop { background: rgb(0 0 0 / 0); }
@@ -324,3 +338,65 @@
   }
   input[type='range'] { min-height: 44px; }
 }
+
+/* --- Switch --------------------------------------------------------------
+   iOS's switch, drawn on a real checkbox so it keeps the keyboard, the label
+   and the checked state for free. Unlayered: Tailwind's utilities would
+   otherwise win over a component rule (see the layer note above). The thumb
+   travels on a spring and the track fills, as UISwitch does; a held thumb
+   stretches a little toward where it is going. */
+.switch {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  flex-shrink: 0;
+  width: 46px;
+  height: 28px;
+  margin: 0;
+  border-radius: 999px;
+  background: var(--border-strong);
+  cursor: pointer;
+  transition: background-color 250ms var(--ease-out);
+}
+.switch::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 2px 5px rgb(0 0 0 / 0.18), 0 0 0 0.5px rgb(0 0 0 / 0.06);
+  transition: translate 500ms var(--spring-snappy), width 200ms var(--ease-out);
+}
+.switch:checked { background: var(--accent); }
+.switch:checked::before { translate: 18px 0; }
+.switch:active::before { width: 30px; }
+.switch:checked:active::before { translate: 12px 0; }
+.switch:disabled { opacity: 0.4; cursor: not-allowed; }
+.switch:focus-visible { outline: 2px solid var(--accent-ring); outline-offset: 2px; }
+
+/* --- Drop zone ------------------------------------------------------------
+   Every file drop area. A file dragged over it makes it rise to meet the
+   file, on a spring, and settle back when the file leaves or lands, the way
+   a Finder or Files drop target answers. The dragging state is the same
+   accent tint every drop zone already sets (bg-accent-subtle). Unlayered so
+   the transition list is this one, not a utility's. */
+.drop-zone {
+  transition:
+    border-color 120ms var(--ease-out),
+    background-color 120ms var(--ease-out),
+    scale 500ms var(--spring-snappy),
+    box-shadow 300ms var(--ease-out);
+}
+.drop-zone.bg-accent-subtle {
+  scale: 1.015;
+  box-shadow: 0 10px 30px -12px rgb(199 0 155 / 0.35);
+}
+@media (prefers-reduced-motion: reduce) {
+  .drop-zone.bg-accent-subtle { scale: none; }
+}
+
+/* The Android app may not link to outside payments (see BaseLayout). */
+html[data-app='android'] :is([data-coffee], a[href^='https://buymeacoffee.com']) { display: none !important; }

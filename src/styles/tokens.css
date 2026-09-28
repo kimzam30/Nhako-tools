@@ -219,9 +219,23 @@
   --breakpoint-xs: 360px;
   --mark-gutter: 28px;
 
-  /* Motion: fast and flat. No overshoot: bounce reads slow. */
+  /* Motion. Until 2026-09-29 this said "fast and flat, no overshoot". Kim
+     then asked for the app to feel like Apple's: every touch answered, every
+     screen arriving with movement. The springs below are real damped-spring
+     step responses (SwiftUI's response/dampingFraction model) sampled into
+     linear(), so a release settles the way a UIKit control does, instead of
+     a cubic-bezier pretending to. Durations are part of each curve's shape:
+     use them with the duration given in the comment. */
   --ease-out: cubic-bezier(0.2, 0, 0, 1);
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  /* UIKit's navigation and sheet curve (the one Vaul and iOS sheets use). */
+  --ease-ios: cubic-bezier(0.32, 0.72, 0, 1);
+  /* response 0.42 s, damping 0.82: settling panels, pills, sheets. 600ms. */
+  --spring-snappy: linear(0, 0.034, 0.116, 0.223, 0.339, 0.454, 0.56, 0.655, 0.737, 0.805, 0.86, 0.904, 0.937, 0.962, 0.98, 0.993, 1.002, 1.007, 1.01, 1.011, 1.011, 1.01, 1.009, 1.008, 1.007, 1.006, 1.004, 1.003, 1.003, 1.002, 1.001, 1.001, 1);
+  /* response 0.5 s, damping 0.62: a star filling, a tab icon landing. 800ms. */
+  --spring-bouncy: linear(0, 0.043, 0.15, 0.291, 0.444, 0.593, 0.727, 0.84, 0.929, 0.995, 1.041, 1.068, 1.081, 1.083, 1.078, 1.068, 1.056, 1.043, 1.031, 1.02, 1.011, 1.004, 0.999, 0.996, 0.994, 0.993, 0.993, 0.994, 0.995, 0.996, 0.997, 0.998, 1);
+  /* response 0.3 s, damping 0.75: a pressed control springing back. 450ms. */
+  --spring-press: linear(0, 0.037, 0.128, 0.248, 0.377, 0.503, 0.619, 0.72, 0.804, 0.872, 0.925, 0.964, 0.991, 1.01, 1.021, 1.027, 1.028, 1.028, 1.025, 1.022, 1.018, 1.015, 1.011, 1.008, 1.006, 1.004, 1.002, 1.001, 1, 1, 0.999, 0.999, 1);
 }
 
 @layer base {

@@ -481,15 +481,15 @@ export default function Teleprompter({ locale = 'en' }: { locale?: Locale }) {
           </div>
         </div>
         <div className="mt-4 flex flex-col gap-2">
-          <label className="flex items-center gap-2 text-sm pointer-coarse:min-h-11">
-            <input type="checkbox" checked={settings.mirrorX} onChange={(e) => set('mirrorX', e.target.checked)} /> {t.mirrorX}
+          <label data-no-press className="flex items-center justify-between gap-3 text-sm pointer-coarse:min-h-11">
+            {t.mirrorX} <input type="checkbox" role="switch" className="switch" checked={settings.mirrorX} onChange={(e) => set('mirrorX', e.target.checked)} />
           </label>
-          <label className="flex items-center gap-2 text-sm pointer-coarse:min-h-11">
-            <input type="checkbox" checked={settings.mirrorY} onChange={(e) => set('mirrorY', e.target.checked)} /> {t.mirrorY}
+          <label data-no-press className="flex items-center justify-between gap-3 text-sm pointer-coarse:min-h-11">
+            {t.mirrorY} <input type="checkbox" role="switch" className="switch" checked={settings.mirrorY} onChange={(e) => set('mirrorY', e.target.checked)} />
           </label>
           <div className="mt-2 rounded border border-border p-3">
-            <label className="flex items-center gap-2 text-sm font-medium pointer-coarse:min-h-11">
-              <input type="checkbox" checked={settings.voice} disabled={!speechOk} onChange={(e) => set('voice', e.target.checked)} data-testid="voice" /> {t.voice}
+            <label data-no-press className="flex items-center justify-between gap-3 text-sm font-medium pointer-coarse:min-h-11">
+              {t.voice} <input type="checkbox" role="switch" className="switch" checked={settings.voice} disabled={!speechOk} onChange={(e) => set('voice', e.target.checked)} data-testid="voice" />
             </label>
             <p className="mt-1.5 text-xs leading-snug text-muted">{speechOk ? t.voiceHelp : t.voiceNone}</p>
             {settings.voice && (

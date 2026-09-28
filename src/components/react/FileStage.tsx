@@ -2,6 +2,7 @@ import { DropLabel } from './DropLabel';
 import { useEffect, useRef, useState } from 'react';
 import { describeFile, KIND_LABEL, type Meta } from './file-thumb';
 import { useDragOrder, dragClass, DROP_GAP } from './drag-order';
+import { useFlip } from './flip';
 import type { Locale } from '../../i18n/paths';
 
 /**
@@ -106,6 +107,10 @@ export default function FileStage({
     onAnnounce(t.removed(it.file.name));
   }
 
+  // Cards spring to their new places when the order changes.
+  const gridRef = useRef<HTMLOListElement>(null);
+  useFlip(gridRef);
+
   const icon = 'grid size-6 place-items-center rounded border border-border bg-bg text-xs text-muted transition-colors hover:border-border-strong hover:text-text disabled:opacity-30';
 
   return (
@@ -121,13 +126,14 @@ export default function FileStage({
         </div>
       </div>
 
-      <ol className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+      <ol ref={gridRef} className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
         {items.map((it, i) => (
           <li
             key={it.id}
             data-stage-card={it.id}
+            data-flip={it.id}
             {...drag.props(it)}
-            className={`relative flex cursor-grab flex-col gap-2 rounded-lg border bg-surface p-2 transition-[border-color,opacity,box-shadow] duration-150 active:cursor-grabbing ${dragClass(drag.dragId === it.id, drag.landed === it.id)}`}
+            className={`m-rise relative flex cursor-grab flex-col gap-2 rounded-lg border bg-surface p-2 transition-[border-color,opacity,box-shadow] duration-150 active:cursor-grabbing ${dragClass(drag.dragId === it.id, drag.landed === it.id)}`}
           >
             {drag.over?.id === it.id && drag.dragId !== null && drag.dragId !== it.id && (
               <span aria-hidden="true" className={`${DROP_GAP} ${drag.over.after ? '-right-1.5' : '-left-1.5'}`} />
@@ -249,7 +255,7 @@ export function DropZone({ onPick, onFiles, title, tap = '', subtitle }: {
       onDragOver={(e) => { e.preventDefault(); setHot(true); }}
       onDragLeave={() => setHot(false)}
       onDrop={(e) => { e.preventDefault(); setHot(false); onFiles(e.dataTransfer?.files ?? null); }}
-      className={`flex min-h-44 w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-6 py-10 text-center transition-colors duration-[120ms] ${
+      className={`drop-zone flex min-h-44 w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-6 py-10 text-center ${
         hot ? 'border-accent bg-accent-subtle' : 'border-border bg-surface hover:border-border-strong'
       }`}
     >

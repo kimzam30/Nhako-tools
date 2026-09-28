@@ -156,7 +156,7 @@ export default function CropImage({ locale = 'en', accept }: { locale?: Locale; 
           onDragOver={(e) => { e.preventDefault(); setDropZone(true); }}
           onDragLeave={() => setDropZone(false)}
           onDrop={(e) => { e.preventDefault(); setDropZone(false); void load(e.dataTransfer?.files?.[0]); }}
-          className={`flex min-h-44 w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-6 py-10 text-center transition-colors duration-[120ms] ${dropZone ? 'border-accent bg-accent-subtle' : 'border-border bg-surface hover:border-border-strong'}`}
+          className={`drop-zone flex min-h-44 w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-6 py-10 text-center ${dropZone ? 'border-accent bg-accent-subtle' : 'border-border bg-surface hover:border-border-strong'}`}
         >
           <span className="text-sm font-medium"><DropLabel drop={t.drop} tap={t.tap} /></span>
           <span className="text-xs text-muted">{t.dropSub}</span>

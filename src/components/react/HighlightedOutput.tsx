@@ -10,6 +10,9 @@ import type { DiffSegment } from '../../tools/types';
 
 type Token = { text: string; className: string };
 
+/** Characters of JSON coloured token by token; see the json branch below. */
+const HIGHLIGHT_LIMIT = 150_000;
+
 const JSON_PATTERN =
   /("(?:\\.|[^"\\])*"\s*:)|("(?:\\.|[^"\\])*")|(\b-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b)|(\btrue\b|\bfalse\b)|(\bnull\b)|([{}[\],])/g;
 
@@ -58,12 +61,19 @@ export default function HighlightedOutput({ text, language, segments }: { text: 
   }
 
   if (language === 'json') {
+    // Colour costs one element per token: a real 5 MB file became millions
+    // of spans and took 10.6 s to show. Editors colour only what is on
+    // screen; here, the first HIGHLIGHT_LIMIT characters are coloured (more
+    // than anyone reads before scrolling) and the rest is plain text in the
+    // same block, so copying and reading are unchanged.
+    const head = text.length > HIGHLIGHT_LIMIT ? text.slice(0, text.lastIndexOf('\n', HIGHLIGHT_LIMIT) + 1 || HIGHLIGHT_LIMIT) : text;
     return (
       <pre className="overflow-x-auto p-3 font-mono text-xs leading-relaxed">
         <code>
-          {tokenizeJson(text).map((t, i) => (
+          {tokenizeJson(head).map((t, i) => (
             <span key={i} className={t.className}>{t.text}</span>
           ))}
+          {head.length < text.length && text.slice(head.length)}
         </code>
       </pre>
     );

@@ -245,7 +245,7 @@ export default function FileToolRunner({ tool, locale = 'en', initialOptions }: 
         onDragLeave={() => setDragging(false)}
         onDrop={(e) => { e.preventDefault(); setDragging(false); accept(e.dataTransfer?.files ?? null); }}
         aria-disabled={busy && tool.heavy ? true : undefined}
-        className={`flex min-h-44 w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-6 py-10 text-center transition-colors duration-[120ms] ${
+        className={`drop-zone flex min-h-44 w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-6 py-10 text-center ${
           dragging ? 'border-accent bg-accent-subtle' : 'border-border bg-sunken shadow-[inset_0_1px_0_var(--edge)] hover:border-border-strong'
         } aria-disabled:cursor-wait`}
       >
@@ -274,7 +274,7 @@ export default function FileToolRunner({ tool, locale = 'en', initialOptions }: 
       </p>
 
       {/* What was handed to the tool, beside what came back out of it. */}
-      {files.length > 0 && <FilePreview files={files} locale={locale} />}
+      {files.length > 0 && <div className="m-rise"><FilePreview files={files} locale={locale} /></div>}
 
       {/*
         `stageFirst` tools keep their settings back until there is something to
@@ -283,13 +283,13 @@ export default function FileToolRunner({ tool, locale = 'en', initialOptions }: 
         five settings you cannot use yet.
       */}
       {specs.length > 0 && (!tool.stageFirst || files.length > 0) && (
-        <div className="rounded-lg border border-border bg-surface p-4">
+        <div className={`rounded-lg border border-border bg-surface p-4 ${tool.stageFirst ? 'm-rise' : ''}`}>
           <OptionsPanel specs={specs} values={options} onChange={changeOption} rangeText={t.numberRange} />
         </div>
       )}
 
       {stale && !busy && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-sunken px-4 py-3 shadow-[inset_0_1px_0_var(--edge)]">
+        <div className="m-rise flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-sunken px-4 py-3 shadow-[inset_0_1px_0_var(--edge)]">
           <p className="text-sm text-muted">{t.settingsChanged}</p>
           <button
             type="button"
@@ -368,7 +368,7 @@ export default function FileToolRunner({ tool, locale = 'en', initialOptions }: 
       */}
       <div className="mt-5 lg:mt-0 lg:sticky lg:top-20">
         {held ? (
-          <div className={`transition-opacity duration-200 ${busy ? 'opacity-50' : 'opacity-100'}`}>
+          <div className={`m-rise transition-opacity duration-200 ${busy ? 'opacity-50' : 'opacity-100'}`}>
             <ResultPreview blob={held.result.blob} locale={locale} />
           </div>
         ) : (

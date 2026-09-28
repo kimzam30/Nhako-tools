@@ -244,9 +244,9 @@ function Counter({ id, label: text, help, value, onChange, less, more }: {
 
 function Check({ id, label: text, checked, onChange }: { id: string; label: string; checked: boolean; onChange: (b: boolean) => void }) {
   return (
-    <label htmlFor={id} className="flex cursor-pointer items-center gap-2.5 text-sm pointer-coarse:min-h-11">
-      <input id={id} type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="size-4 accent-[var(--accent)]" />
+    <label htmlFor={id} data-no-press className="flex cursor-pointer items-center justify-between gap-3 text-sm pointer-coarse:min-h-11">
       {text}
+      <input id={id} type="checkbox" role="switch" checked={checked} onChange={(e) => onChange(e.target.checked)} className="switch" />
     </label>
   );
 }

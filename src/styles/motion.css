@@ -1,20 +1,25 @@
 /* ==========================================================================
    Motion
    
-   The governing principle (see DESIGN_BRIEF.md §4): motion must read as
-   machinery working, never as decoration. Stepped reveals reinforce the
-   instrument. Easing overshoot,
-   hover-scale and bouncy entrances still do not.
+   2026-09-29, Kim: the app should feel like Apple's. Every touch gets an
+   answer (the press script in BaseLayout), every screen arrives with
+   movement that says where it came from (push, pop, tab), and things that
+   appear rise into place instead of popping in. Springs, not linear fades,
+   and never so long that anyone waits on them: the longest here is 460ms,
+   and nothing blocks a tap while it runs.
+
+   Before that date the principle was "machinery, never decoration", with no
+   overshoot anywhere. The two hard rules below still stand.
 
    The NeraOS layer (nera.css) is the deliberate exception Kim asked for on
    2026-09-25: the background butterflies, the loading readout and the
    finished state. They follow NeraOS, not the rules below.
 
    Two hard rules:
-     1. Nothing on a tool page's critical path moves. The drop zone, options
-        and result row stay still. Someone waiting for their file should never
-        be watching an animation instead.
-     2. Everything reserves its space up front. CLS is 0 and stays 0.
+     1. Nothing loops while someone waits for their file. Things may arrive
+        with movement; nothing keeps moving afterwards.
+     2. Everything reserves its space up front, and motion is transform and
+        opacity only. CLS is 0 and stays 0.
 
    Almost all of this is CSS-only. Scroll-driven animations and cross-document
    view transitions both degrade to "no animation, content fully visible" where
@@ -30,11 +35,12 @@
     navigation: auto;
   }
 
-  /* The page swaps with a quick dip, not a crossfade. Two different pages
-     overlapping at half opacity is the double exposure the 2026-09-25 screen
-     recording showed: both active pills, two sets of cards. The old page is
-     gone in 90ms, before the new one is more than faint, and the exit is
-     faster than the entrance. */
+  /* A page change with no known direction (a reload, a first visit from a
+     search result, a tab switch) swaps with a quick dip, not a crossfade.
+     Two different pages overlapping at half opacity is the double exposure
+     the 2026-09-25 screen recording showed: both active pills, two sets of
+     cards. The old page is gone in 90ms, before the new one is more than
+     faint, and the exit is faster than the entrance. */
   ::view-transition-old(root) {
     animation: 90ms var(--ease-out) both vt-fade-out;
   }
@@ -43,6 +49,33 @@
   }
   @keyframes vt-fade-out { to { opacity: 0; } }
   @keyframes vt-fade-in { from { opacity: 0; } }
+
+  /* PUSH and POP, UINavigationController's: going deeper, the new screen
+     slides in from the right over the old one, which drifts a third of the
+     way left and dims; going back, the reverse, with the leaving screen on
+     top. BaseLayout's pagereveal handler names the direction. The header and
+     tab bar are their own groups (below) and stay put, as a navigation bar
+     does. On a wide screen a full-width slide is too much travel, so the
+     same idea runs at 40px. Opaque pages throughout, so there is never a
+     double exposure. */
+  html:active-view-transition-type(push)::view-transition-old(root) { animation: 440ms var(--ease-ios) both vt-push-old; }
+  html:active-view-transition-type(push)::view-transition-new(root) { animation: 440ms var(--ease-ios) both vt-push-new; }
+  html:active-view-transition-type(pop)::view-transition-old(root) { z-index: 1; animation: 400ms var(--ease-ios) both vt-pop-old; }
+  html:active-view-transition-type(pop)::view-transition-new(root) { animation: 400ms var(--ease-ios) both vt-pop-new; }
+  /* After a finger has already dragged the page away (edge swipe), the new
+     page is simply there. */
+  html:active-view-transition-type(swiped)::view-transition-old(root) { animation: none; opacity: 0; }
+  html:active-view-transition-type(swiped)::view-transition-new(root) { animation: none; }
+  @keyframes vt-push-new { from { transform: translateX(100%); box-shadow: -12px 0 32px rgb(0 0 0 / 0.14); } to { box-shadow: -12px 0 32px rgb(0 0 0 / 0); } }
+  @keyframes vt-push-old { to { transform: translateX(-30%); filter: brightness(0.92); } }
+  @keyframes vt-pop-old { from { box-shadow: -12px 0 32px rgb(0 0 0 / 0.14); } to { transform: translateX(100%); box-shadow: -12px 0 32px rgb(0 0 0 / 0); } }
+  @keyframes vt-pop-new { from { transform: translateX(-30%); filter: brightness(0.92); } }
+  @media (min-width: 1024px) {
+    @keyframes vt-push-new { from { transform: translateX(40px); opacity: 0; } }
+    @keyframes vt-push-old { to { transform: translateX(-20px); opacity: 0; } }
+    @keyframes vt-pop-old { to { transform: translateX(40px); opacity: 0; } }
+    @keyframes vt-pop-new { from { transform: translateX(-20px); opacity: 0; } }
+  }
 
   /* The chrome does not transition at all. The old header and tab bar are
      dropped and the new ones are shown live from the first frame, so the
@@ -83,6 +116,42 @@
     to   { transform: none; }
   }
 
+  /* --- Arrivals ------------------------------------------------------------
+     What appears on a page rises into place: an options panel once a file is
+     in, a preview, a staged file, a search result. Movement only, never a
+     fade, for the reason reveal-rise gives above: a fading card spent 200ms
+     below AA, and axe caught a staged file name at 4.34:1 mid-fade
+     (2026-09-29). It settles on a spring, with a hair of scale. */
+  .m-rise { animation: m-rise 600ms var(--spring-snappy) both; }
+  .m-pop { animation: m-fade 160ms var(--ease-out) both, m-pop 800ms var(--spring-bouncy) both; }
+  @keyframes m-fade { from { opacity: 0; } }
+  @keyframes m-rise { from { translate: 0 14px; scale: 0.985; } }
+  @keyframes m-pop { from { scale: 0.92; } }
+  /* Lists that arrive together stagger by 30ms a row, capped so a long list
+     is never waiting on its last item. */
+  .m-stagger > * { animation: m-rise 600ms var(--spring-snappy) both; animation-delay: calc(min(var(--i, 0), 8) * 30ms); }
+
+  /* A preview page turning: it slides in from the side it came from. */
+  .m-page-next { animation: m-fade 180ms var(--ease-out) both, m-from-right 500ms var(--spring-snappy) both; }
+  .m-page-prev { animation: m-fade 180ms var(--ease-out) both, m-from-left 500ms var(--spring-snappy) both; }
+  @keyframes m-from-right { from { translate: 36px 0; } }
+  @keyframes m-from-left { from { translate: -36px 0; } }
+
+  /* The tab you just switched to lands, the way an SF Symbol bounces. */
+  [data-arrive='tab'] .tab[aria-current='page'] svg,
+  [data-arrive='tab'] .tab[data-ind-current] svg { animation: m-land 800ms var(--spring-bouncy) both; }
+  @keyframes m-land { from { scale: 0.7; } }
+
+  /* Search opens from where the field is, as Spotlight does. */
+  #palette:not([hidden]) { animation: m-fade 160ms var(--ease-out) both; }
+  #palette:not([hidden]) > [role='dialog'] { animation: m-fade 160ms var(--ease-out) both, m-drop 460ms var(--spring-snappy) both; }
+  #palette[data-closing] { animation: m-fade-out 140ms var(--ease-out) both; }
+  @keyframes m-drop { from { translate: 0 -10px; scale: 0.98; } }
+  @keyframes m-fade-out { to { opacity: 0; } }
+  @media (max-width: 639.98px) {
+    #palette:not([hidden]) > [role='dialog'] { animation: m-fade 180ms var(--ease-out) both, m-rise 460ms var(--ease-ios) both; }
+  }
+
   /* --- Result status ------------------------------------------------------
      Moved to nera.css on 2026-09-25, when the finished and failed states took
      on the NeraOS theme. The reasoning that allowed them to move at all still
@@ -95,9 +164,11 @@
   @media (prefers-reduced-motion: reduce) {
     @view-transition { navigation: none; }
 
-    [data-reveal] {
+    [data-reveal], .m-rise, .m-pop, .m-stagger > *, .m-page-next, .m-page-prev, #palette, #palette > * {
       opacity: 1 !important;
       transform: none !important;
+      translate: none !important;
+      scale: none !important;
       animation: none !important;
     }
   }

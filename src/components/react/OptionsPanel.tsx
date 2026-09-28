@@ -29,15 +29,19 @@ export default function OptionsPanel({
         return (
           <div key={spec.key} className={spec.kind === 'toggle' ? 'sm:col-span-2' : ''}>
             {spec.kind === 'toggle' ? (
-              <label htmlFor={id} className="flex cursor-pointer items-center gap-2.5 pointer-coarse:min-h-11">
+              // An iOS Settings row: the words on the left, the switch on the
+              // right. Still a real checkbox underneath (app.css .switch).
+              <label htmlFor={id} data-no-press className="flex cursor-pointer items-center gap-3 pointer-coarse:min-h-11">
+                <span className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2.5">
+                  <span className="text-sm">{spec.label}</span>
+                  {spec.help && <span className="text-xs text-muted">{spec.help}</span>}
+                </span>
                 <input
-                  id={id} type="checkbox" disabled={disabled}
+                  id={id} type="checkbox" role="switch" disabled={disabled}
                   checked={Boolean(value)}
                   onChange={(e) => onChange(spec.key, e.target.checked)}
-                  className="size-4 accent-[var(--accent)]"
+                  className="switch"
                 />
-                <span className="text-sm">{spec.label}</span>
-                {spec.help && <span className="text-xs text-muted">{spec.help}</span>}
               </label>
             ) : (
               <>

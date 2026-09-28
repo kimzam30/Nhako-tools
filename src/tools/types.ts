@@ -34,7 +34,8 @@ export const CATEGORY_MODIFIER: Record<Category, string> = {
 };
 
 /** Show an option only while another option has a given value. */
-export interface OptionCondition { key: string; equals: string | number | boolean }
+/** `not: true` inverts it: shown whenever the option is anything BUT `equals`. */
+export interface OptionCondition { key: string; equals: string | number | boolean; not?: boolean }
 
 /** Declarative option spec that lets one generic renderer serve every tool. */
 export type OptionSpec = (
@@ -47,7 +48,7 @@ export type OptionSpec = (
 
 /** Every condition in `when` must hold. */
 export const isVisible = (spec: OptionSpec, values: OptionValues): boolean =>
-  [spec.when ?? []].flat().every((c) => values[c.key] === c.equals);
+  [spec.when ?? []].flat().every((c) => (values[c.key] === c.equals) !== Boolean(c.not));
 
 export type OptionValues = Record<string, string | number | boolean>;
 
