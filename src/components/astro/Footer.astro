@@ -60,4 +60,17 @@ const year = new Date().getFullYear();
       <li>MIT © {year}</li>
     </ul>
   </div>
+
+  {/*
+    Launch badge. Self-hosted, not hotlinked: the site sends COEP require-corp
+    and dailylaunch.io serves the SVG with no CORP or CORS header, so the
+    remote image would be blocked. Hosting it also keeps their cookies off
+    our visitors. The light/dark pair follows the theme toggle.
+  */}
+  <div class="mx-auto max-w-6xl px-4 pb-8 sm:px-6">
+    <a href="https://dailylaunch.io/" target="_blank" rel="noopener" class="inline-block rounded-[10px] transition-opacity hover:opacity-80">
+      <img src="/badges/dailylaunch-light.svg" alt="Featured on DailyLaunch" width="200" height="54" loading="lazy" decoding="async" class="dark:hidden">
+      <img src="/badges/dailylaunch-dark.svg" alt="Featured on DailyLaunch" width="200" height="54" loading="lazy" decoding="async" class="hidden dark:block">
+    </a>
+  </div>
 </footer>
