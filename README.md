@@ -1,4 +1,8 @@
 <p align="center">
+  <img src="docs/brand/logo-circle.png" alt="Nhako Tools logo: a red pixel-art hammer with a smiling face and a wooden handle, on a yellow circle" width="128">
+</p>
+
+<p align="center">
   <img src="docs/brand/banner.png" alt="Nhako Tools: the app icon, a red pixel-art toolbox on a lawn, next to the words Built for the big screen., and a laptop showing the Nhako Tools home page beside a tablet running the teleprompter" width="100%">
 </p>
 
@@ -394,7 +398,7 @@ src/
   i18n/         every string, in English and Malay
   styles/       tokens.css (colours, tested for contrast), nera.css (the NeraOS layer), motion.css
   workers/      the Web Worker that runs CPU-heavy PDF work off the main thread
-scripts/        build-sw.mjs, icons.mjs + logo-art.mjs, og-images.mjs, vendor.mjs, sweep.mjs
+scripts/        build-sw.mjs, icons.mjs + mascot-art.mjs, logo-art.mjs, og-images.mjs, vendor.mjs, sweep.mjs
 e2e/            Playwright specs, Chromium, WebKit and mobile profiles
 supabase/       the feedback table's migration
 launch/film/    the widescreen launch film and posters: capture, timeline, scene, posters, check, renderer
@@ -422,7 +426,7 @@ npm run dev
 | `npm test` | Vitest unit tests |
 | `npm run test:e2e` | Playwright functional and accessibility tests |
 | `npm run vendor` | Copy the ffmpeg core and ONNX runtime into `public/vendor/<name>/<version>` (runs automatically) |
-| `npm run icons` | Draw every icon (favicon.svg, favicon.ico, the PNG and maskable sizes) from the pixel art in `scripts/logo-art.mjs` |
+| `npm run icons` | Draw every icon (favicon.svg, favicon.ico, the PNG and maskable sizes) from the pixel art in `scripts/mascot-art.mjs` |
 | `npm run og` | Regenerate the share cards in `public/og/` |
 | `npm run screenshots` | Retake the web-manifest screenshots from a running preview |
 | `npm run test:e2e:mobile` | The e2e suite on Android, iPhone and iPad profiles, portrait and landscape |
@@ -459,17 +463,17 @@ most 0.001.
 
 ## Design
 
-<img src="docs/brand/logo.png" width="128" align="left" alt="The Nhako Tools logo: a red pixel-art toolbox on a lawn, a wrench and a screwdriver poking out, a butterfly sticker and a heart sticker" style="image-rendering: pixelated">
+<img src="docs/brand/logo.png" width="128" align="left" alt="The Nhako Tools logo: a red pixel-art hammer with a smiling face, a wooden handle and a purple grip, on yellow" style="image-rendering: pixelated">
 
-**The mark** is a red pixel-art toolbox on a lawn, a wrench and a screwdriver
-poking out, a butterfly sticker and a heart sticker slapped on at opposite
-tilts. It is drawn on a 32 x 32 grid in the NeraOS sprite format, one letter
-per pixel, in [`scripts/logo-art.mjs`](scripts/logo-art.mjs), and
-`npm run icons` writes every size from it: the SVG favicon, `favicon.ico`, the
-192 and 512 icons, the Apple touch icon, and maskable icons with extra lawn for
-Android. Every size is a whole multiple of the grid, so no pixel is ever
-resampled. The stickers are placed by hand: rotating a 7-pixel sprite turns it
-into a blob.
+**The mark** is the Nhako Tools mascot: a red pixel-art hammer with a smiling
+face, a wooden handle and a purple grip wrap, coming up from the lower left of
+a yellow square. It is one of the seven Nhako mascots (Nhako-home's
+`scripts/mascots.py`), copied as a 48 x 48 grid into
+[`scripts/mascot-art.mjs`](scripts/mascot-art.mjs), and `npm run icons` writes
+every size from it: the SVG favicon, `favicon.ico`, the 192 and 512 icons, the
+Apple touch icon and the maskable icons. The previous toolbox mark stays in
+[`scripts/logo-art.mjs`](scripts/logo-art.mjs) for the launch video and the
+social images.
 
 <br clear="left">
 

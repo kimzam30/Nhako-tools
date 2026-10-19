@@ -1,33 +1,28 @@
 /**
- * Write the favicon and every PNG icon from the pixel art in logo-art.mjs.
+ * Write the favicon and every PNG icon from the mascot in mascot-art.mjs.
+ * Run: npm run icons
  *
- * The art is a grid, so nothing here resamples: each PNG is the grid at a whole
- * multiple, encoded directly with node:zlib. No browser and no image
- * dependency, and every edge stays a hard pixel edge.
+ * Each PNG is encoded directly with node:zlib: no browser, no image dependency. The mascot is a 48px grid,
+ * so sizes that are a whole multiple of 48 stay hard pixel edges; other sizes
+ * step each output pixel to its nearest cell when growing, and average the
+ * cells under it when shrinking (16 and 32, where nearest would drop rows).
  *
- * Three shapes, because the platforms mask icons differently:
- *   - `any` and the favicon: the art with stepped pixel corners. Desktop
- *     install dialogs and the Chrome app list show it unmasked.
- *   - apple-touch-icon: full bleed, no transparency. iOS draws its own rounded
- *     corners and fills any transparent pixel with BLACK, so the favicon's
- *     rounded rect came out as a pink tile with black corners on a home screen.
- *   - maskable: the art on a wider lawn. Android's adaptive mask shows only
- *     the middle 72/108 (a 33.3% radius), and on the emulator's launcher the
- *     old mark all but touched the edge at full size (checked 2026-09-25). At
- *     512 the art is drawn at 10x, 62% of the width, one cell below centre so
- *     the tool tips and the box's bottom corners sit equally far out; the
- *     farthest corner of any art pixel is 32.5% out (measured). 11x clips the
- *     screwdriver. 192 has no whole scale between 3x (50%) and 4x (67%, clips),
- *     so it stays at 3x.
+ * Shapes, because platforms mask icons differently:
+ *   - `any` icons and the favicon: the mascot with stepped pixel corners.
+ *   - apple-touch-icon: full bleed, no transparency. iOS rounds the corners
+ *     itself and fills transparent pixels with black.
+ *   - maskable: full bleed too. The mascot is drawn coming in from a corner
+ *     and cropped by the edge, and its face sits inside Android's safe circle,
+ *     so the crop only takes ground and the edges that were cropped anyway.
  */
 import { writeFileSync } from 'node:fs';
 import { deflateSync } from 'node:zlib';
-import { ICON, PALETTE, onLawn, rounded } from './logo-art.mjs';
+import { ICON, LABEL, PALETTE, rounded } from './mascot-art.mjs';
 
 const rgba = (k) => {
   if (k === '.') return [0, 0, 0, 0];
   const hex = PALETTE[k];
-  if (!hex) throw new Error(`logo-art: no colour for "${k}"`);
+  if (!hex) throw new Error(`mascot-art: no colour for "${k}"`);
   return [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).concat(255);
 };
 
@@ -73,24 +68,31 @@ function encode(size, pixel, opaque) {
   ]);
 }
 
-// `crop` trims that many pixels of lawn off every side, for a size the grid
-// does not divide: 52 cells at 10x is 520, trimmed to 512.
-function png(rows, scale, crop = 0) {
-  const size = rows.length * scale - 2 * crop;
-  const at = (x, y) => rgba(rows[Math.floor((y + crop) / scale)][Math.floor((x + crop) / scale)]);
-  return encode(size, at, rows.every((r) => !r.includes('.')));
-}
-
-// Half size, each pixel the alpha-weighted mean of a 2x2 block of cells. Only
-// for the 16px entry in favicon.ico, the one size smaller than the art.
-function half(rows) {
+// The grid at any size: nearest cell when growing, the alpha-weighted mean of
+// the cells under each pixel when shrinking.
+function png(rows, size) {
+  const n = rows.length;
+  const opaque = rows.every((r) => !r.includes('.'));
+  if (size >= n) {
+    return encode(size, (x, y) => rgba(rows[Math.floor((y * n) / size)][Math.floor((x * n) / size)]), opaque);
+  }
+  const step = n / size;
   const at = (x, y) => {
-    const cells = [[0, 0], [1, 0], [0, 1], [1, 1]].map(([dx, dy]) => rgba(rows[y * 2 + dy][x * 2 + dx]));
-    const a = cells.reduce((t, c) => t + c[3], 0);
+    let a = 0;
+    const sum = [0, 0, 0];
+    let count = 0;
+    for (let cy = Math.floor(y * step); cy < Math.ceil((y + 1) * step); cy++) {
+      for (let cx = Math.floor(x * step); cx < Math.ceil((x + 1) * step); cx++) {
+        const c = rgba(rows[cy][cx]);
+        a += c[3];
+        for (let i = 0; i < 3; i++) sum[i] += c[i] * c[3];
+        count++;
+      }
+    }
     if (!a) return [0, 0, 0, 0];
-    return [0, 1, 2].map((i) => Math.round(cells.reduce((t, c) => t + c[i] * c[3], 0) / a)).concat(Math.round(a / 4));
+    return sum.map((s) => Math.round(s / a)).concat(Math.round(a / count));
   };
-  return encode(rows.length / 2, at, false);
+  return encode(size, at, opaque);
 }
 
 // favicon.ico for whatever asks for it by name: older browsers, Windows
@@ -114,50 +116,38 @@ function ico(entries) {
   return Buffer.concat([head, ...entries.map(([, data]) => data)]);
 }
 
-// The lawn as one stepped shape, then one <path> per colour made of that
-// colour's horizontal runs. A <rect> per run was 431 elements and 25 KB.
+// One <path> per colour made of that colour's horizontal runs.
 function svg(rows) {
   const n = rows.length;
-  const base = rows[Math.floor(n / 2)][0];
   const runs = {};
   rows.forEach((row, y) => {
     for (let x = 0; x < n; ) {
       let end = x + 1;
       while (end < n && row[end] === row[x]) end++;
-      if (row[x] !== '.' && row[x] !== base) (runs[row[x]] ??= []).push(`M${x} ${y}h${end - x}v1h${x - end}z`);
+      if (row[x] !== '.') (runs[row[x]] ??= []).push(`M${x} ${y}h${end - x}v1h${x - end}z`);
       x = end;
     }
   });
-  // The painted extent of every row, so the lawn's corners step with rounded().
-  const edge = rows.map((r) => [r.search(/[^.]/), r.length - r.split('').reverse().join('').search(/[^.]/)]);
-  const right = edge.map(([, r], y) => `L${r} ${y}L${r} ${y + 1}`).join('');
-  const left = edge.map(([l], y) => `L${l} ${y + 1}L${l} ${y}`).reverse().join('');
-  const lawn = `M${edge[0][0]} 0${right}${left}z`;
   return (
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${n} ${n}" shape-rendering="crispEdges" role="img" aria-label="Nhako Tools">\n` +
-    `<path fill="${PALETTE[base]}" d="${lawn}"/>\n` +
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${n} ${n}" shape-rendering="crispEdges" role="img" aria-label="${LABEL}">\n` +
     Object.entries(runs).map(([k, d]) => `<path fill="${PALETTE[k]}" d="${d.join('')}"/>`).join('\n') +
     '\n</svg>\n'
   );
 }
 
 const favicon = rounded(ICON);
-const apple = onLawn(36); // 36 x 5 = 180
-const maskable192 = onLawn(64, { dy: 1 }); // 64 x 3 = 192
-const maskable512 = onLawn(52, { dy: 1 }); // 52 x 10 = 520, less 4px a side
 
 writeFileSync('public/favicon.svg', svg(favicon));
 console.log('  public/favicon.svg');
-writeFileSync('public/favicon.ico', ico([[16, half(favicon)], [32, png(favicon, 1)], [64, png(favicon, 2)]]));
-console.log('  public/favicon.ico  16, 32, 64');
-for (const [rows, scale, out, crop] of [
-  [apple, 5, 'public/icons/apple-touch-icon.png'],
-  [favicon, 6, 'public/icons/icon-192.png'],
-  [favicon, 16, 'public/icons/icon-512.png'],
-  [maskable192, 3, 'public/icons/maskable-192.png'],
-  [maskable512, 10, 'public/icons/maskable-512.png', 4],
+writeFileSync('public/favicon.ico', ico([16, 32, 48, 64].map((s) => [s, png(favicon, s)])));
+console.log('  public/favicon.ico  16, 32, 48, 64');
+for (const [rows, size, out] of [
+  [ICON, 180, 'public/icons/apple-touch-icon.png'],
+  [favicon, 192, 'public/icons/icon-192.png'],
+  [favicon, 512, 'public/icons/icon-512.png'],
+  [ICON, 192, 'public/icons/maskable-192.png'],
+  [ICON, 512, 'public/icons/maskable-512.png'],
 ]) {
-  writeFileSync(out, png(rows, scale, crop));
-  const px = rows.length * scale - 2 * (crop ?? 0);
-  console.log(`  ${out}  ${px}x${px}`);
+  writeFileSync(out, png(rows, size));
+  console.log(`  ${out}  ${size}x${size}`);
 }
