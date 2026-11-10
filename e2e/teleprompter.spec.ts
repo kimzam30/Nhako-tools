@@ -74,7 +74,7 @@ test.describe('teleprompter', () => {
     await page.goto('/media/teleprompter');
     await writeScript(page, `${lorem(20)} [PAUSE] ${lorem(400, 'after')}`);
     await startPlaying(page);
-    await expect(page.getByText('Paused at a cue. Tap to continue.')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('status')).toContainText('Paused at a cue. Tap to continue.', { timeout: 15_000 });
     await expect(page.getByTestId('play')).toHaveText('Play');
     const at = (await scrolled(page)).offset;
     await page.waitForTimeout(600);
@@ -384,7 +384,7 @@ test.describe('recording', () => {
     });
     await page.getByTestId('play-record').click();
     await expect(page.getByTestId('countdown')).toBeVisible();
-    await expect(page.getByTestId('play-record')).toHaveText('Stop');
+    await expect(page.getByTestId('play-record')).toHaveText('Stop take');
     // Nothing is recorded during the countdown.
     await expect(page.getByTestId('rec-badge')).toBeHidden();
     await expect(page.getByTestId('rec-badge')).toBeVisible({ timeout: 6000 });
@@ -644,5 +644,309 @@ test.describe('phone remote (live relay)', () => {
     await page.getByTestId('code').fill('abc');
     await page.getByRole('button', { name: 'Connect' }).click();
     await expect(page.getByRole('alert')).toHaveText('That code should be 10 letters and numbers.');
+  });
+});
+
+test.describe('camera lane', () => {
+  test.skip(({ browserName }) => browserName !== 'chromium', 'Chromium provides a fake camera and microphone');
+  test.use({ permissions: ['camera', 'microphone'] });
+
+  // Kim's debug devices: Galaxy Z Flip 5 (unfolded both ways, cover screen),
+  // Galaxy Tab S9 both ways, and the 1920x1200 laptop.
+  const DEVICES = {
+    'flip 5 portrait': { width: 412, height: 1004 },
+    'flip 5 landscape': { width: 1004, height: 412 },
+    'flip 5 cover screen': { width: 360, height: 374 },
+    'tab s9 portrait': { width: 800, height: 1280 },
+    'tab s9 landscape': { width: 1280, height: 800 },
+    laptop: { width: 1920, height: 1200 },
+  };
+  const LONG = Array.from({ length: 8 }, (_, i) => `# Part ${i + 1}\n\nA long paragraph with **internationalisation** and extraordinarily wide words so every line runs edge to edge, number ${i + 1}.`).join('\n\n');
+
+  /** Words under the camera box, and words cut off at the text area's sides. */
+  const overlap = (page: Page) => page.evaluate(() => {
+    const view = document.querySelector('[data-testid=prompter-view]')!.getBoundingClientRect();
+    const boxes = [...document.querySelectorAll('[data-testid=camera-lane] *')].map((e) => e.getBoundingClientRect()).filter((r) => r.width > 0);
+    const words = [...document.querySelectorAll('[data-w]')].map((w) => w.getBoundingClientRect())
+      .filter((r) => r.bottom > view.top && r.top < view.bottom)
+      .map((r) => new DOMRect(r.left, Math.max(r.top, view.top), r.width, Math.min(r.bottom, view.bottom) - Math.max(r.top, view.top)));
+    const hit = (a: DOMRect, b: DOMRect) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+    return {
+      hidden: words.filter((w) => boxes.some((b) => hit(w, b))).length,
+      clipped: words.filter((w) => w.right > view.right + 1 || w.left < view.left - 1).length,
+    };
+  });
+
+  for (const [name, size] of Object.entries(DEVICES)) {
+    test(`no word is ever under the camera or cut off: ${name}`, async ({ page }) => {
+      await page.setViewportSize(size);
+      await fresh(page, { fontSize: 120, margin: 0 });
+      await page.goto('/media/teleprompter');
+      await writeScript(page, LONG);
+      await page.getByTestId('start-record').click();
+      await expect(page.getByTestId('camera-preview')).toBeVisible();
+      const view = page.getByTestId('prompter-view');
+      const box = (await view.boundingBox())!;
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      for (let i = 0; i < 10; i++) {
+        expect(await overlap(page)).toEqual({ hidden: 0, clipped: 0 });
+        await page.mouse.wheel(0, 120);
+        await page.waitForTimeout(50);
+      }
+      // Recording puts the REC timer on the picture, not on the script.
+      await page.getByTestId('record').click();
+      const rec = (await page.getByTestId('rec-badge').boundingBox())!;
+      const cam = (await page.getByTestId('camera-preview').boundingBox())!;
+      expect(rec.x >= cam.x && rec.y >= cam.y && rec.x + rec.width <= cam.x + cam.width + 1).toBe(true);
+      expect(await overlap(page)).toEqual({ hidden: 0, clipped: 0 });
+      await page.getByTestId('record').click();
+      await expect(page.getByTestId('stage-message')).toBeVisible();
+    });
+  }
+
+  test('drag the camera and it snaps to the nearest corner, remembered after a reload', async ({ page }) => {
+    await page.setViewportSize(DEVICES.laptop);
+    await fresh(page);
+    await page.goto('/media/teleprompter');
+    const open = async () => {
+      await page.getByTestId('start-record').click();
+      await expect(page.getByTestId('camera-preview')).toBeVisible();
+    };
+    await open();
+    const lane = page.getByTestId('camera-lane');
+    await expect(lane).toHaveAttribute('data-corner', 'tr');
+    const area = (await page.getByTestId('prompter-view').boundingBox())!;
+    for (const [corner, fx, fy] of [['bl', 0.1, 0.9], ['tl', 0.1, 0.1], ['br', 0.9, 0.9]] as const) {
+      const cam = (await page.getByTestId('camera-preview').boundingBox())!;
+      await page.mouse.move(cam.x + cam.width / 2, cam.y + cam.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(area.x + area.width * fx, area.y + area.height * fy, { steps: 8 });
+      await expect(page.getByTestId('camera-drop-hint'), `dragging to ${corner}`).toBeVisible();
+      await page.mouse.up();
+      await expect(lane).toHaveAttribute('data-corner', corner);
+      await expect(page.getByTestId('camera-drop-hint')).toHaveCount(0);
+      // Let the snap glide finish before measuring or grabbing it again.
+      await page.waitForTimeout(350);
+    }
+    // A drag on the camera is not a tap on the script: nothing started playing.
+    await expect(page.getByTestId('play')).toHaveText('Play');
+    // Bottom right is on the right: the text sits left of the lane.
+    const v = (await page.getByTestId('prompter-view').boundingBox())!;
+    const c = (await page.getByTestId('camera-preview').boundingBox())!;
+    expect(v.x + v.width).toBeLessThanOrEqual(c.x);
+    expect(c.y + c.height).toBeGreaterThan(v.y + v.height * 0.6);
+
+    await page.getByTestId('close').click();
+    await page.reload();
+    await open();
+    await expect(lane).toHaveAttribute('data-corner', 'br');
+
+    // Move goes round the corners clockwise, for keys and screen readers.
+    await page.getByTestId('camera-move').click();
+    await expect(lane).toHaveAttribute('data-corner', 'bl');
+    await page.getByTestId('camera-move').click();
+    await expect(lane).toHaveAttribute('data-corner', 'tl');
+  });
+
+  test('hiding the camera gives the script the whole width, and keeps the line being read', async ({ page }) => {
+    await page.setViewportSize(DEVICES['tab s9 landscape']);
+    await fresh(page, { fontSize: 64 });
+    await page.goto('/media/teleprompter');
+    await writeScript(page, Array.from({ length: 20 }, () => lorem(30)).join('\n\n'));
+    await page.getByTestId('start-record').click();
+    await expect(page.getByTestId('camera-preview')).toBeVisible();
+    const narrow = (await page.getByTestId('prompter-view').boundingBox())!.width;
+    const view = (await page.getByTestId('prompter-view').boundingBox())!;
+    await page.mouse.move(view.x + view.width / 2, view.y + view.height / 2);
+    for (let i = 0; i < 6; i++) { await page.mouse.wheel(0, 300); await page.waitForTimeout(60); }
+    await page.waitForTimeout(300);
+    /** The word sitting on the reading line. */
+    const reading = () => page.evaluate(() => {
+      const band = document.querySelector('[data-testid=prompter-view] > div[aria-hidden]')!.getBoundingClientRect();
+      const w = [...document.querySelectorAll<HTMLElement>('[data-w]')].find((e) => {
+        const r = e.getBoundingClientRect();
+        return r.top >= band.top - 2 && r.top < band.bottom;
+      });
+      return w?.textContent ?? null;
+    });
+    const before = await reading();
+    expect(before).toMatch(/^word\d+$/);
+    await page.getByTestId('camera-hide').click();
+    await expect(page.getByTestId('camera-preview')).toHaveCount(0);
+    const wide = (await page.getByTestId('prompter-view').boundingBox())!.width;
+    expect(wide).toBeGreaterThan(narrow + 200);
+    await page.waitForTimeout(300);
+    // The reflow moved every line; the one being read stays on the reading line.
+    const after = await page.evaluate(() => {
+      const band = document.querySelector('[data-testid=prompter-view] > div[aria-hidden]')!.getBoundingClientRect();
+      return [...document.querySelectorAll<HTMLElement>('[data-w]')]
+        .filter((e) => { const r = e.getBoundingClientRect(); return r.top >= band.top - 2 && r.top < band.bottom; })
+        .map((e) => e.textContent);
+    });
+    expect(after).toContain(before);
+    // The Camera button brings it back.
+    await page.getByTestId('camera').click();
+    await expect(page.getByTestId('camera-preview')).toBeVisible();
+  });
+});
+
+test.describe('stage fixes (phase 2 audit)', () => {
+  test('Esc in the phone-remote dialog closes the dialog, not the stage, and focus goes in and back', async ({ page }) => {
+    // In full screen the browser keeps the first Esc to leave full screen (Firefox
+    // headless grants it); this is about the page's own handling of the key.
+    await page.addInitScript(() => { Element.prototype.requestFullscreen = () => Promise.reject(new TypeError('test')); });
+    await fresh(page);
+    await page.goto('/media/teleprompter');
+    await page.getByTestId('start').click();
+    if (!(await page.getByTestId('remote').isVisible())) await page.getByTestId('more').click();
+    await page.getByTestId('remote').click();
+    const dialog = page.getByTestId('room-code').locator('xpath=ancestor::*[@role="dialog"][1]');
+    await expect(dialog).toHaveAttribute('aria-modal', 'true');
+    await expect(dialog.getByRole('button', { name: 'Done' })).toBeFocused();
+    // Tab stays inside the dialog: the stage behind is out of the Tab order.
+    for (let i = 0; i < 3; i++) {
+      expect(await page.evaluate(() => {
+        const box = document.querySelector('[data-testid=room-code]')!.closest('[role=dialog]');
+        return document.activeElement?.closest('[role=dialog]') === box;
+      })).toBe(true);
+      await page.keyboard.press('Tab');
+    }
+    await page.keyboard.press('Escape');
+    await expect(dialog).toHaveCount(0);
+    await expect(page.getByTestId('prompter-view')).toBeVisible();
+    await expect(page.getByTestId('remote')).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('prompter-view')).toHaveCount(0);
+  });
+
+  test('the stage covers the whole screen, and the page behind is out of reach until it closes', async ({ page }) => {
+    await fresh(page, { theme: 'light' });
+    await page.goto('/media/teleprompter');
+    await page.getByTestId('start').click();
+    const m = await page.evaluate(() => {
+      const stage = document.querySelector('[data-testid=prompter-view]')!.closest('[aria-modal=true]')!;
+      return {
+        stage: stage.getBoundingClientRect().width, vw: window.innerWidth,
+        headerInert: document.querySelector('header')?.closest('[inert]') !== null,
+        stageInert: stage.closest('[inert]') !== null,
+      };
+    });
+    // The site's scrollbar gutter used to leave a 15 px strip of the page on the right.
+    expect(m.stage).toBe(m.vw);
+    expect(m.headerInert).toBe(true);
+    expect(m.stageInert).toBe(false);
+    await page.getByTestId('close').click();
+    expect(await page.evaluate(() => document.querySelectorAll('[inert]').length)).toBe(0);
+    expect(await page.evaluate(() => document.documentElement.style.scrollbarGutter)).toBe('');
+  });
+
+  test('a refused full-screen request is asked again on the next tap on the stage', async ({ page }) => {
+    await page.addInitScript(() => {
+      const w = window as unknown as { fsCalls: number };
+      w.fsCalls = 0;
+      // The first request fails, as it does when the camera prompt outlived the tap.
+      Element.prototype.requestFullscreen = function () {
+        w.fsCalls++;
+        return w.fsCalls === 1 ? Promise.reject(new TypeError('not allowed')) : Promise.resolve();
+      };
+    });
+    await fresh(page);
+    await page.goto('/media/teleprompter');
+    await page.getByTestId('start').click();
+    await page.waitForTimeout(200);
+    expect(await page.evaluate(() => (window as unknown as { fsCalls: number }).fsCalls)).toBe(1);
+    await page.getByTestId('play').click();
+    expect(await page.evaluate(() => (window as unknown as { fsCalls: number }).fsCalls)).toBe(2);
+    // It went through, so the next tap does not ask a third time.
+    await page.getByTestId('play').click();
+    expect(await page.evaluate(() => (window as unknown as { fsCalls: number }).fsCalls)).toBe(2);
+  });
+
+  test('voice-follow with no speech service backs off and says so, instead of claiming to listen', async ({ page }) => {
+    await page.addInitScript(() => {
+      const w = window as unknown as { starts: number };
+      w.starts = 0;
+      class DeadRecognition {
+        lang = ''; continuous = false; interimResults = false;
+        onresult: unknown = null; onend: (() => void) | null = null; onerror: ((e: { error: string }) => void) | null = null;
+        start() { w.starts++; setTimeout(() => { this.onerror?.({ error: 'network' }); this.onend?.(); }, 10); }
+        stop() { this.onend?.(); }
+      }
+      Object.assign(window, { SpeechRecognition: DeadRecognition, webkitSpeechRecognition: DeadRecognition });
+    });
+    await fresh(page);
+    await page.goto('/media/teleprompter');
+    await writeScript(page, lorem(200));
+    await page.getByTestId('voice').check();
+    await startPlaying(page);
+    await page.waitForTimeout(3000);
+    // It used to restart every 250 ms: about 12 times in 3 s.
+    expect(await page.evaluate(() => (window as unknown as { starts: number }).starts)).toBeLessThanOrEqual(4);
+    await expect(page.getByTestId('voice-offline')).toBeVisible();
+    await expect(page.getByTestId('status')).not.toContainText('Listening');
+  });
+
+  test('the time left is not read out every second, and the ready hint sits clear of the script', async ({ page }) => {
+    await fresh(page);
+    await page.goto('/media/teleprompter');
+    await writeScript(page, lorem(400));
+    await page.getByTestId('start').click();
+    await expect(page.getByTestId('status')).not.toHaveAttribute('aria-live', /.*/);
+    const hint = (await page.getByTestId('ready-hint').locator('span').boundingBox())!;
+    const hidden = await page.evaluate((h) => [...document.querySelectorAll('[data-w]')].map((w) => w.getBoundingClientRect())
+      .filter((r) => r.left < h.x + h.width && h.x < r.right && r.top < h.y + h.height && h.y < r.bottom).length, hint);
+    expect(hidden).toBe(0);
+  });
+});
+
+test.describe('stage fixes with a camera', () => {
+  test.skip(({ browserName }) => browserName !== 'chromium', 'Chromium provides a fake camera and microphone');
+  test.use({ permissions: ['camera', 'microphone'] });
+
+  test('the mic meter keeps one audio engine while the camera is hidden and shown', async ({ page }) => {
+    await page.addInitScript(() => {
+      const w = window as unknown as { contexts: number; AudioContext: typeof AudioContext };
+      w.contexts = 0;
+      const Real = w.AudioContext;
+      w.AudioContext = class extends Real { constructor(o?: AudioContextOptions) { super(o); w.contexts++; } };
+    });
+    await fresh(page);
+    await page.goto('/media/teleprompter');
+    await page.getByTestId('start-record').click();
+    await expect(page.getByTestId('camera-preview')).toBeVisible();
+    for (let i = 0; i < 2; i++) {
+      await page.getByTestId('camera-hide').click();
+      if (!(await page.getByTestId('camera').isVisible())) await page.getByTestId('more').click();
+      await page.getByTestId('camera').click();
+      await expect(page.getByTestId('camera-preview')).toBeVisible();
+    }
+    expect(await page.evaluate(() => (window as unknown as { contexts: number }).contexts)).toBe(1);
+  });
+
+  test('old recording links are let go when the list refreshes', async ({ page }) => {
+    await page.addInitScript(() => {
+      const w = window as unknown as { made: number; freed: number };
+      w.made = 0; w.freed = 0;
+      const make = URL.createObjectURL.bind(URL);
+      const free = URL.revokeObjectURL.bind(URL);
+      URL.createObjectURL = (o) => { w.made++; return make(o); };
+      URL.revokeObjectURL = (u) => { w.freed++; free(u); };
+    });
+    await fresh(page);
+    await page.goto('/media/teleprompter');
+    for (let i = 0; i < 2; i++) {
+      await page.getByTestId('start-record').click();
+      await page.getByTestId('record').click();
+      await expect(page.getByTestId('rec-badge')).toBeVisible();
+      await page.waitForTimeout(600);
+      await page.getByTestId('record').click();
+      await expect(page.getByTestId('stage-message')).toBeVisible();
+      await page.getByTestId('close').click();
+    }
+    await expect(page.getByTestId('takes').locator('li')).toHaveCount(2);
+    await page.waitForTimeout(200);
+    // Refresh 1 made 1 link, refresh 2 made 2 and let go of the first.
+    const n = await page.evaluate(() => { const w = window as unknown as { made: number; freed: number }; return { made: w.made, freed: w.freed }; });
+    expect(n.made - n.freed).toBe(2);
   });
 });

@@ -7,6 +7,7 @@ import { prepareRecording, startRecording, type PreparedRecording, type Recordin
 import type { Settings } from './teleprompter-store';
 import { cameraProblemText, cameraRetryable, type StageText } from './teleprompter-text';
 import { currentCameraBlocker, isLive, openCamera, type OpenedCamera } from '../../lib/camera';
+import TeleprompterCamera, { laneIsSide } from './TeleprompterCamera';
 
 interface Props {
   script: Script;
@@ -60,6 +61,11 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
   const contentRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const meterRef = useRef<HTMLDivElement>(null);
+  // The text area and the camera lane share this.
+  const areaRef = useRef<HTMLDivElement>(null);
+  const [area, setArea] = useState({ w: 0, h: 0 });
+  // The text area's width, for fitting the longest word.
+  const [viewW, setViewW] = useState(0);
 
   // The scroll runs every frame, so it lives in refs, not state.
   const y = useRef(0);
@@ -91,7 +97,7 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
   // (1080 x 1920 on the Android emulator), which a fixed 16:9 box cropped to a
   // strip across the presenter's eyes.
   const [aspect, setAspect] = useState(16 / 9);
-  const [voiceState, setVoiceState] = useState<'off' | 'listening' | 'unsupported' | 'blocked'>('off');
+  const [voiceState, setVoiceState] = useState<'off' | 'listening' | 'unsupported' | 'blocked' | 'offline'>('off');
   const [showRemote, setShowRemote] = useState(false);
   const [qr, setQr] = useState<string | null>(null);
   const [preview, setPreview] = useState(true);
@@ -117,6 +123,26 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
   }, []);
 
   const normWords = useMemo(() => script.words.map(normalizeWord), [script]);
+
+  // A word wider than the screen was cut off mid-word ("internati"), so the
+  // text shrinks until the longest word fits. Breaking a word is worse read
+  // aloud than a smaller font; it only happens past half the chosen size.
+  const widestWord = useMemo(() => {
+    const family = typeof window !== 'undefined' && rootRef.current ? getComputedStyle(rootRef.current).fontFamily : 'sans-serif';
+    const ctx = document.createElement('canvas').getContext('2d');
+    if (!ctx) return 0;
+    ctx.font = `700 100px ${family}`;
+    let max = 0;
+    for (const w of script.words) max = Math.max(max, ctx.measureText(w).width);
+    return max / 100;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [script, viewW > 0]);
+  const textRoom = viewW * (1 - (2 * settings.margin) / 100);
+  const fontSize = widestWord > 0 && textRoom > 0
+    ? Math.max(Math.min(settings.fontSize, 24), Math.min(settings.fontSize, Math.max(settings.fontSize * 0.5, Math.floor((textRoom * 0.97) / widestWord))))
+    : settings.fontSize;
+  const fontRef = useRef(fontSize);
+  fontRef.current = fontSize;
   const canRecord = currentCameraBlocker() === null;
 
   // ─── Layout ──────────────────────────────────────────────────────────
@@ -125,13 +151,29 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
     const v = viewRef.current;
     if (!c || !v) return;
     const tops = (sel: string) => [...c.querySelectorAll<HTMLElement>(sel)].map((el) => el.offsetTop);
-    layout.current = {
+    const old = layout.current;
+    const next = {
       height: c.scrollHeight,
       view: v.clientHeight,
       sections: tops('[data-section]'),
       pauses: tops('[data-pause]'),
       words: tops('[data-w]'),
     };
+    // A reflow (camera moved, font fitted, phone turned) moves every line.
+    // Keep the word on the reading line where it was, not the pixel offset.
+    if (old.words.length === next.words.length && old.words.length > 0 && y.current > 0) {
+      const i = wordAt(y.current);
+      const before = old.words[i];
+      const after = next.words[i];
+      if (before !== undefined && after !== undefined && before !== after) {
+        y.current = Math.max(0, after + (y.current - before) * (next.height / Math.max(1, old.height)));
+        target.current = null;
+      } else if (before === undefined && old.height > 1) {
+        y.current = (y.current / old.height) * next.height;
+      }
+    }
+    layout.current = next;
+    setViewW(v.clientWidth);
   }, []);
 
   useEffect(() => {
@@ -140,7 +182,7 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
     if (contentRef.current) ro.observe(contentRef.current);
     if (viewRef.current) ro.observe(viewRef.current);
     return () => ro.disconnect();
-  }, [measure, script, settings.fontSize, settings.lineHeight, settings.margin, settings.align]);
+  }, [measure, script, fontSize, settings.lineHeight, settings.margin, settings.align]);
 
   const wordAt = (pos: number) => {
     const w = layout.current.words;
@@ -262,7 +304,7 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
     const L = layout.current;
     target.current = Math.max(0, Math.min(L.height - 1, pos));
   };
-  const lineStep = () => settingsRef.current.fontSize * settingsRef.current.lineHeight;
+  const lineStep = () => fontRef.current * settingsRef.current.lineHeight;
   const nudge = (lines: number) => jumpTo((target.current ?? y.current) + lines * lineStep());
   const section = (dir: 1 | -1) => {
     const s = layout.current.sections;
@@ -381,7 +423,7 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
       tick();
     } catch { /* no meter, recording still works */ }
     return () => { cancelAnimationFrame(raf); void ctx?.close(); };
-  }, [stream, preview]);
+  }, [stream]);
 
   // A second press while the camera or file is still opening would open two takes.
   const busy = useRef(false);
@@ -452,6 +494,7 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
   // ─── Voice-follow ────────────────────────────────────────────────────
   const recognizer = useRef<SpeechRecognitionLike | null>(null);
   const wantVoice = useRef(false);
+  const voiceRetry = useRef(250);
 
   function startVoice() {
     const SR = speechRecognition();
@@ -464,6 +507,8 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
     r.interimResults = true;
     let heard: string[] = [];
     r.onresult = (e) => {
+      voiceRetry.current = 250;
+      setVoiceState('listening');
       const latest: string[] = [];
       for (let i = e.resultIndex; i < e.results.length; i++) latest.push(e.results[i]?.[0]?.transcript ?? '');
       const words = latest.join(' ').split(/\s+/).filter(Boolean);
@@ -476,19 +521,25 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
       if (idx < tops.length) target.current = Math.max(target.current ?? 0, tops[idx]!);
       else target.current = layout.current.height - 1;
     };
+    let failed = false;
     r.onerror = (e) => {
       if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { wantVoice.current = false; setVoiceState('blocked'); }
+      // No speech service (offline, or it refused): restarting at once looped
+      // four times a second forever while the screen still said Listening.
+      else if (e.error === 'network' || e.error === 'audio-capture' || e.error === 'language-not-supported') { failed = true; setVoiceState('offline'); }
     };
-    // Recognition ends itself after silence; keep it going while wanted.
+    // Recognition ends itself after silence; keep it going while wanted. A
+    // failure backs off, doubling up to 8 seconds, and a result resets it.
     r.onend = () => {
       recognizer.current = null;
-      if (wantVoice.current) setTimeout(() => { if (wantVoice.current) startVoice(); }, 250);
+      voiceRetry.current = failed ? Math.min(8000, Math.max(500, voiceRetry.current * 2)) : 250;
+      if (wantVoice.current) setTimeout(() => { if (wantVoice.current) startVoice(); }, voiceRetry.current);
       else setVoiceState((v) => (v === 'listening' ? 'off' : v));
     };
     try {
       r.start();
       recognizer.current = r;
-      setVoiceState('listening');
+      setVoiceState((v) => (v === 'offline' ? v : 'listening'));
     } catch {
       setVoiceState('unsupported');
     }
@@ -504,6 +555,23 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
     const onKey = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
       const k = e.key;
+      // The phone-remote dialog is on top: Esc closes it, not the whole stage
+      // (and with it a take that is recording), and nothing else reaches the stage.
+      if (showRemote) {
+        if (k === 'Escape') { e.preventDefault(); e.stopPropagation(); setShowRemote(false); }
+        // Tab goes round the dialog's own controls rather than out of the page.
+        else if (k === 'Tab') {
+          const box = remoteDone.current?.closest('[role=dialog]');
+          const items = [...(box?.querySelectorAll<HTMLElement>('button, a[href], input, [tabindex]:not([tabindex="-1"])') ?? [])];
+          if (items.length) {
+            e.preventDefault();
+            const i = items.indexOf(document.activeElement as HTMLElement);
+            items[(i + (e.shiftKey ? -1 : 1) + items.length) % items.length]!.focus();
+          }
+        }
+        return;
+      }
+      retryFullscreen();
       // Space and Enter on a focused button press that button.
       if ((k === ' ' || k === 'Enter') && e.target instanceof HTMLButtonElement) return;
       const handled = () => { e.preventDefault(); e.stopPropagation(); };
@@ -557,6 +625,20 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
     setShowRemote(true);
     remote.pair();
   }
+  const remoteDone = useRef<HTMLButtonElement>(null);
+  const remoteOpener = useRef<Element | null>(null);
+  useEffect(() => {
+    if (!showRemote) return;
+    remoteOpener.current = document.activeElement;
+    remoteDone.current?.focus();
+    // Everything behind the dialog leaves the Tab order while it is open.
+    const behind = [...(rootRef.current?.children ?? [])].filter((el) => !el.contains(remoteDone.current));
+    behind.forEach((el) => el.setAttribute('inert', ''));
+    return () => {
+      behind.forEach((el) => el.removeAttribute('inert'));
+      (remoteOpener.current as HTMLElement | null)?.focus?.();
+    };
+  }, [showRemote]);
   useEffect(() => {
     if (!showRemote || !remote.code) return;
     let live = true;
@@ -565,12 +647,34 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
   }, [showRemote, remote.code]);
 
   // ─── Screen: full screen, awake ──────────────────────────────────────
-  useEffect(() => {
+  // A browser goes full screen only inside a tap. Start and record opens the
+  // stage after the camera prompt, and if that prompt waited a few seconds
+  // for an answer, the tap had expired (the Flip 5 stayed in its browser
+  // bars). So a refused request is asked again on the stage's next tap or key.
+  const fsWanted = useRef(false);
+  function goFullscreen() {
     const root = rootRef.current as (HTMLDivElement & { webkitRequestFullscreen?: () => void }) | null;
+    const doc = document as Document & { webkitFullscreenElement?: Element | null };
+    if (!root || doc.fullscreenElement || doc.webkitFullscreenElement) { fsWanted.current = false; return; }
     try {
-      const p = root?.requestFullscreen?.({ navigationUI: 'hide' }) ?? root?.webkitRequestFullscreen?.();
-      if (p instanceof Promise) p.catch(() => undefined);
-    } catch { /* the overlay already covers the page */ }
+      const p = root.requestFullscreen?.({ navigationUI: 'hide' }) ?? root.webkitRequestFullscreen?.();
+      if (p instanceof Promise) {
+        fsWanted.current = false;
+        p.catch(() => { fsWanted.current = true; });
+      }
+    } catch { fsWanted.current = true; /* the overlay already covers the page */ }
+  }
+  function retryFullscreen() { if (fsWanted.current) goFullscreen(); }
+  useEffect(() => {
+    goFullscreen();
+
+    // The page behind stays out of reach of Tab and of a screen reader.
+    const inerted: Element[] = [];
+    for (let n: Element | null = rootRef.current; n && n !== document.body; n = n.parentElement) {
+      for (const sib of n.parentElement?.children ?? []) {
+        if (sib !== n && !sib.hasAttribute('inert')) { sib.setAttribute('inert', ''); inerted.push(sib); }
+      }
+    }
 
     let lock: { release(): Promise<void> } | null = null;
     const wake = async () => {
@@ -581,11 +685,17 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
     document.addEventListener('visibilitychange', onVisible);
     const prevOverflow = document.documentElement.style.overflow;
     document.documentElement.style.overflow = 'hidden';
+    // The site keeps a scrollbar gutter, and a fixed element stops short of it:
+    // a 15 px strip of the page showed down the stage's right edge.
+    const prevGutter = document.documentElement.style.scrollbarGutter;
+    document.documentElement.style.scrollbarGutter = 'auto';
     rootRef.current?.focus();
     return () => {
       document.removeEventListener('visibilitychange', onVisible);
       void lock?.release().catch(() => undefined);
       document.documentElement.style.overflow = prevOverflow;
+      document.documentElement.style.scrollbarGutter = prevGutter;
+      inerted.forEach((el) => el.removeAttribute('inert'));
       // Whichever API took us in has to take us out. A Safari old enough to
       // have only the prefixed one would otherwise stay full screen after
       // Close, with the page behind it and no way back but the Esc key.
@@ -654,6 +764,19 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
     y.current = Math.max(0, Math.min(layout.current.height - 1, y.current + e.deltaY * (settings.mirrorY ? -1 : 1)));
   };
 
+  // ─── Camera lane ─────────────────────────────────────────────────────
+  const laneShown = Boolean(stream && preview);
+  const laneSide = laneIsSide(area);
+  useLayoutEffect(() => {
+    const el = areaRef.current;
+    if (!el) return;
+    const read = () => setArea({ w: el.clientWidth, h: el.clientHeight });
+    read();
+    const ro = new ResizeObserver(read);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   // ─── Render ──────────────────────────────────────────────────────────
   const mirror = `scale(${settings.mirrorX ? -1 : 1}, ${settings.mirrorY ? -1 : 1})`;
   const btn = 'inline-flex min-h-12 min-w-12 items-center justify-center rounded-lg px-3 text-sm font-medium transition-colors disabled:opacity-40';
@@ -690,13 +813,17 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
       aria-modal="true"
       aria-label={t.stageLabel}
       tabIndex={-1}
+      onPointerDownCapture={retryFullscreen}
       className="fixed inset-0 z-[100] flex h-[100dvh] flex-col outline-none"
       style={{ background: theme.bg, color: theme.fg }}
     >
+      {/* The text area and, when the camera is up, its lane: side by side on a
+          wide stage, stacked on a tall one, never on top of each other. */}
+      <div ref={areaRef} className="relative flex min-h-0 flex-1 overflow-hidden" style={{ flexDirection: laneSide ? 'row' : 'column' }}>
       {/* Text area. Mirroring flips this and the reading line together. */}
       <div
         ref={viewRef}
-        className="relative flex-1 cursor-pointer touch-none select-none overflow-hidden"
+        className="relative min-h-0 min-w-0 flex-1 cursor-pointer touch-none select-none overflow-hidden"
         style={{ transform: mirror }}
         onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={() => { drag.current = null; }}
         onWheel={onWheel}
@@ -705,15 +832,15 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-x-0 z-10"
-          style={{ top: `${settings.guide}%`, height: `${settings.fontSize * settings.lineHeight}px`, background: `${theme.em}1f`, borderTop: `2px solid ${theme.em}66` }}
+          style={{ top: `${settings.guide}%`, height: `${fontSize * settings.lineHeight}px`, background: `${theme.em}1f`, borderTop: `2px solid ${theme.em}66` }}
         />
         <div
           ref={contentRef}
           data-testid="prompter-text"
           className="absolute inset-x-0 top-0 will-change-transform"
           style={{
-            fontSize: `${settings.fontSize}px`, lineHeight: settings.lineHeight, padding: `0 ${settings.margin}%`,
-            textAlign: settings.align, fontWeight: 500,
+            fontSize: `${fontSize}px`, lineHeight: settings.lineHeight, padding: `0 ${settings.margin}%`,
+            textAlign: settings.align, fontWeight: 500, overflowWrap: 'anywhere',
           }}
         >
           {script.blocks.map((b, i) => b.kind === 'heading' ? (
@@ -729,6 +856,19 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
           ))}
           {script.words.length === 0 && <p style={{ color: theme.muted }}>{t.empty}</p>}
         </div>
+        {/* Before the first Play, in the empty space above the reading line,
+            where the script has not arrived yet: over the bottom lines it hid
+            the very text the presenter was about to read. Not in the bar: a
+            line that comes and goes there would resize the text area and move
+            the reading line just as the script starts. Mirrored back so it
+            reads the right way round on a beam-splitter rig. */}
+        {!started && (
+          <p className="pointer-events-none absolute inset-x-0 top-3 z-10 px-3 text-center" style={{ transform: mirror }} data-testid="ready-hint">
+            <span className="inline-block max-w-xl rounded-2xl bg-black/75 px-4 py-2 text-sm leading-snug text-white">
+              {record && stream ? t.readyRecord : t.readyPlay}
+            </span>
+          </p>
+        )}
         {countdown > 0 && (
           <div aria-live="assertive" className="absolute inset-0 z-20 flex items-center justify-center" style={{ background: `${theme.bg}cc` }}>
             <span data-testid="countdown" className="font-mono text-[20vmin] font-bold tabular-nums">{countdown}</span>
@@ -736,69 +876,50 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
         )}
       </div>
 
-      {/* Camera preview with a framing grid and a mic level. */}
-      {stream && preview && (
-        <div
-          className={`pointer-events-none absolute right-[max(0.75rem,env(safe-area-inset-right))] top-[max(0.75rem,env(safe-area-inset-top))] z-30 overflow-hidden rounded-lg border border-white/30 bg-black shadow-lg ${aspect < 1 ? 'w-24 sm:w-32' : 'w-40 sm:w-52'}`}
-          data-testid="camera-preview"
-        >
-          <video
-            ref={videoRef} autoPlay muted playsInline disablePictureInPicture
-            onLoadedMetadata={(e) => { const v = e.currentTarget; if (v.videoWidth && v.videoHeight) setAspect(v.videoWidth / v.videoHeight); }}
-            onResize={(e) => { const v = e.currentTarget; if (v.videoWidth && v.videoHeight) setAspect(v.videoWidth / v.videoHeight); }}
-            className="block w-full object-cover" style={{ transform: 'scaleX(-1)', aspectRatio: String(aspect) }}
-          />
-          {needsTap && (
-            <button
-              type="button"
-              onClick={() => { void videoRef.current?.play().then(() => setNeedsTap(false), () => undefined); }}
-              className="pointer-events-auto absolute inset-0 z-10 flex items-center justify-center bg-black/60 px-2 text-center text-xs font-medium text-white"
-              data-testid="camera-tap"
-            >
-              {t.cameraTap}
-            </button>
-          )}
-          <div aria-hidden="true" className="absolute inset-0 grid grid-cols-3 grid-rows-3">
-            {Array.from({ length: 9 }, (_, i) => <span key={i} className="border border-white/15" />)}
-          </div>
-          <div className="h-1.5 bg-white/10"><div ref={meterRef} className="h-full origin-left bg-emerald-400" style={{ transform: 'scaleX(0)' }} /></div>
-        </div>
+      {laneShown && (
+        <TeleprompterCamera
+          corner={settings.camCorner}
+          onCorner={(c) => onSettings({ ...settingsRef.current, camCorner: c })}
+          onHide={() => setPreview(false)}
+          areaRef={areaRef} area={area} aspect={aspect} onAspect={setAspect}
+          videoRef={videoRef} meterRef={meterRef}
+          needsTap={needsTap}
+          onTapPlay={() => { void videoRef.current?.play().then(() => setNeedsTap(false), () => undefined); }}
+          rec={recording ? `${t.rec} ${clock(elapsed)}` : null}
+          fg={theme.fg} t={t}
+        />
       )}
-
-      {recording && (
-        <div className="absolute left-[max(0.75rem,env(safe-area-inset-left))] top-[max(0.75rem,env(safe-area-inset-top))] z-30 flex items-center gap-2 rounded-full bg-black/70 px-3 py-1.5 text-sm text-white" data-testid="rec-badge">
-          <span className="size-2.5 animate-pulse bg-red-500" aria-hidden="true" />
-          <span className="font-mono tabular-nums">{t.rec} {clock(elapsed)}</span>
-        </div>
-      )}
+      </div>
 
       {/* Controls: never mirrored, big enough for a thumb on a tablet, and
           clear of the home indicator and a landscape notch (the page is
           viewport-fit=cover, so the system no longer keeps them clear). */}
-      <div className={`relative z-40 border-t border-white/10 bg-black/85 pb-[max(0.5rem,env(safe-area-inset-bottom))] pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] pt-2 text-white transition-opacity duration-300 ${isPlaying ? 'opacity-40 hover:opacity-100 focus-within:opacity-100' : 'opacity-100'}`}>
-        {/* Floated above the bar rather than placed in it: taking a line of the
-            bar and giving it back on play would resize the text area, and the
-            reading line sits at a percentage of that, so the script would jump
-            a few pixels exactly as it started. */}
-        {!started && (
-          <p className="pointer-events-none absolute inset-x-0 bottom-full mb-3 px-3 text-center" data-testid="ready-hint">
-            <span className="inline-block rounded-full bg-black/75 px-4 py-2 text-sm text-white">
-              {record && stream ? t.readyRecord : t.readyPlay}
-            </span>
-          </p>
-        )}
+      <div className={`relative z-40 border-t border-white/10 bg-black/85 pb-[max(0.5rem,env(safe-area-inset-bottom))] pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] pt-2 text-white transition-opacity duration-300 ${isPlaying ? 'opacity-70 hover:opacity-100 focus-within:opacity-100' : 'opacity-100'}`}>
         <div className="mb-1.5 h-1 overflow-hidden rounded bg-white/10" aria-hidden="true">
           <div className="h-full bg-white/60" style={{ width: `${progress.fraction * 100}%` }} />
         </div>
         {/* One line of its own, always. Sharing the button row meant it took a
             whole row anyway below lg, and a line that comes and goes resizes
             the text area under it. */}
-        <span className="mb-1.5 block truncate px-1 text-xs text-white/70" aria-live="polite" data-testid="status">
+        {/* Not a live region: the time left changes every second, and a screen
+            reader read it out over the script. The changes worth hearing are below. */}
+        <span className="sr-only" aria-live="polite" data-testid="status-live">
+          {pausedAtCue ? t.pausedAtCue : ''}
+          {voiceState === 'unsupported' ? t.voiceUnsupported : voiceState === 'blocked' ? t.voiceBlocked : voiceState === 'offline' ? t.voiceOffline : ''}
+        </span>
+        <span className="mb-1.5 block truncate px-1 text-xs text-white/80" data-testid="status">
+          {recording && !laneShown && (
+            <span className="mr-2 inline-flex items-center gap-1.5 text-white" data-testid="rec-badge">
+              <span className="size-2 animate-pulse rounded-full bg-red-500" aria-hidden="true" />
+              <span className="font-mono tabular-nums">{t.rec} {clock(elapsed)}</span>
+            </span>
+          )}
           {pausedAtCue ? t.pausedAtCue : progress.section >= 0 ? script.sections[progress.section] : ''}
           {' '}<span className="font-mono tabular-nums">{t.left(clock(remainingSeconds))}</span>
           {voiceState === 'listening' && <span className="ml-2 text-emerald-300">{t.listening}</span>}
           {voiceState === 'unsupported' && <span className="ml-2 text-amber-300">{t.voiceUnsupported}</span>}
           {voiceState === 'blocked' && <span className="ml-2 text-amber-300">{t.voiceBlocked}</span>}
+          {voiceState === 'offline' && <span className="ml-2 text-amber-300" data-testid="voice-offline">{t.voiceOffline}</span>}
         </span>
         {(compact || mid) && showMore && (
           <div className="mb-2 flex flex-wrap items-center gap-2 border-b border-white/10 pb-2" data-testid="more-tray">
@@ -871,7 +992,7 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
 
       {showRemote && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={() => setShowRemote(false)}>
-          <div role="dialog" aria-label={t.remoteTitle} className="w-full max-w-sm rounded-xl bg-white p-5 text-black" onClick={(e) => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" aria-label={t.remoteTitle} className="w-full max-w-sm rounded-xl bg-white p-5 text-black" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-lg font-semibold">{t.remoteTitle}</h2>
             <p className="mt-1 text-sm text-stone-600">{t.remoteHelp}</p>
             <div className="mx-auto my-4 aspect-square w-56" data-testid="remote-qr" dangerouslySetInnerHTML={qr ? { __html: qr } : undefined} />
@@ -881,7 +1002,7 @@ export default function TeleprompterStage({ script, settings, onSettings, t, rec
               {remote.phoneSeen ? t.phoneConnected : remote.status === 'open' ? t.waitingPhone : remote.status === 'offline' ? t.relayOffline : t.connecting}
             </p>
             <p className="mt-3 text-xs text-stone-500">{t.remotePrivacy}</p>
-            <button type="button" onClick={() => setShowRemote(false)} className="mt-4 w-full rounded-lg bg-black px-4 py-3 text-sm font-medium text-white">{t.done}</button>
+            <button ref={remoteDone} type="button" onClick={() => setShowRemote(false)} className="mt-4 w-full rounded-lg bg-black px-4 py-3 text-sm font-medium text-white">{t.done}</button>
           </div>
         </div>
       )}

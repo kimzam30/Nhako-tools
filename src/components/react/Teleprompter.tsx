@@ -229,6 +229,10 @@ export default function Teleprompter({ locale = 'en' }: { locale?: Locale }) {
   const urls = useRef<string[]>([]);
   async function refreshTakes() {
     const list = await listTakes().catch(() => []);
+    // Each refresh makes a fresh link per take; the last refresh's links held
+    // every old file in memory until the page closed.
+    const old = urls.current;
+    urls.current = [];
     const withUrls = await Promise.all(list.map(async (tk) => {
       const f = await takeFile(tk.name);
       const url = f ? URL.createObjectURL(f) : null;
@@ -236,6 +240,8 @@ export default function Teleprompter({ locale = 'en' }: { locale?: Locale }) {
       return { ...tk, url };
     }));
     setTakes(withUrls);
+    // After the list has moved to the new links, so no video loses its source mid-render.
+    setTimeout(() => old.forEach((u) => URL.revokeObjectURL(u)), 0);
   }
   useEffect(() => () => urls.current.forEach((u) => URL.revokeObjectURL(u)), []);
 
@@ -429,13 +435,13 @@ export default function Teleprompter({ locale = 'en' }: { locale?: Locale }) {
                 <input
                   type="number" inputMode="numeric" min={0} max={180} value={targetM} placeholder="0"
                   onChange={(e) => setTargetM(e.target.value)} aria-label={t.targetMinutes}
-                  className={`${field} w-14 text-center`} data-testid="target-min"
+                  className={`${field} w-14 text-center placeholder:text-muted`} data-testid="target-min"
                 />
                 <span aria-hidden="true" className="font-mono text-sm text-muted">:</span>
                 <input
                   type="number" inputMode="numeric" min={0} max={59} value={targetS} placeholder="00"
                   onChange={(e) => setTargetS(e.target.value)} aria-label={t.targetSeconds}
-                  className={`${field} w-14 text-center`} data-testid="target-sec"
+                  className={`${field} w-14 text-center placeholder:text-muted`} data-testid="target-sec"
                 />
                 {targetSeconds > 0 && (
                   <button type="button" onClick={clearTarget} className={small} data-testid="target-clear">{t.targetClear}</button>

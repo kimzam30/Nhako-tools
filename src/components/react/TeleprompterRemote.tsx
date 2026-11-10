@@ -99,10 +99,12 @@ export default function TeleprompterRemote({ locale = 'en' }: { locale?: Locale 
 
   return (
     <div className="flex flex-col gap-3">
-      <p aria-live="polite" data-testid="remote-status" className={`rounded-lg px-3 py-2 text-sm ${connected ? 'bg-accent-subtle' : 'bg-sunken text-muted'}`}>
-        {line}
+      <p data-testid="remote-status" className={`rounded-lg px-3 py-2 text-sm ${connected ? 'bg-accent-subtle' : 'bg-sunken text-muted'}`}>
+        {/* Only the connection is announced: the time left below changes every second. */}
+        <span aria-live="polite">{line}</span>
         {connected && state && (
           <span className="ml-2 font-mono tabular-nums">
+            <span className="sr-only">. </span>
             {state.playing ? t.playing : t.paused}, {state.wpm} {unit}, {t.left(clock(state.remaining))}
           </span>
         )}
@@ -137,7 +139,7 @@ export default function TeleprompterRemote({ locale = 'en' }: { locale?: Locale 
           {state.recording ? `● ${t.stopRecording}` : t.record}
         </button>
       )}
-      <button type="button" onClick={() => { try { sessionStorage.removeItem(KEY); } catch { /* storage blocked */ } setCode(null); setState(null); setSeen(0); }} className="self-start text-xs text-muted underline">
+      <button type="button" onClick={() => { try { sessionStorage.removeItem(KEY); } catch { /* storage blocked */ } setCode(null); setState(null); setSeen(0); }} className="min-h-11 self-start px-1 text-sm text-muted underline">
         {t.leave}
       </button>
     </div>

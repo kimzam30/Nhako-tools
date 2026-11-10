@@ -22,12 +22,17 @@ export interface Settings {
   countdown: number;
   voice: boolean;
   voiceLang: string;
+  /** Which corner of the stage the camera preview docks in. */
+  camCorner: CamCorner;
 }
+
+export type CamCorner = 'tl' | 'tr' | 'bl' | 'br';
+export const CAM_CORNERS: readonly CamCorner[] = ['tl', 'tr', 'br', 'bl'];
 
 export const DEFAULTS: Settings = {
   wpm: WPM.default, fontSize: 56, lineHeight: 1.45, margin: 8, guide: 22,
   theme: 'dark', align: 'left', mirrorX: false, mirrorY: false, countdown: 3,
-  voice: false, voiceLang: 'en-US',
+  voice: false, voiceLang: 'en-US', camCorner: 'tr',
 };
 
 const SCRIPTS = 'nhako.teleprompter.scripts';
@@ -76,6 +81,7 @@ export function loadSettings(locale: string): Settings {
     // as on: each visit opts in again.
     voice: false,
     voiceLang: typeof s.voiceLang === 'string' && /^[a-z]{2}-[A-Z]{2}$/.test(s.voiceLang) ? s.voiceLang : d.voiceLang,
+    camCorner: CAM_CORNERS.includes(s.camCorner as CamCorner) ? (s.camCorner as CamCorner) : d.camCorner,
   };
 }
 export const saveSettings = (s: Settings) => write(SETTINGS, { ...s, voice: false });
