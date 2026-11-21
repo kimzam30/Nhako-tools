@@ -64,6 +64,10 @@ const SECTION_PATHS = LOCALES.flatMap((l) =>
     <title>{tabTitle}</title>
     <meta name="description" content={description} />
     {noindex && <meta name="robots" content="noindex" />}
+    {/* Bing Webmaster Tools ownership for tools.nhako.com. Google needs no tag:
+        the nhako.com Domain property in Search Console covers this subdomain.
+        Remove this and Bing un-verifies the site. */}
+    <meta name="msvalidate.01" content="40AF9E46DBCC2B71E365BEA7666564A2" />
     {keywords && keywords.length > 0 && <meta name="keywords" content={keywords.join(', ')} />}
     <link rel="canonical" href={canonical.href} />
     {alternates && LOCALES.map((l) => (

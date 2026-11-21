@@ -87,6 +87,22 @@ const jsonLd = {
       offers: { '@type': 'Offer', price: '0', priceCurrency: 'MYR' },
       featureList: tool.keywords,
     },
+    /* Built from the prose sections rendered below the tool, so every answer
+       is text the reader can see on the page. */
+    {
+      '@type': 'FAQPage',
+      mainEntity: [
+        ...((variant?.about || tool.about)
+          ? [[t.faqWhat(name), [variant?.about, tool.about].filter(Boolean).join(' ')]]
+          : []),
+        ...(tool.limits?.length ? [[t.faqLimits(name), tool.limits.join(' ')]] : []),
+        [t.faqPrivate(name), `${t.privateBody} ${privacyNote}`],
+      ].map(([q, a]) => ({
+        '@type': 'Question',
+        name: q,
+        acceptedAnswer: { '@type': 'Answer', text: a },
+      })),
+    },
     {
       '@type': 'BreadcrumbList',
       itemListElement: crumbs.map((c, i) => ({

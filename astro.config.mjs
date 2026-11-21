@@ -32,8 +32,29 @@ export default defineConfig({
       // The teleprompter's phone remote is useless without a room code, and
       // the favourites page is empty until a browser fills it. Both are
       // marked noindex; keep them out of the sitemap too.
-      filter: (page) => !page.endsWith('/media/teleprompter/remote') && !page.endsWith('/favourites'),
+      // The offline page is only ever served by the service worker.
+      filter: (page) => !page.endsWith('/media/teleprompter/remote') && !page.endsWith('/favourites') && !page.endsWith('/offline'),
     }),
+    // With trailingSlash 'never' the sitemap plugin rewrites the home page's
+    // <loc> to the bare origin after any `serialize`, while its canonical and
+    // hreflang say https://tools.nhako.com/. Same URL to a crawler, but make
+    // the sitemap say exactly what the canonical says. Runs after sitemap().
+    {
+      name: 'sitemap-home-slash',
+      hooks: {
+        'astro:build:done': async ({ dir }) => {
+          const { readdir, readFile, writeFile } = await import('node:fs/promises');
+          const root = new URL('.', dir);
+          for (const f of await readdir(root)) {
+            if (!/^sitemap-\d+\.xml$/.test(f)) continue;
+            const file = new URL(f, root);
+            const xml = await readFile(file, 'utf8');
+            const fixed = xml.replace('<loc>https://tools.nhako.com</loc>', '<loc>https://tools.nhako.com/</loc>');
+            if (fixed !== xml) await writeFile(file, fixed);
+          }
+        },
+      },
+    },
   ],
   vite: {
     plugins: [tailwindcss()],

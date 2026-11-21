@@ -12,10 +12,12 @@ interface Props {
   locale: Locale;
   path: string;
   title: string;
+  /** Full <title>; the bare collection name says nothing in a search result. */
+  documentTitle?: string;
   intro: string;
   sources: string;
 }
-const { entries, locale, path, title, intro, sources } = Astro.props;
+const { entries, locale, path, title, documentTitle, intro, sources } = Astro.props;
 const t = ui(locale);
 const href = (p: string) => localePath(locale, p);
 
@@ -55,7 +57,7 @@ const jsonLd = {
 };
 ---
 
-<BaseLayout title={title} description={intro} path={path} locale={locale} jsonLd={jsonLd}>
+<BaseLayout title={title} documentTitle={documentTitle} description={intro} path={path} locale={locale} jsonLd={jsonLd}>
   <div class="mx-auto max-w-6xl px-4 sm:px-6">
     <div class="pt-1 sm:pt-6 sm:pointer-fine:hidden"><BackLink href={href('/')} label={t.breadcrumbTools} locale={locale} /></div>
     <nav aria-label={t.breadcrumb} class="pt-8 text-2xs text-muted max-sm:hidden pointer-coarse:hidden">
