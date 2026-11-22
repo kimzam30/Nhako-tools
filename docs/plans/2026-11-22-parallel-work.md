@@ -29,6 +29,10 @@ Written 2026-11-22 by the main session. Three Claude sessions work on Nhako Tool
 | Search and crawling | SEO | `astro.config.mjs` (sitemap, `<lastmod>`), `public/robots.txt`, `<head>` meta tags in `BaseLayout.astro`, `README.md`, `docs/seo-*` |
 | Tool content and new pages | Growth | `src/tools/registry.ts`, `src/i18n/tools.ts`, `src/tools/calc/*`, `src/tools/image/remove-background.ts`, `src/tools/image/segment.ts` |
 | Task events | Growth | new `src/lib/events.ts`, `supabase/*`, one call site in `src/tools/run-tool.ts` (after the QA base), privacy copy |
+| Portal copy block | Growth | new `src/components/astro/PortalNotes.astro`, rendered from optional registry/i18n fields; Growth may add the single `<PortalNotes />` line to `ToolView.astro` (Main rebases around it) |
+| Payroll split pages | Growth | new `src/components/react/calc/*`, reusing existing classes; the rebrand restyles them later |
+| Privacy wording | Growth (text only) | sentences inside `src/views/PrivacyView.astro`; Main owns its markup and classes |
+| Event calls in the runner | Main | `trackEvent()` calls for `file_added` and `download` in `FileToolRunner.tsx` / `ResultBar.tsx`, added by Main once Growth's `src/lib/events.ts` exists |
 | Shared, ask first | whoever needs it | `src/i18n/ui.ts`, `src/views/ToolView.astro` (SEO: JSON-LD block; Growth: copy; Main: layout), `package.json` |
 
 ## What each session does next
@@ -49,6 +53,12 @@ Written 2026-11-22 by the main session. Three Claude sessions work on Nhako Tool
 2. Government-portal presets as registry `variants` (1.3), in two batches; the main session adds each new preset to `e2e/human.spec.ts`.
 3. Payroll foreign-worker mode and split pages (1.4) in `src/tools/calc/*` with unit tests.
 4. Task events (0.4) after the QA base: `events.ts` plus a single hook in `run-tool.ts`; no edits to `FileToolRunner.tsx`.
+
+## Decisions log
+
+- 2026-11-22: QA base landed as `038d578`. SEO works in `/mnt/d/Work/Nhako-tools-seo` on `seo-phase0`; Growth in `/mnt/d/Work/Nhako-tools-growth` on `growth-phase1`.
+- 2026-11-22: model licences checked by Growth: ISNet (DIS repack) and ormbg are Apache-2.0; no swap needed; an Apache credits notice ships with the 1.2 copy.
+- 2026-11-22: owner OK required, per action, for: pushes and PRs, GitHub About edits, Supabase migrations and edge-function deploys.
 
 ## Hand-offs
 
