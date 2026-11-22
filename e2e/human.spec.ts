@@ -11,6 +11,7 @@
  * projects and, through scripts/device-e2e.sh, on real phones and tablets.
  */
 import { PDFDocument, degrees } from 'pdf-lib';
+import type { Page } from '@playwright/test';
 import { test, expect, real, fixture, openFromHome, chooseFiles, save, keep, imageInfo, magic, DEVICE } from './support/human';
 import { existsSync } from 'node:fs';
 
@@ -400,6 +401,55 @@ test.describe('Image tools, by hand, on camera photos', () => {
       const img = await imageInfo(page, out.bytes, mime).catch(() => null);
       // AVIF encoding exists in Chromium; decoding is checked where supported.
       if (img) expect([img.width, img.height]).toEqual([640, 480]);
+    });
+  }
+
+  // Format-pair presets: a person lands from Google on "webp to jpg" etc.
+  // WebP and transparent PNG inputs are made in the page from the real
+  // camera photo, since nothing on the test machine can encode them.
+  async function madeInPage(page: Page, kind: 'webp' | 'alpha-png', info: { outputDir: string }) {
+    const src = (await import('node:fs/promises')).readFile(real('gps.jpg'));
+    const b64 = await page.evaluate(async ({ b64, kind }) => {
+      const bmp = await createImageBitmap(new Blob([Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))], { type: 'image/jpeg' }));
+      const c = document.createElement('canvas'); c.width = bmp.width; c.height = bmp.height;
+      const x = c.getContext('2d')!;
+      if (kind === 'alpha-png') x.drawImage(bmp, 0, 0, bmp.width / 2, bmp.height, 0, 0, bmp.width / 2, bmp.height); // right half stays transparent
+      else x.drawImage(bmp, 0, 0);
+      const blob = await new Promise<Blob>((r) => c.toBlob((b) => r(b!), kind === 'webp' ? 'image/webp' : 'image/png', 0.9));
+      const buf = new Uint8Array(await blob.arrayBuffer()); let s = '';
+      for (let i = 0; i < buf.length; i += 0x8000) s += String.fromCharCode(...buf.subarray(i, i + 0x8000));
+      return btoa(s);
+    }, { b64: (await src).toString('base64'), kind });
+    const { mkdir, writeFile } = await import('node:fs/promises');
+    await mkdir(info.outputDir, { recursive: true });
+    const path = `${info.outputDir}/${kind === 'webp' ? 'photo.webp' : 'logo.png'}`;
+    await writeFile(path, Buffer.from(b64, 'base64'));
+    return path;
+  }
+
+  const PAIRS = [
+    { slug: 'webp-to-jpg', input: 'webp', head: 'jpg', mime: 'image/jpeg', size: [640, 480] },
+    { slug: 'png-to-jpg', input: 'alpha-png', head: 'jpg', mime: 'image/jpeg', size: [640, 480], white: true },
+    { slug: 'jpg-to-png', input: 'gps.jpg', head: 'png', mime: 'image/png', size: [640, 480] },
+    { slug: 'jpg-to-webp', input: 'big.jpg', head: 'webp', mime: 'image/webp', size: [5184, 3456], smaller: 5_554_547 },
+    { slug: 'png-to-webp', input: 'alpha-png', head: 'webp', mime: 'image/webp', size: [640, 480], transparent: true },
+    { slug: 'avif-to-jpg', input: 'fox.avif', head: 'jpg', mime: 'image/jpeg' },
+  ] as const;
+  for (const pair of PAIRS) {
+    test(`landing on "${pair.slug.replace(/-/g, ' ')}" converts a real image`, async ({ page }, info) => {
+      await page.goto(`/image/convert/${pair.slug}`);
+      const input = pair.input === 'webp' || pair.input === 'alpha-png' ? await madeInPage(page, pair.input, info) : real(pair.input);
+      await chooseFiles(page, [input]);
+      const out = await save(page, /^Save/, 120_000);
+      await keep(info, out);
+      const sig = { jpg: [0xff, 0xd8, 0xff], png: [0x89, 0x50, 0x4e, 0x47] }[pair.head as 'jpg' | 'png'];
+      if (sig) expect([...out.bytes.subarray(0, sig.length)]).toEqual(sig);
+      else expect(out.bytes.subarray(8, 12).toString('latin1')).toBe('WEBP');
+      const img = await imageInfo(page, out.bytes, pair.mime, [600, 240]);
+      if ('size' in pair) expect([img.width, img.height]).toEqual(pair.size);
+      if ('smaller' in pair) expect(out.bytes.length).toBeLessThan(pair.smaller);
+      if ('white' in pair) expect(img.pixel.slice(0, 3).every((v) => v > 245)).toBe(true);
+      if ('transparent' in pair) expect(img.pixel[3]).toBe(0);
     });
   }
 

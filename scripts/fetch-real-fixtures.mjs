@@ -34,6 +34,8 @@ const FILES = [
   // HEIF stills (libheif example, and filesamples.com).
   ['iphone.heic', 'https://github.com/strukturag/libheif/raw/master/examples/example.heic', '7f8b363e4936c0666a25f64f3a92fda10bd8e5453be4592530b65a55dd98f3f2'],
   ['sample.heic', 'https://filesamples.com/samples/image/heic/sample1.heic', '00d9e0636b645036f77b3809fcd26a29df71b9ee66f2865fd8729b894aeabf59'],
+  // An AVIF photo from the link-u AVIF sample set (8-bit 4:2:0).
+  ['fox.avif', 'https://github.com/link-u/avif-sample-images/raw/master/fox.profile0.8bpc.yuv420.avif', 'cb884c82ac7b6d4fa03b1f687e9e20abc346107095473e9c1d422aaf0de14eaf'],
   // 10 s of Big Buck Bunny, 1080p H.264, video only (no audio track), 5.2 MB (CC BY 3.0, Blender Foundation).
   ['bbb1080.mp4', 'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/1080/Big_Buck_Bunny_1080_10s_5MB.mp4', 'e131ad42621442758a3acb899bfbdfeeab0b40c7e2f7c7e66683f58a09a99aee'],
   // 10 s phone-style clip with sound: H.264 video + AAC audio, 5.5 MB (samplelib.com).
