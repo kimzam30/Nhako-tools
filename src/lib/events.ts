@@ -5,20 +5,20 @@
  * language, phone or desktop, the number of files, a size class for their
  * total (never the size itself), the time taken, and whether a failure was a
  * message the user can act on or a crash. No file names, no file contents, no
- * error text, no cookies, no identifier, no IP address stored (the table has
- * no column for one). Browsers that send Do Not Track or Global Privacy
+ * error text, no cookies, no identifier, and no IP address in the row (the
+ * table has no column for one). Browsers that send Do Not Track or Global Privacy
  * Control send nothing.
  *
  * Rows go into `tool_events`, an insert-only table in the same Supabase
  * project as the feedback form (migration in supabase/migrations/). Sending
  * never blocks or breaks a tool: every failure is swallowed.
  *
- * EVENTS_ENABLED stays false until that migration has been applied; until
- * then trackEvent is a no-op.
+ * The migration was applied to NhakoEcoDB on 2026-11-22 (verified: anon can
+ * insert, cannot read, and malformed rows are refused).
  */
 import { SUPABASE_HOST, SUPABASE_KEY } from './supabase';
 
-export const EVENTS_ENABLED = false;
+export const EVENTS_ENABLED = true;
 
 export type ToolEvent = 'run_start' | 'run_ok' | 'run_error' | 'run_cancel' | 'file_added' | 'download';
 

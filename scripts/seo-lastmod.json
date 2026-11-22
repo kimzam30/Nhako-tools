@@ -139,7 +139,7 @@
   "/ms/pdf/to-word": {"hash":"47919f702527b541","lastmod":"2026-09-25"},
   "/ms/pdf/unlock": {"hash":"476a066d4f322644","lastmod":"2026-09-24"},
   "/ms/pdf/watermark": {"hash":"228b19003670085e","lastmod":"2026-09-24"},
-  "/ms/privacy": {"hash":"1e4c5861b6296ebd","lastmod":"2026-09-25"},
+  "/ms/privacy": {"hash":"d63ede4c09a66635","lastmod":"2026-11-22"},
   "/pdf": {"hash":"566a7d1f918efddf","lastmod":"2026-11-22"},
   "/pdf/compress": {"hash":"6ccceb65880c0b09","lastmod":"2026-11-22"},
   "/pdf/compress/100kb": {"hash":"f5d9751541fa82af","lastmod":"2026-11-22"},
@@ -176,6 +176,6 @@
   "/pdf/to-word": {"hash":"2aa3572f512865e1","lastmod":"2026-09-25"},
   "/pdf/unlock": {"hash":"7b0b9a4bbe43aae7","lastmod":"2026-09-24"},
   "/pdf/watermark": {"hash":"7a2e0cc996ca1630","lastmod":"2026-09-24"},
-  "/privacy": {"hash":"b15bf927236c5b6a","lastmod":"2026-09-25"}
+  "/privacy": {"hash":"19b6aff10930d45a","lastmod":"2026-11-22"}
  }
 }

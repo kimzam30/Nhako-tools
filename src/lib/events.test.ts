@@ -29,8 +29,8 @@ describe('task events', () => {
     expect(row.error).toBe('tool');
   });
 
-  it('stays off until the table exists, and never throws', () => {
-    expect(EVENTS_ENABLED).toBe(false);
+  it('is on, and never throws even where there is no browser', () => {
+    expect(EVENTS_ENABLED).toBe(true);
     expect(() => trackEvent('pdf/merge', 'run_start')).not.toThrow();
   });
 });
