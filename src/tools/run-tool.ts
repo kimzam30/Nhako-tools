@@ -1,4 +1,6 @@
 import type { FileToolResult, OptionValues } from './types';
+import { ToolError } from './types';
+import { trackEvent } from '../lib/events';
 import { loadTool } from './loaders';
 import { WORKER_TOOLS } from '../workers/worker-tools';
 
@@ -45,6 +47,44 @@ function discardWorker(w: Worker) {
  * tab rather than a broken tool.
  */
 export function runFileTool(
+  id: string,
+  files: File[],
+  options: OptionValues,
+  onProgress: (progress: number, label?: string) => void,
+): RunHandle {
+  return tracked(id, files, startFileTool(id, files, options, onProgress));
+}
+
+/**
+ * Anonymous task events around a run (src/lib/events.ts): start, then exactly
+ * one of ok, error or cancel. Observes the handle only; the run itself is
+ * unchanged, and a run whose result is never awaited still reports.
+ */
+function tracked(id: string, files: File[], handle: RunHandle): RunHandle {
+  const t0 = performance.now();
+  const bytes = files.reduce((n, f) => n + f.size, 0);
+  let done = false;
+  trackEvent(id, 'run_start', { files: files.length, bytes });
+  handle.result.then(
+    () => { if (!done) { done = true; trackEvent(id, 'run_ok', { files: files.length, bytes, ms: performance.now() - t0 }); } },
+    (e: unknown) => {
+      if (done) return;
+      done = true;
+      // Errors from the worker arrive as plain Errors, so only an inline
+      // ToolError can be told apart; anything else is left unclassified.
+      trackEvent(id, 'run_error', { files: files.length, bytes, ms: performance.now() - t0, ...(e instanceof ToolError ? { error: 'tool' as const } : {}) });
+    },
+  );
+  return {
+    result: handle.result,
+    cancel: () => {
+      if (!done) { done = true; trackEvent(id, 'run_cancel', { files: files.length, bytes, ms: performance.now() - t0 }); }
+      handle.cancel();
+    },
+  };
+}
+
+function startFileTool(
   id: string,
   files: File[],
   options: OptionValues,
