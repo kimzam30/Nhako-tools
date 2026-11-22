@@ -584,3 +584,46 @@ test.describe('Media tools, by hand, on a real clip and real speech', () => {
     expect(out.bytes.toString('utf8').trim().length).toBeGreaterThan(0);
   });
 });
+
+test.describe('Calculators, by hand', () => {
+  // UKM (Undergraduate Studies) Regulations 2024, Table 3 and its worked
+  // example: 13 credits, GPA 2.69. Typed the way a student would.
+  for (const [path, reset] of [
+    ['/calc/cgpa/ukm', 'Reset to Universiti Kebangsaan Malaysia'],
+    ['/ms/calc/cgpa/ukm', 'Set semula kepada Universiti Kebangsaan Malaysia'],
+  ] as const) {
+    test(`UKM CGPA preset at ${path} reproduces the regulations' worked example`, async ({ page, shot }) => {
+      await page.goto(path);
+      await page.waitForFunction(() => !document.querySelector('astro-island[ssr]'), undefined, { timeout: 30_000 });
+      const grades = await page.locator('#course-0-grade option').evaluateAll((os) => os.map((o) => (o as HTMLOptionElement).value).filter(Boolean));
+      expect(grades).toEqual(['A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'E']);
+      await page.getByRole('button', { name: /Add a course|Tambah kursus/ }).click();
+      await expect(page.locator('[data-course-row]')).toHaveCount(5);
+      const rows = [['3', 'A'], ['3', 'B+'], ['3', 'A-'], ['2', 'E'], ['2', 'D']];
+      for (const [i, [credits, grade]] of rows.entries()) {
+        await page.locator(`#course-${i}-credits`).fill(credits!);
+        await page.locator(`#course-${i}-grade`).selectOption(grade!);
+      }
+      await expect(page.getByTestId('gpa')).toHaveText('2.69');
+      await expect(page.getByTestId('cgpa')).toHaveText('2.69');
+      // Close the keyboard and let the scroll-driven reveal settle before the
+      // tap, as a person does: mid-scroll, the panel above slides over it.
+      await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+      const scale = page.locator('summary').filter({ hasText: /Grade points|Mata gred/ });
+      await scale.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+      await page.waitForTimeout(600);
+      await scale.click();
+      await expect(page.getByRole('button', { name: reset })).toBeVisible();
+      await shot('ukm-worked-example');
+    });
+  }
+
+  test('the default CGPA page still uses Universiti Malaya, with A+ and F', async ({ page }) => {
+    await page.goto('/calc/cgpa');
+    await page.waitForFunction(() => !document.querySelector('astro-island[ssr]'), undefined, { timeout: 30_000 });
+    const grades = await page.locator('#course-0-grade option').evaluateAll((os) => os.map((o) => (o as HTMLOptionElement).value));
+    expect(grades).toContain('A+');
+    expect(grades).toContain('F');
+    expect(grades).not.toContain('E');
+  });
+});
