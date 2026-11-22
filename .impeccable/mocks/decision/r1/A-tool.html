@@ -1,0 +1,47 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Dompet tool</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>:root{--accent:#c7009b}*{box-sizing:border-box;margin:0}body{width:1440px;height:900px;overflow:hidden}
+.ic{flex:none}.logo{width:30px;height:30px;flex:none}.fly{width:22px;height:17px;flex:none}
+.acc-bg{background:var(--accent);color:#fff}.acc{color:var(--accent)}
+.cc{color:var(--c)}.cc-bg{background:var(--c);color:#fff}.cc-tint{background:color-mix(in srgb,var(--c) 11%,#fff);color:var(--c)}
+.tint{background:color-mix(in srgb,var(--accent) 9%,#fff)}.tint2{background:color-mix(in srgb,var(--accent) 15%,#fff)}
+body{font-family:Manrope,system-ui,sans-serif;color:#14171a;background:#f5f6f8}
+.top{height:72px;background:#fff;border-bottom:1px solid #e6e8ec;display:flex;align-items:center;gap:20px;padding:0 40px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px}
+.sbar{flex:1;max-width:640px;margin:0 auto;height:48px;border-radius:24px;background:#f1f3f5;display:flex;align-items:center;gap:10px;padding:0 18px;color:#6a727b;font-size:15px}
+.r{display:flex;gap:10px;align-items:center;font-weight:700;font-size:14px}.pill{border:1px solid #dde0e4;border-radius:999px;padding:7px 14px}
+.wrap{padding:28px 40px}
+.hero{border-radius:22px;padding:30px 34px;display:flex;justify-content:space-between;align-items:center}
+.hero h1{font-size:38px;font-weight:800;letter-spacing:-.02em;line-height:1.1;max-width:640px}
+.hero p{margin-top:10px;color:#4b535b;font-size:17px}
+.prom{display:flex;gap:10px;margin-top:16px}.prom span{display:flex;gap:6px;align-items:center;background:#fff;border-radius:999px;padding:7px 13px;font-weight:700;font-size:13px}
+.cats{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-top:22px}
+.cat{background:#fff;border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:10px;border:1px solid #eceef1}
+.cat .b{width:46px;height:46px;border-radius:14px;display:grid;place-items:center}
+.cat b{font-size:16px}.cat small{color:#6a727b;font-size:13px}
+h2{font-size:18px;font-weight:800;margin:26px 0 12px}
+.pop{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.job{background:#fff;border-radius:16px;padding:16px;display:flex;gap:12px;align-items:center;border:1px solid #eceef1}
+.top{border-bottom:3px solid var(--accent)}.ph .top{border-bottom-width:2px}
+.job .b{width:40px;height:40px;border-radius:12px;display:grid;place-items:center}
+.job b{display:block;font-size:15px}.job small{color:#6a727b;font-size:13px}
+.tool{display:grid;grid-template-columns:1fr 380px;gap:22px;padding:26px 40px}
+.crumb{color:#6a727b;font-size:14px;padding:22px 40px 0}
+.tool h1{font-size:32px;font-weight:800;letter-spacing:-.02em}
+.drop{margin-top:16px;background:#fff;border:2px dashed #cfd4da;border-radius:22px;height:360px;display:grid;place-items:center;text-align:center}
+.drop .btn{display:inline-flex;gap:8px;align-items:center;border-radius:14px;padding:15px 26px;font-weight:800;font-size:17px;margin:14px 0 8px}
+.panel{background:#fff;border-radius:22px;border:1px solid #eceef1;padding:22px;display:grid;gap:16px;align-content:start}
+.f label{display:block;font-weight:700;font-size:13px;margin-bottom:6px}.f div{height:46px;border:1px solid #dde0e4;border-radius:12px;display:flex;align-items:center;padding:0 14px;font-size:15px}
+.res{border-radius:18px;padding:18px}.res .n{font-size:34px;font-weight:800;letter-spacing:-.02em}.res s{color:#6a727b;font-size:18px;font-weight:600}
+.save{border-radius:14px;padding:14px;text-align:center;font-weight:800}
+/* phone */
+.ph .top{height:60px;padding:0 16px}.ph .wrap{padding:16px}
+.ph .hero{padding:20px;border-radius:18px;display:block}.ph .hero h1{font-size:24px}.ph .hero p{font-size:14px}
+.ph .sbar2{margin-top:14px;height:46px;border-radius:23px;background:#fff;display:flex;align-items:center;gap:8px;padding:0 14px;color:#6a727b;font-size:14px}
+.ph .cats{grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}.ph .cat{padding:12px;border-radius:16px;align-items:center;text-align:center;gap:6px}.ph .cat small{display:none}.ph .cat b{font-size:13px}
+.ph h2{font-size:16px;margin:18px 0 10px}.ph .pop{grid-template-columns:1fr;gap:8px}.ph .job{padding:12px}
+.tabs{position:absolute;left:12px;right:12px;bottom:14px;height:64px;background:#fff;border-radius:20px;box-shadow:0 8px 24px -8px rgba(20,23,26,.25);display:grid;grid-template-columns:repeat(4,1fr);align-items:center;text-align:center;font-size:11px;font-weight:700;color:#6a727b}
+.tabs div{display:grid;justify-items:center;gap:3px}</style></head><body><div class="top"><div class="brand"><svg class="logo" viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><rect width="8" height="8" rx="1.4" fill="#ffd23f"/><rect x="1" y="1.2" width="6" height="2.8" fill="#e4002b"/><rect x="2" y="2" width="1" height="1" fill="#fff"/><rect x="5" y="2" width="1" height="1" fill="#fff"/><rect x="3.5" y="4" width="1" height="3.4" fill="#8a5a2b"/></svg>Nhako Tools</div><div class="sbar"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg>Search 50 tools, e.g. “compress pdf 500kb”, “gaji”</div><div class="r"><span><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4l2.4 5 5.4.7-4 3.7 1 5.4L12 16.2 7.2 18.8l1-5.4-4-3.7 5.4-.7z"/></svg></span><span class="pill">BM / EN</span></div></div><div class="crumb"><span class="cc" style="--c:#e03131;font-weight:700">PDF</span> › Compress PDF</div><div class="tool" style="--c:#e03131"><div><h1>Compress PDF</h1><p style="color:#4b535b;margin-top:6px">Shrink a PDF, or get it under an exact size for a portal. Runs on your device.</p>
+<div class="drop" style="border-color:color-mix(in srgb,var(--c) 45%,#fff);background:color-mix(in srgb,var(--c) 4%,#fff)"><div><span class="cc"><svg class="ic" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V5M7 10l5-5 5 5M5 19h14"/></svg></span><br><span class="btn cc-bg"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l5 5v13H7z M14 3v5h5" /></svg>Choose PDF</span><br><small style="color:#6a727b">or drop it here · any size · nothing uploads</small></div></div></div>
+<div class="panel"><div class="f"><label>Target size</label><div>Under 500 KB ▾</div></div><div class="f"><label>Mode</label><div>Recommended: shrinks images, keeps text ▾</div></div>
+<div class="res" style="background:color-mix(in srgb,var(--c) 8%,#fff)"><small style="font-weight:700">scholarship-docs.pdf</small><div class="n"><s>5.7 MB</s> → 486 KB</div><small>Under 500 KB · 40 pages · 2.4 s</small></div><div class="save cc-bg">Save PDF</div></div></div></body></html>

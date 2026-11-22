@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Bitmap sketch</title>
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Geist:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#fbfbf8;--ink:#121212;--mag:#d6007e;--mute:#62625e;--line:#e2e2dc}
+*{box-sizing:border-box;margin:0}
+body{width:1440px;height:900px;overflow:hidden;background:var(--paper);color:var(--ink);font-family:Geist,system-ui,sans-serif;
+  background-image:radial-gradient(#d9d9d2 1px,transparent 1px);background-size:12px 12px}
+header{height:64px;background:var(--paper);display:flex;align-items:center;gap:30px;padding:0 48px;border-bottom:2px solid var(--ink)}
+.brand{font:700 20px Silkscreen,monospace;display:flex;gap:10px;align-items:center}
+nav{display:flex;gap:24px;font-weight:500}
+.lang{margin-left:auto;font-weight:700}
+main{padding:44px 48px;position:relative}
+h1{font:700 128px/0.92 Silkscreen,monospace;letter-spacing:-.02em;text-transform:uppercase}
+h1 span{color:var(--mag)}
+.sub{margin-top:18px;font-size:22px;color:var(--mute);max-width:44em}
+.row{margin-top:34px;display:grid;grid-template-columns:640px 1fr;gap:40px;align-items:start}
+.search{height:64px;background:#fff;border:2px solid var(--ink);display:flex;align-items:center;padding:0 18px;font-size:19px;color:var(--mute)}
+.promise{margin-top:14px;font:400 14px Silkscreen,monospace;display:flex;gap:22px}
+.promise b{color:var(--mag)}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tile{background:#fff;border:2px solid var(--ink);padding:14px 16px}
+.tile b{display:block;font-size:17px}.tile span{display:block;color:var(--mute);font-size:14px;margin-top:2px}
+.tile em{font:400 11px Silkscreen,monospace;font-style:normal;color:var(--mag)}
+.fly{position:absolute;right:120px;top:40px;image-rendering:pixelated}
+</style></head><body>
+<header><div class="brand"><svg width="30" height="30" viewBox="0 0 8 8" shape-rendering="crispEdges"><rect width="8" height="8" fill="#ffd23f"/><rect x="1" y="1" width="6" height="3" fill="#e4002b"/><rect x="2" y="2" width="1" height="1" fill="#fff"/><rect x="5" y="2" width="1" height="1" fill="#fff"/><rect x="3.5" y="4" width="1" height="3.5" fill="#8a5a2b"/></svg>NHAKO TOOLS</div>
+<nav><span>PDF</span><span>Image</span><span>Media</span><span>Calculators</span><span>Developer</span><span>Malaysia</span></nav><span class="lang">BM / EN</span></header>
+<main>
+  <svg class="fly" width="140" height="110" viewBox="0 0 14 11" shape-rendering="crispEdges"><g fill="#d6007e"><rect x="1" y="1" width="4" height="4"/><rect x="9" y="1" width="4" height="4"/><rect x="2" y="5" width="3" height="3"/><rect x="9" y="5" width="3" height="3"/></g><g fill="#121212"><rect x="6" y="2" width="2" height="7"/><rect x="5" y="0" width="1" height="2"/><rect x="8" y="0" width="1" height="2"/></g><g fill="#ffd6ec"><rect x="2" y="2" width="2" height="2"/><rect x="10" y="2" width="2" height="2"/></g></svg>
+  <h1>Compress.<br>Merge. <span>Done.</span></h1>
+  <p class="sub">50 tools for PDFs, photos, video and Malaysian forms. They run on your own device: free, no limit, no account.</p>
+  <div class="row">
+    <div><div class="search">Search: “compress pdf 500kb”, “passport”, “gaji”</div><div class="promise"><span><b>■</b> Free</span><span><b>■</b> No limit</span><span><b>■</b> No account</span><span><b>■</b> No ads</span></div></div>
+    <div class="tiles">
+      <div class="tile"><em>PDF</em><b>Compress PDF to 500 KB</b><span>SPA, UPU, scholarship portals</span></div>
+      <div class="tile"><em>IMAGE</em><b>Passport photo 35×50</b><span>White background, 4R sheet</span></div>
+      <div class="tile"><em>PDF</em><b>Merge PDF</b><span>In the order you set</span></div>
+      <div class="tile"><em>KIRA</em><b>Salary calculator</b><span>EPF, SOCSO, EIS, PCB 2026</span></div>
+    </div>
+  </div>
+</main>
+</body></html>

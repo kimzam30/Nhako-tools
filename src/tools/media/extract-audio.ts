@@ -2,6 +2,7 @@ import { ToolError, type FileRun } from '../types';
 import { withFiles, onFFmpegProgress } from '../../lib/ffmpeg';
 import { fetchFile } from '@ffmpeg/util';
 import { sayer } from '../say';
+import { assertFits } from '../../lib/memory';
 
 export const run: FileRun = async (files, opts, ctx) => {
   const say = sayer(opts);
@@ -13,6 +14,8 @@ export const run: FileRun = async (files, opts, ctx) => {
   const output = 'output.mp3';
 
   onFFmpegProgress((fraction) => ctx.onProgress(fraction, say('Extracting', 'Mengeluarkan')));
+
+  assertFits(file.size * 2.5, say('This video', 'Video ini'), say);
 
   const data = await withFiles({ [input]: await fetchFile(file) }, [output], async (ffmpeg) => {
     const code = await ffmpeg.exec(['-i', input, '-vn', '-c:a', 'libmp3lame', '-b:a', `${bitrate}k`, output]);

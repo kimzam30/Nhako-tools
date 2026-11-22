@@ -278,7 +278,7 @@ export default function SplitPdf({ locale = 'en', accept }: { locale?: Locale; a
           >
             {busy ? <BusyLabel label={t.working} /> : t.split}
           </button>
-          <button type="button" onClick={clear} className="rounded border border-border px-3 py-1.5 text-sm text-muted transition-colors hover:border-border-strong hover:text-text">
+          <button type="button" onClick={clear} className="rounded border border-border px-3 py-1.5 text-sm text-muted transition-colors hover:border-border-strong hover:text-text pointer-coarse:min-h-11">
             {t.startOver}
           </button>
         </div>

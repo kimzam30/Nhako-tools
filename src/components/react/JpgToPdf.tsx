@@ -177,7 +177,7 @@ export default function JpgToPdf({ locale = 'en', accept, options }: {
             >
               {busy ? <BusyLabel label={t.working} /> : t.build}
             </button>
-            <button type="button" onClick={clear} className="rounded border border-border px-3 py-1.5 text-sm text-muted transition-colors hover:border-border-strong hover:text-text">
+            <button type="button" onClick={clear} className="rounded border border-border px-3 py-1.5 text-sm text-muted transition-colors hover:border-border-strong hover:text-text pointer-coarse:min-h-11">
               {ui.clear}
             </button>
           </>

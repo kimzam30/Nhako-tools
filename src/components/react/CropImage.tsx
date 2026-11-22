@@ -210,8 +210,8 @@ export default function CropImage({ locale = 'en', accept }: { locale?: Locale; 
 
       <div aria-live="polite" className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3">
         <span data-numeric className="flex-1 text-sm">{t.size(rect.w, rect.h)}{output ? `, ${bytes(output.size)}` : ''}</span>
-        <button type="button" onClick={() => fileRef.current?.click()} className="rounded border border-border px-2.5 py-1 text-xs text-muted hover:text-text">{t.another}</button>
-        {output && <a href={output.url} download={output.name} className="rounded bg-accent px-3 py-1.5 text-sm font-medium text-accent-on hover:bg-accent-hover">{t.save}</a>}
+        <button type="button" onClick={() => fileRef.current?.click()} className="rounded border border-border px-2.5 py-1 text-xs text-muted hover:text-text pointer-coarse:min-h-11">{t.another}</button>
+        {output && <a href={output.url} download={output.name} className="rounded bg-accent px-3 py-1.5 text-sm font-medium text-accent-on hover:bg-accent-hover pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center">{t.save}</a>}
       </div>
     </section>
   );

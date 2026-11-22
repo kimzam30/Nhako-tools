@@ -414,7 +414,7 @@ export default function PhotoMaker({ locale = 'en', accept }: { locale?: Locale;
             <div className="flex w-full items-center gap-2" style={{ maxWidth: PREVIEW_W }}>
               <label htmlFor="photo-zoom" className="text-2xs font-semibold uppercase tracking-wider text-muted">{t.zoom}</label>
               <input id="photo-zoom" type="range" min={1} max={4} step={0.01} value={Math.min(4, view.zoom)} onChange={(e) => zoomTo(Number(e.target.value))} className="flex-1 accent-[var(--accent)]" />
-              <button type="button" onClick={() => source && setView(clampView({ zoom: 1, cx: source.width / 2, cy: source.height / 2 }, source.width, source.height, PREVIEW_W, previewH))} className="rounded border border-border px-2 py-0.5 text-2xs text-muted hover:text-text">{t.reset}</button>
+              <button type="button" onClick={() => source && setView(clampView({ zoom: 1, cx: source.width / 2, cy: source.height / 2 }, source.width, source.height, PREVIEW_W, previewH))} className="rounded border border-border px-2 py-0.5 text-2xs text-muted hover:text-text pointer-coarse:min-h-11">{t.reset}</button>
             </div>
             <p id="photo-guide" className="text-xs leading-snug text-muted" style={{ maxWidth: PREVIEW_W }}>{t.guide}</p>
           </div>
@@ -426,7 +426,7 @@ export default function PhotoMaker({ locale = 'en', accept }: { locale?: Locale;
             {matteState.name === 'error' && (
               <div className="flex items-start gap-3 rounded-lg border border-err bg-err-subtle px-4 py-3">
                 <p data-status-message className="flex-1 text-sm text-err">{matteState.message}</p>
-                <button type="button" onClick={() => source && void segment(source)} className="shrink-0 rounded border border-border px-2.5 py-1 text-xs text-muted hover:text-text">{t.retry}</button>
+                <button type="button" onClick={() => source && void segment(source)} className="shrink-0 rounded border border-border px-2.5 py-1 text-xs text-muted hover:text-text pointer-coarse:min-h-11">{t.retry}</button>
               </div>
             )}
 
@@ -462,7 +462,7 @@ export default function PhotoMaker({ locale = 'en', accept }: { locale?: Locale;
             )}
 
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-2xs">
-              <button type="button" onClick={() => inputRef.current?.click()} className="rounded border border-border px-2.5 py-1 text-xs text-muted hover:text-text">{t.another}</button>
+              <button type="button" onClick={() => inputRef.current?.click()} className="rounded border border-border px-2.5 py-1 text-xs text-muted hover:text-text pointer-coarse:min-h-11">{t.another}</button>
               <a href={localePath(locale, '/image/compress')} className="text-muted underline decoration-border underline-offset-2 hover:text-accent">{t.compress}</a>
             </div>
           </div>

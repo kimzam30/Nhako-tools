@@ -120,6 +120,11 @@ test('the command palette dialog is reachable and labelled', async ({ page }) =>
   await page.keyboard.press('ControlOrMeta+k');
   const dialog = page.getByRole('dialog', { name: 'Command palette' });
   await expect(dialog).toBeVisible();
+  // Measured mid fade-in, the half-transparent text fails contrast (seen in
+  // WebKit under load). Check what a person sees once it has opened.
+  await dialog.evaluate((el) => Promise.all(el.getAnimations({ subtree: true })
+    .filter((a) => a.effect?.getComputedTiming().iterations !== Infinity)
+    .map((a) => a.finished.catch(() => {}))));
 
   const { violations } = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa'])

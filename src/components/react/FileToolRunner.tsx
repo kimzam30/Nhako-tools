@@ -1,7 +1,7 @@
 import { DropLabel } from './DropLabel';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { FileToolResult, OptionSpec, OptionValues, ToolMeta } from '../../tools/types';
-import { defaultOptions, ToolError } from '../../tools/types';
+import { defaultOptions } from '../../tools/types';
 import { runFileTool, type RunHandle } from '../../tools/run-tool';
 import OptionsPanel from './OptionsPanel';
 import FilePreview from './FilePreview';
@@ -11,6 +11,7 @@ import NeraLoader from './NeraLoader';
 import { optionsBeforeHydration } from './hydration';
 import { localePath, type Locale } from '../../i18n/paths';
 import { islandText } from '../../i18n/island';
+import { friendlyError } from '../../lib/errors';
 
 /** A finished run, kept apart from the phase so it can outlive the next one. */
 interface Done { result: FileToolResult; elapsed: number; size: number; url: string }
@@ -130,9 +131,9 @@ export default function FileToolRunner({ tool, locale = 'en', initialOptions }: 
       // Inline, never alert(). The old build used alert() seven times over.
       setPhase({
         name: 'error',
-        message: err instanceof ToolError || err instanceof Error
-          ? err.message
-          : t.genericError,
+        // Engine errors ("memory access out of bounds", a stale chunk after a
+        // deploy) are turned into something a person can act on.
+        message: friendlyError(err, locale, t.genericError),
       });
     }
   }, [id, locale, t]);
@@ -284,7 +285,7 @@ export default function FileToolRunner({ tool, locale = 'en', initialOptions }: 
       */}
       {specs.length > 0 && (!tool.stageFirst || files.length > 0) && (
         <div className={`rounded-lg border border-border bg-surface p-4 ${tool.stageFirst ? 'm-rise' : ''}`}>
-          <OptionsPanel specs={specs} values={options} onChange={changeOption} rangeText={t.numberRange} />
+          <OptionsPanel specs={specs} values={options} onChange={changeOption} onSubmit={() => { if (filesRef.current.length > 0 && !busy) void execute(filesRef.current, optionsRef.current); }} rangeText={t.numberRange} />
         </div>
       )}
 
@@ -294,7 +295,7 @@ export default function FileToolRunner({ tool, locale = 'en', initialOptions }: 
           <button
             type="button"
             onClick={() => void execute(files, options)}
-            className="rounded bg-accent px-3 py-1.5 text-sm font-medium text-accent-on transition-colors duration-[120ms] hover:bg-accent-hover"
+            className="rounded bg-accent px-3 py-1.5 text-sm font-medium text-accent-on transition-colors duration-[120ms] hover:bg-accent-hover pointer-coarse:min-h-11"
           >
             {t.runAgain}
           </button>
@@ -337,6 +338,17 @@ export default function FileToolRunner({ tool, locale = 'en', initialOptions }: 
              bar, because a percentage on a 400ms task is a number nobody
              has time to read. */
           <NeraLoader label={phase.label ?? t.working} progress={tool.heavy ? phase.progress : undefined} />
+        )}
+        {busy && tool.heavy && (
+          /* A heavy job (video, OCR, Office) can run for minutes. Before this,
+             the only way out was closing the tab. */
+          <button
+            type="button"
+            onClick={reset}
+            className="mt-3 inline-flex min-h-11 items-center rounded border border-border px-4 text-sm font-medium transition-colors duration-[120ms] hover:border-border-strong hover:bg-sunken"
+          >
+            {t.cancel}
+          </button>
         )}
 
         {phase.name === 'done' && (

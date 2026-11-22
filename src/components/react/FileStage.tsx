@@ -111,7 +111,7 @@ export default function FileStage({
   const gridRef = useRef<HTMLOListElement>(null);
   useFlip(gridRef);
 
-  const icon = 'grid size-6 place-items-center rounded border border-border bg-bg text-xs text-muted transition-colors hover:border-border-strong hover:text-text disabled:opacity-30';
+  const icon = 'grid size-6 pointer-coarse:size-11 place-items-center rounded border border-border bg-bg text-xs text-muted transition-colors hover:border-border-strong hover:text-text disabled:opacity-30';
 
   return (
     <section aria-label={t.region} className="flex flex-col gap-4">
@@ -119,7 +119,7 @@ export default function FileStage({
         <span data-numeric className="text-sm font-medium">{t.heading}</span>
         <span className="hidden text-xs text-muted sm:inline">{t.hint}</span>
         <div className="ml-auto flex flex-wrap gap-2">
-          <button type="button" onClick={onAdd} className="rounded border border-border px-3 py-1.5 text-sm text-muted transition-colors hover:border-border-strong hover:text-text">
+          <button type="button" onClick={onAdd} className="rounded border border-border px-3 py-1.5 text-sm text-muted transition-colors hover:border-border-strong hover:text-text pointer-coarse:min-h-11">
             {t.add}
           </button>
           {toolbar}

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Gate board sketch</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--board:#101317;--paper:#f4f5f2;--amber:#ffb81c;--red:#e4002b;--mute:#666d73;--line:#d8dbd6}
+*{box-sizing:border-box;margin:0}
+body{width:1440px;height:900px;overflow:hidden;background:var(--paper);color:var(--board);font-family:Archivo,system-ui,sans-serif}
+header{height:68px;display:flex;align-items:center;gap:32px;padding:0 48px;border-bottom:1px solid var(--line)}
+.brand{font-weight:800;font-size:21px;display:flex;gap:10px;align-items:center}
+nav{display:flex;gap:24px;font-weight:600;color:var(--mute)}
+.search{margin-left:auto;width:420px;height:44px;border:1.5px solid var(--board);border-radius:8px;display:flex;align-items:center;padding:0 14px;color:var(--mute)}
+main{padding:40px 48px;display:grid;grid-template-columns:1fr 430px;gap:40px}
+.board{background:var(--board);color:#fff;border-radius:14px;padding:24px 28px}
+.board h1{font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);font-weight:800;display:flex;justify-content:space-between}
+.row{display:grid;grid-template-columns:90px 1fr 170px 120px;align-items:center;gap:18px;padding:15px 0;border-top:1px solid #262b31;font-size:19px}
+.row.head{font:500 12px 'JetBrains Mono',monospace;color:#8d949b;border-top:0;padding-top:16px}
+.gate{font:700 18px 'JetBrains Mono',monospace;color:var(--amber)}
+.flap{font:700 16px 'JetBrains Mono',monospace;background:#1d2228;border-radius:4px;padding:5px 8px;letter-spacing:.06em}
+.st{font:700 13px 'JetBrains Mono',monospace}.st.go{color:#4ade80}.st.now{color:var(--amber)}
+.pass{background:#fff;border-radius:16px;box-shadow:0 16px 36px -16px rgba(16,19,23,.35);overflow:hidden}
+.pass .top{background:var(--red);color:#fff;padding:14px 22px;font-weight:800;display:flex;justify-content:space-between}
+.seg{padding:16px 22px;display:grid;grid-template-columns:1fr 1fr;gap:12px 18px;border-bottom:2px dashed var(--line)}
+.seg label{display:block;font:500 11px 'JetBrains Mono',monospace;color:var(--mute);text-transform:uppercase}
+.seg b{font-size:20px}.seg .big{font-size:42px;font-weight:800;letter-spacing:-.02em}
+.stub{padding:16px 22px;display:flex;justify-content:space-between;align-items:center}
+.stub span{background:var(--board);color:#fff;font-weight:800;padding:12px 22px;border-radius:9px}
+h2{font-size:44px;font-weight:800;letter-spacing:-.025em;line-height:1.05;margin-bottom:22px}
+</style></head><body>
+<header><div class="brand"><svg width="30" height="30" viewBox="0 0 8 8" shape-rendering="crispEdges"><rect width="8" height="8" rx="1" fill="#ffd23f"/><rect x="1" y="1" width="6" height="3" fill="#e4002b"/><rect x="2" y="2" width="1" height="1" fill="#fff"/><rect x="5" y="2" width="1" height="1" fill="#fff"/><rect x="3.5" y="4" width="1" height="3.5" fill="#8a5a2b"/></svg>Nhako Tools</div>
+<nav><span>PDF</span><span>Image</span><span>Media</span><span>Calculators</span><span>Malaysia</span></nav><div class="search">Search 50 tools…</div></header>
+<main>
+  <section>
+    <h2>Where is your file going today?</h2>
+    <div class="board"><h1><span>Departures · popular now</span><span>Free · no limit · no account</span></h1>
+      <div class="row head"><span>GATE</span><span>JOB</span><span>TARGET</span><span>STATUS</span></div>
+      <div class="row"><span class="gate">P5</span><span>Compress PDF</span><span class="flap">≤ 500 KB</span><span class="st now">BOARDING</span></div>
+      <div class="row"><span class="gate">I7</span><span>Passport photo</span><span class="flap">35×50 MM</span><span class="st go">ON TIME</span></div>
+      <div class="row"><span class="gate">P1</span><span>Merge PDF</span><span class="flap">ANY ORDER</span><span class="st go">ON TIME</span></div>
+      <div class="row"><span class="gate">I3</span><span>Compress image</span><span class="flap">≤ 100 KB</span><span class="st go">ON TIME</span></div>
+      <div class="row"><span class="gate">K1</span><span>Salary calculator</span><span class="flap">PCB 2026</span><span class="st go">ON TIME</span></div>
+    </div>
+  </section>
+  <aside class="pass">
+    <div class="top"><span>NHAKO · BOARDING PASS</span><span>P5</span></div>
+    <div class="seg"><div><label>From</label><b>transcript.pdf</b></div><div><label>To</label><b>transcript-500kb.pdf</b></div>
+      <div><label>Size</label><div class="big">486 KB</div></div><div><label>Was</label><b>5.7 MB</b></div>
+      <div><label>Time</label><b>2.4 s</b></div><div><label>Seat</label><b>On this device</b></div></div>
+    <div class="stub"><b>Under 500 KB ✓</b><span>Save PDF</span></div>
+  </aside>
+</main>
+</body></html>

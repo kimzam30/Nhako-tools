@@ -18,9 +18,19 @@ export default function NeraLoader({ label, progress }: { label: string; progres
       <div className="nera-load-body">
         <div className="flex items-baseline justify-between gap-4">
           <p className="nera-msg">{label}…</p>
-          {measured && <span data-numeric className="nera-pct">{Math.round(progress * 100)}%</span>}
+          {/* The number is the bar's value, read by assistive tech from the
+              progressbar below. Hidden here, so a live region around the
+              loader does not re-announce every percent. */}
+          {measured && <span data-numeric className="nera-pct" aria-hidden="true">{Math.round(progress * 100)}%</span>}
         </div>
-        <div className="nera-bar">
+        <div
+          className="nera-bar"
+          role="progressbar"
+          aria-label={label}
+          aria-valuemin={measured ? 0 : undefined}
+          aria-valuemax={measured ? 100 : undefined}
+          aria-valuenow={measured ? Math.round(progress * 100) : undefined}
+        >
           <div
             className="nera-fill"
             data-indeterminate={measured ? undefined : ''}

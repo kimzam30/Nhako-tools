@@ -19,6 +19,14 @@
        has its own pressed state instead, which reads as the control reacting
        rather than the browser. */
     -webkit-tap-highlight-color: transparent;
+    /* The header is sticky (h-14) and, below 1024 px, a tab bar floats at the
+       bottom. Without these, anything scrolled into view (an #anchor, a focused
+       field, a search result) lands under one of them, and on the Tab S9 FE
+       the header was found intercepting the tap meant for the result. */
+    scroll-padding-top: calc(3.5rem + 0.75rem);
+  }
+  @media (max-width: 1023.98px) {
+    html { scroll-padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)); }
   }
 
   /* Double-tap-to-zoom waits ~300ms to rule out a second tap on some

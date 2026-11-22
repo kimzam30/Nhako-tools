@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Sayap sketch</title>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--velvet:#0d0f0e;--paper:#f6f7f5;--em:#13b673;--em2:#0a7a4d;--crim:#c8102e;--mute:#5d6661;--line:#dfe3df}
+*{box-sizing:border-box;margin:0}
+body{width:1440px;height:900px;overflow:hidden;background:var(--paper);color:var(--velvet);font-family:'Schibsted Grotesk',system-ui,sans-serif}
+header{background:var(--velvet);color:#fff;height:76px;display:flex;align-items:center;padding:0 56px;gap:36px;position:relative}
+header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:5px;background:linear-gradient(90deg,var(--em2),var(--em) 30%,var(--em2) 60%,var(--em) 100%)}
+.brand{display:flex;align-items:center;gap:12px;font-weight:900;font-size:22px}
+nav{display:flex;gap:26px;font-weight:500;font-size:16px;color:#c9d0cb}
+nav b{color:#fff;font-weight:700}
+.right{margin-left:auto;display:flex;gap:18px;align-items:center;font-size:15px;color:#c9d0cb}
+.right .pill{border:1px solid #2c332f;border-radius:999px;padding:7px 14px;color:#fff}
+main{display:grid;grid-template-columns:560px 1fr;gap:64px;padding:64px 56px 0}
+h1{font-size:64px;line-height:1;font-weight:900;letter-spacing:-.035em}
+h1 span{color:var(--em2)}
+p.lead{margin-top:20px;font-size:20px;line-height:1.5;color:var(--mute);max-width:30em}
+.promise{margin-top:28px;display:grid;grid-template-columns:repeat(3,auto);justify-content:start;gap:10px 28px;font-weight:700;font-size:15px}
+.promise span{display:flex;align-items:center;gap:8px}
+.promise span::before{content:"";width:16px;height:4px;border-radius:2px;background:var(--em)}
+.drop{position:relative;height:330px;border-radius:20px;background:#fff;box-shadow:0 18px 40px -18px rgba(13,15,14,.28),0 2px 6px rgba(13,15,14,.06);display:grid;place-items:center;overflow:hidden}
+.wing{position:absolute;top:0;bottom:0;width:46%;background:var(--velvet)}
+.wing.l{left:0;clip-path:polygon(0 0,100% 18%,88% 100%,0 100%)}
+.wing.r{right:0;clip-path:polygon(0 18%,100% 0,100% 100%,12% 100%)}
+.wing::after{content:"";position:absolute;top:30%;height:26%;width:84%;background:var(--em);transform:skewY(-9deg)}
+.wing.l::after{left:6%}.wing.r::after{right:6%;transform:skewY(9deg)}
+.drop .core{position:relative;z-index:1;background:#fff;border-radius:16px;padding:30px 38px;text-align:center;width:300px;box-shadow:0 10px 30px -12px rgba(0,0,0,.45)}
+.core b{display:block;font-size:22px}.core small{display:block;color:var(--mute);margin-top:6px;font-size:14px}
+.btn{display:inline-block;margin-top:16px;background:var(--crim);color:#fff;font-weight:700;padding:13px 26px;border-radius:10px;font-size:16px}
+.search{margin-top:22px;height:56px;border-radius:12px;border:1.5px solid var(--line);background:#fff;display:flex;align-items:center;gap:12px;padding:0 18px;color:var(--mute);font-size:17px}
+.jobs{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:6px}
+.job{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.job b{display:block;font-size:16px}.job span{display:block;font-size:14px;color:var(--mute);margin-top:4px}
+.job i{display:block;width:28px;height:4px;border-radius:2px;background:var(--em);margin-bottom:12px}
+</style></head><body>
+<header>
+  <div class="brand"><svg width="34" height="34" viewBox="0 0 8 8" shape-rendering="crispEdges"><rect width="8" height="8" rx="1" fill="#ffd23f"/><rect x="1" y="1" width="6" height="3" fill="#c8102e"/><rect x="2" y="2" width="1" height="1" fill="#fff"/><rect x="5" y="2" width="1" height="1" fill="#fff"/><rect x="3.5" y="4" width="1" height="3.5" fill="#8a5a2b"/></svg>Nhako Tools</div>
+  <nav><b>PDF</b><span>Image</span><span>Media</span><span>Calculators</span><span>Developer</span><span>Malaysia</span></nav>
+  <div class="right"><span>Search ⌘K</span><span class="pill">BM</span></div>
+</header>
+<main>
+  <section>
+    <h1>Every file job your forms ask for. <span>Free, no catch.</span></h1>
+    <p class="lead">Compress a scan under 500 KB, make a 35×50 passport photo, merge your transcripts. 50 tools that run on your own device.</p>
+    <div class="promise"><span>No limits</span><span>No account</span><span>No ads, ever</span></div>
+    <div class="search">Search 50 tools: “compress pdf 500kb”, “gaji”, “heic”</div>
+  </section>
+  <section>
+    <div class="drop"><div class="wing l"></div><div class="wing r"></div>
+      <div class="core"><b>Compress PDF</b><small>Drop a PDF, or pick a target size</small><span class="btn">Choose PDF</span></div>
+    </div>
+  </section>
+  <div class="jobs">
+    <div class="job"><i></i><b>Compress PDF to 500 KB</b><span>SPA, UPU, scholarship portals</span></div>
+    <div class="job"><i></i><b>Passport photo 35×50</b><span>White background, 4R sheet</span></div>
+    <div class="job"><i></i><b>Merge PDF</b><span>In the order you set</span></div>
+    <div class="job"><i></i><b>Salary calculator</b><span>EPF, SOCSO, EIS, PCB 2026</span></div>
+  </div>
+</main>
+</body></html>

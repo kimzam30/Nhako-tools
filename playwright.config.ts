@@ -36,6 +36,14 @@ export default defineConfig({
     { name: 'ios-landscape', testMatch: MOBILE, use: { ...devices['iPhone 14 landscape'] } },
     { name: 'ipados', testMatch: MOBILE, use: { ...devices['iPad (gen 7)'] } },
     { name: 'ipados-landscape', testMatch: MOBILE, use: { ...devices['iPad (gen 7) landscape'] } },
+    // Real phones and tablets: Chrome on the device, attached over CDP by
+    // e2e/support/human.ts when DEVICE_CDP is set. Run via scripts/device-e2e.sh.
+    {
+      name: 'device', testMatch: /human\.spec\.ts/, retries: 0, timeout: 300_000,
+      // One folder per device: two devices run at once, and a shared folder
+      // let each run wipe the other's failure screenshots.
+      outputDir: `test-results/device-${process.env.DEVICE_NAME ?? 'unknown'}`,
+    },
   ],
   webServer: {
     command: `npm run build && PORT=${PORT} npm run preview`,

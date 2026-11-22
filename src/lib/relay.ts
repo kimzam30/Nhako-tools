@@ -47,7 +47,12 @@ export function openRoom(
   let attempt = 0;
   let heartbeat: ReturnType<typeof setInterval> | undefined;
   let retry: ReturnType<typeof setTimeout> | undefined;
+  // The ref of the last heartbeat not yet answered. A socket that stays
+  // "open" while the phone sleeps never fires onclose; a heartbeat still
+  // unanswered one interval later is how that is noticed.
+  let beat: string | null = null;
   const queue: unknown[] = [];
+  const backoff = () => Math.min(30_000, 1000 * 2 ** attempt++);
 
   const raw = (event: string, payload: Record<string, unknown>, t = topic) => {
     if (ws?.readyState !== WebSocket.OPEN) return '';
@@ -72,17 +77,22 @@ export function openRoom(
       ws = socketFactory(URL_);
     } catch {
       onStatus('offline');
-      schedule(Math.min(30_000, 1000 * 2 ** attempt++));
+      schedule(backoff());
       return;
     }
     ws.onopen = () => {
       join();
       clearInterval(heartbeat);
-      heartbeat = setInterval(() => raw('heartbeat', {}, 'phoenix'), HEARTBEAT_MS);
+      beat = null;
+      heartbeat = setInterval(() => {
+        if (beat !== null) { ws?.close(); return; } // half-dead: onclose reconnects
+        beat = raw('heartbeat', {}, 'phoenix') || null;
+      }, HEARTBEAT_MS);
     };
     ws.onmessage = (e) => {
       let f: Frame;
       try { f = JSON.parse(String(e.data)) as Frame; } catch { return; }
+      if (f.topic === 'phoenix' && f.event === 'phx_reply' && f.ref === beat) { beat = null; return; }
       if (f.topic !== topic) return;
       if (f.event === 'phx_reply' && f.ref === joinRef) {
         if (f.payload.status === 'ok') {
@@ -97,14 +107,20 @@ export function openRoom(
         return;
       }
       if (f.event === 'broadcast' && f.payload.event === 'm') onMessage(f.payload.payload);
-      if (f.event === 'phx_close' || f.event === 'phx_error') { joined = false; join(); }
+      if (f.event === 'phx_close' || f.event === 'phx_error') {
+        // Rejoin, but with the same growing delay as a reconnect: a channel
+        // that errors on every join used to rejoin in a tight loop.
+        joined = false;
+        clearTimeout(retry);
+        retry = setTimeout(() => { if (!closed && !joined) join(); }, backoff());
+      }
     };
     ws.onclose = () => {
       joined = false;
       clearInterval(heartbeat);
       if (closed) return;
       onStatus('offline');
-      schedule(Math.min(30_000, 1000 * 2 ** attempt++));
+      schedule(backoff());
     };
   }
 
@@ -112,7 +128,9 @@ export function openRoom(
 
   return {
     send(payload) {
-      if (joined) broadcast(payload);
+      // `joined` can still be true for a moment after the socket dropped;
+      // queue then too, rather than let raw() drop it silently.
+      if (joined && ws?.readyState === WebSocket.OPEN) broadcast(payload);
       // Keep only the latest few while offline: old commands are stale.
       else { queue.push(payload); if (queue.length > 3) queue.shift(); }
     },

@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ms"><head><meta charset="utf-8"><title>Laluan sketch</title>
+<link href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;800;900&family=Overpass+Mono:wght@600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1c2229;--paper:#fff;--soft:#f2f4f6;--line:#d9dee3;--p:#e4002b;--i:#0064c8;--m:#7a3ea1;--k:#00965e;--d:#59636e;--mute:#5b6570}
+*{box-sizing:border-box;margin:0}
+body{width:1440px;height:900px;overflow:hidden;background:var(--paper);color:var(--ink);font-family:Overpass,system-ui,sans-serif}
+header{height:72px;background:var(--ink);color:#fff;display:flex;align-items:center;gap:28px;padding:0 48px}
+.brand{display:flex;align-items:center;gap:12px;font-weight:900;font-size:22px;letter-spacing:-.01em}
+.brand small{display:block;font-weight:600;font-size:11px;letter-spacing:.08em;color:#aeb7c0;text-transform:uppercase}
+nav{display:flex;gap:6px;margin-left:12px}
+nav a{display:flex;align-items:center;gap:8px;color:#e9edf0;text-decoration:none;font-weight:600;font-size:15px;padding:8px 12px;border-radius:6px}
+nav a i{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-weight:900;font-size:12px;color:#fff}
+.lang{margin-left:auto;display:flex;border:1px solid #47515b;border-radius:6px;overflow:hidden;font-weight:800;font-size:13px}
+.lang span{padding:6px 12px}.lang .on{background:#fff;color:var(--ink)}
+.lines{height:8px;display:grid;grid-template-columns:repeat(5,1fr)}
+.lines b:nth-child(1){background:var(--p)}.lines b:nth-child(2){background:var(--i)}.lines b:nth-child(3){background:var(--m)}.lines b:nth-child(4){background:var(--k)}.lines b:nth-child(5){background:var(--d)}
+main{padding:52px 48px 0;display:grid;grid-template-columns:1fr 470px;gap:56px}
+h1{font-size:60px;line-height:1.02;font-weight:900;letter-spacing:-.025em;max-width:780px}
+h1 em{display:block;font-style:normal;font-weight:400;font-size:28px;letter-spacing:0;color:var(--mute);margin-top:10px}
+.search{margin-top:30px;height:68px;border:3px solid var(--ink);border-radius:10px;display:flex;align-items:center;gap:14px;padding:0 20px;font-size:20px;color:var(--mute)}
+.search kbd{margin-left:auto;font:600 13px 'Overpass Mono',monospace;border:1px solid var(--line);border-radius:4px;padding:3px 7px;color:var(--mute)}
+.promise{margin-top:18px;display:flex;gap:22px;font-weight:700;font-size:15px}
+.promise span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--k);margin-right:8px;vertical-align:1px}
+.map{border:1px solid var(--line);border-radius:12px;padding:22px 24px;background:var(--soft)}
+.map h2{font-size:14px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin-bottom:14px}
+.route{position:relative;padding-left:34px}
+.route::before{content:"";position:absolute;left:13px;top:10px;bottom:10px;width:6px;border-radius:3px;background:var(--p)}
+.stn{position:relative;display:flex;align-items:center;gap:12px;padding:9px 0}
+.stn i{position:absolute;left:-34px;width:32px;height:32px;border-radius:50%;background:#fff;border:5px solid var(--p);display:grid;place-items:center;font:600 10px 'Overpass Mono',monospace;color:var(--ink);font-style:normal}
+.stn.done i{background:var(--p);color:#fff}
+.stn b{font-size:17px}.stn small{color:var(--mute);font-size:14px;margin-left:auto;font-variant-numeric:tabular-nums}
+.big{font-size:44px;font-weight:900;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.big s{color:var(--mute);font-weight:400;font-size:24px;text-decoration-thickness:2px;margin-right:10px}
+.jobs{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-top:1px solid var(--line);margin-top:8px}
+.job{padding:18px 20px 0 0;display:flex;gap:14px;align-items:flex-start}
+.code{flex:none;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;color:#fff;font:600 13px 'Overpass Mono',monospace}
+.job b{display:block;font-size:17px}.job span{display:block;font-size:14px;color:var(--mute);margin-top:2px}
+</style></head><body>
+<header>
+  <div class="brand"><svg width="36" height="36" viewBox="0 0 8 8" shape-rendering="crispEdges"><rect width="8" height="8" rx="1" fill="#ffd23f"/><rect x="1" y="1" width="6" height="3" fill="#e4002b"/><rect x="2" y="2" width="1" height="1" fill="#fff"/><rect x="5" y="2" width="1" height="1" fill="#fff"/><rect x="3.5" y="4" width="1" height="3.5" fill="#8a5a2b"/></svg><div>Nhako Tools<small>Alat percuma · Free tools</small></div></div>
+  <nav><a><i style="background:var(--p)">P</i>PDF</a><a><i style="background:var(--i)">I</i>Imej</a><a><i style="background:var(--m)">M</i>Media</a><a><i style="background:var(--k)">K</i>Kira</a><a><i style="background:var(--d)">D</i>Dev</a><a>Malaysia</a></nav>
+  <div class="lang"><span class="on">BM</span><span>EN</span></div>
+</header>
+<div class="lines"><b></b><b></b><b></b><b></b><b></b></div>
+<main>
+  <section>
+    <h1>Pilih kerja anda. Fail tak pernah tinggalkan telefon.<em>Pick your job. 50 tools that run on your own device.</em></h1>
+    <div class="search"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1c2229" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4" stroke-linecap="round"/></svg>Cari 50 alat: "kecilkan pdf 500kb", "gambar passport", "gaji"<kbd>Ctrl K</kbd></div>
+    <div class="promise"><span>Percuma, tiada had</span><span>Tiada akaun</span><span>Tiada iklan</span></div>
+  </section>
+  <aside class="map">
+    <h2>Laluan anda · P05 Compress PDF</h2>
+    <div class="route">
+      <div class="stn done"><i>1</i><b>Letak fail</b><small>skrol-ijazah.pdf</small></div>
+      <div class="stn done"><i>2</i><b>Sasaran 500 KB</b><small>kualiti 70</small></div>
+      <div class="stn"><i>3</i><b>Simpan</b><small>2.4 s</small></div>
+    </div>
+    <div class="big"><s>5.7 MB</s>486 KB</div>
+  </aside>
+  <div class="jobs">
+    <div class="job"><div class="code" style="background:var(--p)">P05</div><div><b>Kecilkan PDF bawah 500 KB</b><span>Untuk portal SPA, UPU, biasiswa</span></div></div>
+    <div class="job"><div class="code" style="background:var(--i)">I07</div><div><b>Gambar passport 35×50</b><span>Latar putih, cetak 4R</span></div></div>
+    <div class="job"><div class="code" style="background:var(--p)">P01</div><div><b>Gabung PDF</b><span>Susun ikut urutan anda</span></div></div>
+    <div class="job"><div class="code" style="background:var(--k)">K01</div><div><b>Kalkulator gaji bersih</b><span>KWSP, PERKESO, SIP, PCB 2026</span></div></div>
+  </div>
+</main>
+</body></html>

@@ -8,7 +8,7 @@ import { valueBeforeHydration } from './hydration';
  * component change.
  */
 export default function OptionsPanel({
-  specs, values, onChange, disabled, rangeText = (min, max) => `${min} to ${max}`,
+  specs, values, onChange, onSubmit, disabled, rangeText = (min, max) => `${min} to ${max}`,
 }: {
   specs: OptionSpec[];
   values: OptionValues;
@@ -16,6 +16,9 @@ export default function OptionsPanel({
   disabled?: boolean;
   /** "1 to 100", worded for the page's language. */
   rangeText?: (min: number, max: number) => string;
+  /** Enter (the keyboard's Go key) in a text field. On a phone the keyboard
+   *  covers whatever button would run the job, so Go has to run it. */
+  onSubmit?: () => void;
 }) {
   const shown = specs.filter((s) => isVisible(s, values));
   // Toggles always span the full width, so only the others decide the layout.
@@ -56,6 +59,15 @@ export default function OptionsPanel({
                   <select
                     id={id} disabled={disabled} value={String(value)}
                     onChange={(e) => onChange(spec.key, e.target.value)}
+                    enterKeyHint={onSubmit ? 'go' : undefined}
+                    onKeyDown={(e) => {
+                      if (e.key !== 'Enter' || !onSubmit) return;
+                      e.preventDefault();
+                      // Commit the typed value first, then run with it.
+                      onChange(spec.key, e.currentTarget.value);
+                      e.currentTarget.blur();
+                      onSubmit();
+                    }}
                     className="w-full rounded border border-border bg-surface px-2.5 py-1.5 text-sm transition-colors hover:border-border-strong"
                   >
                     {spec.choices.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
@@ -90,6 +102,15 @@ export default function OptionsPanel({
                     spellCheck={spec.secret ? false : undefined}
                     value={String(value)} placeholder={spec.placeholder}
                     onChange={(e) => onChange(spec.key, e.target.value)}
+                    enterKeyHint={onSubmit ? 'go' : undefined}
+                    onKeyDown={(e) => {
+                      if (e.key !== 'Enter' || !onSubmit) return;
+                      e.preventDefault();
+                      // Commit the typed value first, then run with it.
+                      onChange(spec.key, e.currentTarget.value);
+                      e.currentTarget.blur();
+                      onSubmit();
+                    }}
                     className="w-full rounded border border-border bg-surface px-2.5 py-1.5 text-sm transition-colors hover:border-border-strong"
                   />
                 )}

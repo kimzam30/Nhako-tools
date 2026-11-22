@@ -34,6 +34,23 @@ export interface FitOptions {
 
 export const DEFAULT_SCALES = [1, 0.85, 0.7, 0.55, 0.42, 0.32, 0.24, 0.18] as const;
 
+/**
+ * DEFAULT_SCALES, continued for a large image until its long side would drop
+ * below `minLongSide` pixels. The fixed list stops at 18%, which for an
+ * 18 MP camera photo is still 933 px wide and about 52 KB at the lowest
+ * quality, so "compress image to 20 KB" could not reach 20 KB for the photo
+ * most people bring. 320 px is the smallest a portal or ID photo is useful at.
+ */
+export function scalesFor(width: number, height: number, minLongSide = 320): number[] {
+  const long = Math.max(width, height);
+  const out: number[] = DEFAULT_SCALES.filter((s) => s === 1 || long * s >= minLongSide);
+  let s = out[out.length - 1]!;
+  while (long * s * 0.75 >= minLongSide) { s *= 0.75; out.push(s); }
+  const floor = minLongSide / long;
+  if (floor < 1 && floor < s * 0.95) out.push(floor);
+  return out;
+}
+
 export async function fitToSize(
   encode: (quality: number, scale: number) => Promise<Blob>,
   targetBytes: number,

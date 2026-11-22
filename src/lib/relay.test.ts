@@ -94,4 +94,54 @@ describe('relay', () => {
     vi.advanceTimersByTime(25_000);
     expect(sockets[0]!.last('heartbeat').topic).toBe('phoenix');
   });
+
+  it('notices a half-dead socket (phone asleep): an unanswered heartbeat closes it and reconnects', () => {
+    const { sockets, statuses } = setup();
+    const s = sockets[0]!;
+    s.open();
+    s.reply({ topic: TOPIC, event: 'phx_reply', payload: { status: 'ok' }, ref: s.last('phx_join').ref });
+    vi.advanceTimersByTime(25_000);
+    const beat = s.last('heartbeat');
+    s.reply({ topic: 'phoenix', event: 'phx_reply', payload: { status: 'ok' }, ref: beat.ref });
+    vi.advanceTimersByTime(25_000); // answered: a new beat goes out, socket kept
+    expect(s.readyState).toBe(1);
+    vi.advanceTimersByTime(25_000); // this one never answered
+    expect(s.readyState).toBe(3);
+    expect(statuses.at(-1)).toBe('offline');
+    vi.advanceTimersByTime(1_000);
+    expect(sockets).toHaveLength(2);
+  });
+
+  it('rejoins after a channel error with a growing delay, not in a tight loop', () => {
+    const { sockets } = setup();
+    const s = sockets[0]!;
+    s.open();
+    s.reply({ topic: TOPIC, event: 'phx_reply', payload: { status: 'ok' }, ref: s.last('phx_join').ref });
+    const joins = () => s.sent.filter((f) => f.event === 'phx_join').length;
+    expect(joins()).toBe(1);
+    s.reply({ topic: TOPIC, event: 'phx_error', payload: {}, ref: null });
+    expect(joins()).toBe(1); // not immediately
+    vi.advanceTimersByTime(1_000);
+    expect(joins()).toBe(2);
+    s.reply({ topic: TOPIC, event: 'phx_error', payload: {}, ref: null });
+    vi.advanceTimersByTime(1_000);
+    expect(joins()).toBe(2); // the second wait is longer
+    vi.advanceTimersByTime(1_000);
+    expect(joins()).toBe(3);
+  });
+
+  it('queues a message sent while the socket is down, even if it was joined a moment ago', () => {
+    const { room, sockets } = setup();
+    const s = sockets[0]!;
+    s.open();
+    s.reply({ topic: TOPIC, event: 'phx_reply', payload: { status: 'ok' }, ref: s.last('phx_join').ref });
+    s.readyState = 3; // dropped, onclose not fired yet
+    room.send({ n: 1 });
+    s.onclose?.();
+    vi.advanceTimersByTime(1_000);
+    const s2 = sockets[1]!;
+    s2.open();
+    s2.reply({ topic: TOPIC, event: 'phx_reply', payload: { status: 'ok' }, ref: s2.last('phx_join').ref });
+    expect(s2.sent.filter((f) => f.event === 'broadcast').map((f) => f.payload.payload)).toEqual([{ n: 1 }]);
+  });
 });

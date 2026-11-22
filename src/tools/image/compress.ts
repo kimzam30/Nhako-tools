@@ -1,7 +1,7 @@
 import { ToolError, type FileRun } from '../types';
 import { sayer, type Say } from '../say';
 import { decode, draw, toBlob, replaceExtension, formatOf, EXTENSION, type Encodable } from '../../lib/canvas';
-import { fitToSize, kbToBytes, exactBytes, targetLabel } from '../../lib/fit-size';
+import { fitToSize, kbToBytes, exactBytes, targetLabel, scalesFor } from '../../lib/fit-size';
 import { lossyPng } from '../../lib/png-quant';
 
 /**
@@ -141,6 +141,7 @@ async function toTarget(
       const h = Math.max(1, Math.round(bitmap.height * scale));
       return toBlob(draw(bitmap, w, h, mime), mime, quality, say);
     }, target, {
+      scales: scalesFor(bitmap.width, bitmap.height),
       onAttempt: (_a, n) => ctx.onProgress((i + Math.min(0.95, n / 12)) / files.length, ms ? 'Mencari saiz terbaik' : 'Finding the best fit'),
     });
     const w = Math.round(bitmap.width * fit.scale);

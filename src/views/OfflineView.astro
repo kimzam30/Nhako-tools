@@ -1,0 +1,53 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { localePath, type Locale } from '../i18n';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+
+/*
+  Served by the service worker when a page that was never opened on this
+  device is asked for while offline. It used to fall back to the home page,
+  which then sat under the tool's URL: the person saw the wrong page and no
+  reason. Precached with the shell, noindex, and out of the sitemap.
+*/
+const TEXT = {
+  en: {
+    title: 'You are offline',
+    doc: 'Offline | Nhako Tools',
+    description: 'This page has not been saved on this device yet.',
+    lead: 'This page has not been opened on this device before, so it is not saved for offline use yet.',
+    how: 'Every tool you open once while online keeps working offline after that, because nothing it does needs the internet. Connect again and open it once.',
+    retry: 'Try again',
+    home: 'Go to the home page',
+  },
+  ms: {
+    title: 'Anda di luar talian',
+    doc: 'Luar talian | Nhako Tools',
+    description: 'Halaman ini belum disimpan pada peranti ini.',
+    lead: 'Halaman ini belum pernah dibuka pada peranti ini, jadi ia belum disimpan untuk kegunaan luar talian.',
+    how: 'Setiap alat yang anda buka sekali semasa dalam talian akan terus berfungsi di luar talian selepas itu, kerana kerjanya tidak memerlukan internet. Sambung semula dan bukanya sekali.',
+    retry: 'Cuba lagi',
+    home: 'Ke halaman utama',
+  },
+}[locale];
+---
+<BaseLayout title={TEXT.title} documentTitle={TEXT.doc} description={TEXT.description} path="/offline" locale={locale} noindex>
+  <div class="mx-auto max-w-xl px-4 pb-16 pt-12 text-center sm:px-6 sm:pt-20">
+    <svg class="mx-auto size-12 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+      <path d="M2 8.5a15 15 0 0 1 20 0M5.5 12a10 10 0 0 1 13 0M9 15.5a5 5 0 0 1 6 0" stroke-linecap="round" />
+      <circle cx="12" cy="19" r="1.2" fill="currentColor" stroke="none" />
+      <path d="M3 3l18 18" stroke-linecap="round" />
+    </svg>
+    <h1 class="mt-5 text-2xl font-bold tracking-tight">{TEXT.title}</h1>
+    <p class="mt-3 text-base leading-relaxed">{TEXT.lead}</p>
+    <p class="mt-2 text-sm leading-relaxed text-muted">{TEXT.how}</p>
+    <div class="mt-8 flex flex-wrap justify-center gap-3">
+      <button type="button" data-retry class="min-h-11 rounded bg-accent px-5 text-sm font-medium text-accent-on transition-colors hover:bg-accent-hover">{TEXT.retry}</button>
+      <a href={localePath(locale, '/')} class="inline-flex min-h-11 items-center rounded border border-border px-5 text-sm font-medium transition-colors hover:border-border-strong hover:bg-sunken">{TEXT.home}</a>
+    </div>
+  </div>
+  <script>
+    document.querySelector('[data-retry]')?.addEventListener('click', () => location.reload());
+  </script>
+</BaseLayout>

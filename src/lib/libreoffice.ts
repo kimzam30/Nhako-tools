@@ -74,7 +74,15 @@ export function libreOffice(onProgress?: (fraction: number, stage: Stage) => voi
       browserWorkerJs: `${base}browser.worker.global.js`,
       onProgress: (p: { percent?: number }) => report?.((p.percent ?? 0) / 100, 'start'),
     });
-    await converter.initialize();
+    // The download above may take minutes on a slow connection and shows its
+    // own progress; starting the engine should not. Bound the start, so a
+    // stuck initialize() becomes an error instead of an endless spinner.
+    try {
+      await withTimeout(converter.initialize(), 120_000);
+    } catch (err) {
+      (converter as unknown as { worker?: Worker }).worker?.terminate();
+      throw err;
+    }
     return converter;
   })();
   engine.catch(() => { engine = null; });
@@ -115,9 +123,13 @@ export async function convertWithRetry(
   // converts in well under that. Big files get more time.
   const startLimit = 90_000;
   const convertLimit = 45_000 + (input.length / 1_000_000) * 15_000;
+  // Read before libreOffice() runs: it starts the download, which sets
+  // `assets`, so checking inside the call below was always false and a first
+  // visit on a slow connection got 90 s to fetch 77 MB.
+  const firstLoad = !assets;
   for (let attempt = 0; ; attempt++) {
     try {
-      const converter = await withTimeout(libreOffice(onProgress), attempt === 0 && !assets ? 30 * 60_000 : startLimit);
+      const converter = await withTimeout(libreOffice(onProgress), attempt === 0 && firstLoad ? 30 * 60_000 : startLimit);
       return await withTimeout(converter.convert(input.slice(), options, filename), convertLimit);
     } catch (err) {
       if (!(err instanceof Timeout)) throw err;

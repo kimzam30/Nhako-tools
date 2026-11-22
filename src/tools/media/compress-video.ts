@@ -4,6 +4,7 @@ import { fitResolution, planBitrate } from './bitrate';
 import { encodeWithWebCodecs, readVideoFacts } from './webcodecs-video';
 import { fetchFile } from '@ffmpeg/util';
 import { sayer } from '../say';
+import { assertFits } from '../../lib/memory';
 
 export const run: FileRun = async (files, opts, ctx) => {
   const say = sayer(opts);
@@ -50,6 +51,10 @@ export const run: FileRun = async (files, opts, ctx) => {
   const output = 'output.mp4';
 
   onFFmpegProgress((fraction) => ctx.onProgress(fraction, say('Encoding', 'Mengekod')));
+
+  // ffmpeg.wasm holds the input, the output and its own copies in one heap.
+  // (The WebCodecs path above streams, so it needs no such check.)
+  assertFits(file.size * 3, say('This video', 'Video ini'), say);
 
   const data = await withFiles({ [input]: await fetchFile(file) }, [output], async (ffmpeg) => {
     // Audio is re-encoded to a known bitrate rather than copied, so the size

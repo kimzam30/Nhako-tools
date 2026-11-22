@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { fitToSize } from './fit-size';
+import { fitToSize, scalesFor } from './fit-size';
 
 /** A fake encoder whose output grows with quality and with pixel count. */
 const fake = (bytesAtFull: number) => async (quality: number, scale: number) =>
@@ -40,5 +40,18 @@ describe('fitToSize', () => {
     expect(r.fits).toBe(false);
     expect(r.quality).toBe(0.4);
     expect(r.scale).toBe(0.18);
+  });
+});
+
+describe('scalesFor', () => {
+  it('goes past 18% for a big camera photo, down to a 320 px long side', () => {
+    const scales = scalesFor(5184, 3456);
+    expect(scales[0]).toBe(1);
+    expect(Math.min(...scales) * 5184).toBeCloseTo(320, 0);
+    expect(scales.every((s, i) => i === 0 || s < scales[i - 1]!)).toBe(true);
+  });
+  it('never shrinks a small image below 320 px', () => {
+    expect(scalesFor(640, 480).every((s) => s * 640 >= 320 - 1e-9)).toBe(true);
+    expect(scalesFor(200, 100)).toEqual([1]);
   });
 });

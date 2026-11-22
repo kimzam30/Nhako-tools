@@ -20,7 +20,8 @@ export default [
     },
   },
   {
-    files: ['scripts/**/*.mjs', 'launch/**/*.mjs'],
+    // Root config files (astro.config.mjs) run in Node too.
+    files: ['scripts/**/*.mjs', 'launch/**/*.mjs', '*.config.{js,mjs}'],
     languageOptions: { globals: globals.node },
   },
   {

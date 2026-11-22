@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { toBlob } from '../../lib/canvas';
 import { applyFilter, detectPage, flatSize, pageFor, placeImage, warp, type Filter, type Point, type Quad } from '../../tools/pdf/scan';
 import { bytes } from '../../lib/format';
 import type { Locale } from '../../i18n/paths';
@@ -69,7 +70,9 @@ async function loadSource(file: File): Promise<{ canvas: HTMLCanvasElement; prev
   const img = sc.getImageData(0, 0, small.width, small.height);
   const found = detectPage({ data: img.data, width: img.width, height: img.height });
   const quad = found.map((p) => ({ x: p.x / s, y: p.y / s })) as Quad;
-  const preview = await new Promise<string>((resolve) => small.toBlob((b) => resolve(URL.createObjectURL(b!)), 'image/jpeg', 0.8));
+  // The shared helper rejects on a null blob (iOS canvas memory limit) instead
+  // of throwing inside the callback and leaving the spinner turning forever.
+  const preview = URL.createObjectURL(await toBlob(small, 'image/jpeg', 0.8));
   return { canvas, preview, quad };
 }
 
@@ -92,7 +95,7 @@ async function render(page: Page): Promise<NonNullable<Page['result']>> {
   c.drawImage(flatCanvas, -width / 2, -height / 2);
   // Black and white compresses best, and stays crisp, as PNG.
   const type = page.filter === 'bw' ? 'image/png' : 'image/jpeg';
-  const blob = await new Promise<Blob>((resolve) => out.toBlob((b) => resolve(b!), type, 0.85));
+  const blob = await toBlob(out, type, 0.85);
   return { url: URL.createObjectURL(blob), blob, width: out.width, height: out.height };
 }
 
@@ -341,7 +344,7 @@ function CornerEditor({ page, t, onApply, onClose }: { page: Page; t: (typeof TE
       </div>
       <div className="mt-3 flex gap-2">
         <button type="button" onClick={() => { show(whole); onApply(whole); }} className="rounded border border-border px-3 py-1.5 text-sm text-muted hover:text-text">{t.reset}</button>
-        <button type="button" onClick={onClose} className="ml-auto rounded bg-accent px-3 py-1.5 text-sm font-medium text-accent-on hover:bg-accent-hover">{t.done}</button>
+        <button type="button" onClick={onClose} className="ml-auto rounded bg-accent px-3 py-1.5 text-sm font-medium text-accent-on hover:bg-accent-hover pointer-coarse:min-h-11">{t.done}</button>
       </div>
     </div>
   );

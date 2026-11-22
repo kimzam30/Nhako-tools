@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { bytes } from '../../lib/format';
 import type { Locale } from '../../i18n/paths';
 import PixelSprite from './PixelSprite';
+import type { renderPage as RenderPage } from '../../lib/pdf-render';
 
 /**
  * Shows what the tool actually produced, decoded from the output blob itself.
@@ -126,9 +127,16 @@ export default function ResultPreview({ blob, locale = 'en' }: { blob: Blob; loc
     wanted.current = n;
     heading.current = by > 0 ? 1 : -1;
     const mine = ticket.current;
-    const { renderPage } = await import('../../lib/pdf-render');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const r = await renderPage(docRef.current as any, n, PAGE_W);
+    let r: Awaited<ReturnType<typeof RenderPage>>;
+    try {
+      const { renderPage } = await import('../../lib/pdf-render');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      r = await renderPage(docRef.current as any, n, PAGE_W);
+    } catch {
+      // The document was replaced (a re-run) or destroyed (unmount) mid-page:
+      // nothing to show, and nothing to report.
+      return;
+    }
     if (mine !== ticket.current || n !== wanted.current) { URL.revokeObjectURL(r.url); return; }
     setView({ ...view, url: track(r.url), page: n, width: r.widthPt, height: r.heightPt });
   }

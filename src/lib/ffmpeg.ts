@@ -46,6 +46,19 @@ async function loadFFmpeg(): Promise<FFmpeg> {
   return ffmpeg;
 }
 
+/**
+ * Stop whatever ffmpeg is doing, now. ffmpeg.wasm 0.12 can terminate its
+ * worker; the next getFFmpeg() loads a fresh one (from the HTTP cache, so it
+ * is quick). Without this a 10-minute video job could only be escaped by
+ * closing the tab.
+ */
+export function abortFFmpeg() {
+  const current = loading;
+  loading = null;
+  progressHandler = null;
+  current?.then((f) => f.terminate()).catch(() => {});
+}
+
 export function onFFmpegProgress(fn: ((fraction: number) => void) | null) {
   progressHandler = fn;
 }

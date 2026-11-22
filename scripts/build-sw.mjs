@@ -47,7 +47,7 @@ function shouldPrecache(url, file) {
   if (ext === '.html') {
     const segments = url.replace(/(\/index)?\.html$/, '').split('/').filter(Boolean);
     const page = segments[0] === 'ms' ? segments.slice(1) : segments;
-    return page.length === 0 || (page.length === 1 && ['about', 'privacy', '404'].includes(page[0]));
+    return page.length === 0 || (page.length === 1 && ['about', 'privacy', '404', 'offline'].includes(page[0]));
   }
   if (ext === '.css') return true;
   // Latin subsets only: other scripts are fetched on demand by unicode-range.
@@ -150,7 +150,12 @@ self.addEventListener('fetch', (event) => {
           caches.open(SHELL).then((c) => c.put(request, copy));
           return response;
         })
-        .catch(async () => (await caches.match(request)) ?? (await caches.match('/')) ?? Response.error()),
+        // A page never opened here: say so, in its language. It used to
+        // serve the home page under the tool's URL, with no explanation.
+        .catch(async () => (await caches.match(request))
+          ?? (await caches.match(url.pathname === '/ms' || url.pathname.startsWith('/ms/') ? '/ms/offline' : '/offline'))
+          ?? (await caches.match('/'))
+          ?? Response.error()),
     );
     return;
   }

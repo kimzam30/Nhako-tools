@@ -104,7 +104,7 @@ export default function FeedbackForm({ locale, tools }: { locale: Locale; tools:
           <div className="min-w-0 flex-1">
             <p className="nera-title">{t.sentTitle}</p>
             <p className="mt-1.5 text-sm text-muted">{t.sentBody}</p>
-            <button type="button" onClick={again} className="mt-4 rounded border border-border bg-bg px-3 py-1.5 text-sm text-muted transition-colors hover:border-border-strong hover:text-text">
+            <button type="button" onClick={again} className="mt-4 rounded border border-border bg-bg px-3 py-1.5 text-sm text-muted transition-colors hover:border-border-strong hover:text-text pointer-coarse:min-h-11">
               {t.sendAnother}
             </button>
           </div>

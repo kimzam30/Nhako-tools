@@ -4,6 +4,7 @@ import '@fontsource/dancing-script/latin-400.css';
 import { stamp, type Placement } from '../../tools/pdf/sign';
 import { openForPreview, renderPage, type RenderedPage } from '../../lib/pdf-render';
 import { bytes } from '../../lib/format';
+import { toBlob } from '../../lib/canvas';
 import { filesBeforeHydration } from './hydration';
 import type { Locale } from '../../i18n/paths';
 import { BusyLabel } from './NeraLoader';
@@ -70,7 +71,7 @@ async function trimToPng(canvas: HTMLCanvasElement): Promise<Stamp | null> {
   const out = document.createElement('canvas');
   out.width = w; out.height = h;
   out.getContext('2d')!.drawImage(canvas, Math.max(0, minX - pad), Math.max(0, minY - pad), w, h, 0, 0, w, h);
-  const blob = await new Promise<Blob>((r) => out.toBlob((b) => r(b!), 'image/png'));
+  const blob = await toBlob(out, 'image/png');
   return { png: new Uint8Array(await blob.arrayBuffer()), url: URL.createObjectURL(blob), aspect: w / h };
 }
 
@@ -370,7 +371,7 @@ export default function SignPdf({ locale = 'en', accept }: { locale?: Locale; ac
               style={{ touchAction: 'none' }}
               className="h-24 w-full max-w-md cursor-crosshair rounded border border-dashed border-border-strong bg-white"
             />
-            <button type="button" onClick={clearPad} className="rounded border border-border px-2.5 py-1 text-xs text-muted hover:text-text">{t.clear}</button>
+            <button type="button" onClick={clearPad} className="rounded border border-border px-2.5 py-1 text-xs text-muted hover:text-text pointer-coarse:min-h-11">{t.clear}</button>
           </div>
         )}
         {mode === 'type' && (
@@ -396,9 +397,9 @@ export default function SignPdf({ locale = 'en', accept }: { locale?: Locale; ac
           {signature
             ? <span className="flex items-center gap-2 text-xs text-muted"><img src={signature.url} alt="" className="h-8 w-auto rounded bg-white px-1" />{t.place}</span>
             : <span className="text-xs text-muted">{t.nothing}</span>}
-          <button type="button" onClick={() => void addDate()} className="rounded border border-border px-2.5 py-1 text-xs text-muted hover:text-text">{t.addDate}</button>
+          <button type="button" onClick={() => void addDate()} className="rounded border border-border px-2.5 py-1 text-xs text-muted hover:text-text pointer-coarse:min-h-11">{t.addDate}</button>
           <span data-numeric className="text-2xs text-muted">{t.placed(placed.length)}</span>
-          <button type="button" disabled={busy || placed.length === 0} onClick={() => void save()} className="ml-auto rounded bg-accent px-3 py-1.5 text-sm font-medium text-accent-on hover:bg-accent-hover disabled:opacity-50">{busy ? <BusyLabel label={t.saving} /> : t.save}</button>
+          <button type="button" disabled={busy || placed.length === 0} onClick={() => void save()} className="ml-auto rounded bg-accent px-3 py-1.5 text-sm font-medium text-accent-on hover:bg-accent-hover disabled:opacity-50 pointer-coarse:min-h-11">{busy ? <BusyLabel label={t.saving} /> : t.save}</button>
         </div>
       </div>
 
@@ -407,7 +408,7 @@ export default function SignPdf({ locale = 'en', accept }: { locale?: Locale; ac
           <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3">
             <span className="text-ok" aria-hidden="true">✓</span>
             <span data-numeric className="flex-1 text-sm">{pdf.name.replace(/\.pdf$/i, '')}-signed.pdf, {bytes(output.size)}</span>
-            <a href={output.url} download={`${pdf.name.replace(/\.pdf$/i, '')}-signed.pdf`} className="rounded bg-accent px-3 py-1.5 text-sm font-medium text-accent-on hover:bg-accent-hover">{locale === 'ms' ? 'Simpan' : 'Save'}</a>
+            <a href={output.url} download={`${pdf.name.replace(/\.pdf$/i, '')}-signed.pdf`} className="rounded bg-accent px-3 py-1.5 text-sm font-medium text-accent-on hover:bg-accent-hover pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center">{locale === 'ms' ? 'Simpan' : 'Save'}</a>
           </div>
         )}
       </div>
@@ -454,7 +455,7 @@ export default function SignPdf({ locale = 'en', accept }: { locale?: Locale; ac
         ))}
       </div>
 
-      <button type="button" onClick={() => fileRef.current?.click()} className="self-start rounded border border-border px-2.5 py-1 text-xs text-muted hover:text-text">{t.another}</button>
+      <button type="button" onClick={() => fileRef.current?.click()} className="self-start rounded border border-border px-2.5 py-1 text-xs text-muted hover:text-text pointer-coarse:min-h-11">{t.another}</button>
     </section>
   );
 }

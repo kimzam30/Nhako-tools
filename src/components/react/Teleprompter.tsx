@@ -259,17 +259,29 @@ export default function Teleprompter({ locale = 'en' }: { locale?: Locale }) {
   const [lastSeen, setLastSeen] = useState(0);
   const [now, setNow] = useState(0);
 
+  // Set while the relay module loads, so a double tap cannot open two rooms;
+  // `gone` stops a room opening after the page has been left.
+  const pairing = useRef(false);
+  const gone = useRef(false);
+
   function pair() {
-    if (room.current) return;
+    if (room.current || pairing.current) return;
+    pairing.current = true;
     const c = roomCode();
     setCode(c);
-    void import('../../lib/relay').then(({ openRoom }) => {
+    import('../../lib/relay').then(({ openRoom }) => {
+      pairing.current = false;
+      if (gone.current) return;
       room.current = openRoom(c, (payload) => {
         const m = parseRemote(payload);
         if (!m) return;
         setLastSeen(Date.now());
         handler.current?.(m);
       }, setStatus);
+    }).catch(() => {
+      // A chunk that failed to load (offline, or replaced by a deploy).
+      pairing.current = false;
+      setStatus('offline');
     });
   }
   useEffect(() => {
@@ -277,7 +289,7 @@ export default function Teleprompter({ locale = 'en' }: { locale?: Locale }) {
     const id = setInterval(() => setNow(Date.now()), 2000);
     return () => clearInterval(id);
   }, [code]);
-  useEffect(() => () => room.current?.close(), []);
+  useEffect(() => () => { gone.current = true; room.current?.close(); }, []);
   // The phone says hello every few seconds; silence means it has gone.
   const phoneSeen = lastSeen > 0 && (now || Date.now()) - lastSeen < 12_000;
 

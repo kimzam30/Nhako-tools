@@ -1,0 +1,116 @@
+{
+  "title": "Choose the new look for Nhako Tools",
+  "question": "The roll assigned Laluan (Rapid KL wayfinding). Keep it, take an alternate, or re-roll. You will see home, a tool page and mobile in the chosen world before anything is built.",
+  "options": [
+    {
+      "id": "assigned",
+      "kind": "assigned",
+      "label": "Laluan: every tool is a station",
+      "kicker": "THE ROLL",
+      "lineage": "Rapid KL LRT/MRT wayfinding, bilingual station signage",
+      "thesis": "The site reads like the rail map every KL student already navigates: each category is a coloured line, each tool a coded station, and your job travels a route from Drop to Save.",
+      "palette": ["#ffffff", "#1c2229", "#e4002b", "#0064c8", "#7a3ea1", "#00965e"],
+      "materials": ["enamel signage panels", "line-colour bars", "station code roundels", "bilingual BM/EN pairs"],
+      "viewport": "Dark signage header with the hammer and a search bar like the station directory; below, five coloured lines (PDF P, Image I, Media M, Kira K, Dev D) with the most-used stations as roundels: P05 Compress PDF to 500 KB, I07 Passport photo, K01 Kalkulator gaji.",
+      "risk": "If the line metaphor is applied to every element it turns into a costume; it must stay in type, colour, codes and the progress route.",
+      "raised": [
+        {"from": "challenger-variable-font", "raise": "The number is the hero: file sizes before and after are set at display scale, hierarchy by scale contrast alone."},
+        {"from": "challenger-botanical", "raise": "Before and after previews are registered at the same scale, so the saving is seen, not read."},
+        {"from": "challenger-timetable", "raise": "State is a mark in a fixed cell with tabular figures: filled done, hollow pending, red struck failed."},
+        {"from": "challenger-character-goods", "raise": "Each category owns exactly one line colour everywhere, and grids reflow in whole cells."}
+      ],
+      "html": ".impeccable/mocks/decision/assigned.html"
+    },
+    {
+      "id": "model-pick",
+      "kind": "pick",
+      "label": "Sayap: the national butterfly",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "Rajah Brooke’s birdwing (Trogonoptera brookiana), Malaysia’s national butterfly",
+      "thesis": "Nhako’s butterflies become one real Malaysian butterfly: velvet black shell, emerald wing bands that fill as work completes, a crimson mark for the one thing to press.",
+      "palette": ["#0d0f0e", "#f6f7f5", "#13b673", "#0a7a4d", "#c8102e"],
+      "materials": ["velvet black", "iridescent emerald bands", "crimson head mark"],
+      "viewport": "Black top bar with the hammer and a wing-band underline; light work area; the drop zone framed by two emerald bands that open like wings when a file lands; popular jobs as clean cards beneath.",
+      "risk": "Black plus one vivid green sits close to the familiar dark-with-neon look; it needs the light work area and the crimson to stay its own.",
+      "html": ".impeccable/mocks/decision/model-pick.html"
+    },
+    {
+      "id": "challenger-boarding",
+      "kind": "challenger",
+      "catalogId": "vernacular-ephemera-boarding-pass-and-gate-board",
+      "label": "Gate board and boarding pass",
+      "verdict": "competitive",
+      "lineage": "KLIA departure boards and AirAsia boarding passes",
+      "thesis": "Every result is issued as a boarding pass: from your file, to the output, size, time, gate. Home is a departures board of the jobs people are doing.",
+      "palette": ["#101317", "#f4f5f2", "#ffb81c", "#e4002b"],
+      "materials": ["split-flap board", "perforated pass stub", "tabular figures"],
+      "viewport": "A departures board lists jobs (Compress PDF, under 500 KB, gate P5) with a search above; the result pass is the signature, segmented and scannable.",
+      "case": "Holds product clarity (the pass is an excellent result receipt); loses on audience identification to the rail map students use daily.",
+      "risk": "Travel framing can feel like a theme on tools that have nothing to do with travel.",
+      "html": ".impeccable/mocks/decision/challenger-boarding.html",
+      "hero": "https://impeccable.style/worlds/cards/vernacular-ephemera-boarding-pass-and-gate-board-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/vernacular-ephemera-boarding-pass-and-gate-board.webp"
+    },
+    {
+      "id": "challenger-bitmap",
+      "kind": "challenger",
+      "catalogId": "emigre-bitmap-specimen",
+      "label": "Bitmap specimen",
+      "verdict": "competitive",
+      "lineage": "Emigre bitmap type, carried by Nhako’s own pixel hammer and butterflies",
+      "thesis": "The pixel brand goes typographic: the job’s name set in proud pixel letters at poster scale, everything else in a fine grotesk.",
+      "palette": ["#fbfbf8", "#121212", "#d6007e"],
+      "materials": ["visible pixels", "dot-matrix rules", "newsprint white"],
+      "viewport": "A pixel headline ‘KECILKAN PDF / COMPRESS PDF’ over a clean search, pixel butterflies as the only ornament.",
+      "case": "Holds audience identification (it is already Nhako’s pixel brand); loses on product clarity and premium feel next to Smallpdf.",
+      "risk": "Reads retro or gamer rather than premium if the pixel type leaks into body text.",
+      "html": ".impeccable/mocks/decision/challenger-bitmap.html",
+      "hero": "https://impeccable.style/worlds/cards/emigre-bitmap-specimen-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/emigre-bitmap-specimen.webp"
+    },
+    {
+      "id": "challenger-variable-font", "kind": "challenger", "catalogId": "variable-font-specimen",
+      "label": "Variable type specimen", "verdict": "declined", "lineage": "foundry specimen pages",
+      "palette": ["#fafaf7", "#111111"], "materials": ["live axis sliders"],
+      "case": "Loses both axes: students do not identify with a foundry specimen, and it says nothing about files.",
+      "kept": "Hierarchy by scale contrast: the size number is the hero.",
+      "hero": "https://impeccable.style/worlds/cards/variable-font-specimen-hero.webp"
+    },
+    {
+      "id": "challenger-botanical", "kind": "challenger", "catalogId": "editorial-sequence-montage-botanical-folio-season",
+      "label": "Botanical folio", "verdict": "declined", "lineage": "seasonal botanical plates",
+      "palette": ["#efe6d2", "#2f5d3a", "#b5241b"], "materials": ["engraved plates"],
+      "case": "Loses both axes: a quiet folio cannot carry a deadline job.",
+      "kept": "Registration: before and after shown at the same scale.",
+      "hero": "https://impeccable.style/worlds/cards/editorial-sequence-montage-botanical-folio-season-hero.webp"
+    },
+    {
+      "id": "challenger-timetable", "kind": "challenger", "catalogId": "rw-timetable-slide-rack",
+      "label": "Timetable slide rack", "verdict": "declined", "lineage": "1971 pocket airline timetables",
+      "palette": ["#e0a72b", "#1d1d1b", "#e8422c"], "materials": ["tinted glass slides"],
+      "case": "Loses both axes: the raked one-size grammar fights a phone-first task screen.",
+      "kept": "State as a mark in a fixed cell, with tabular figures.",
+      "hero": "https://impeccable.style/worlds/cards/rw-timetable-slide-rack-hero.webp"
+    },
+    {
+      "id": "challenger-character-goods", "kind": "challenger", "catalogId": "pop-culture-shelf-character-goods-catalog",
+      "label": "Character goods catalog", "verdict": "declined", "lineage": "mascot merchandise catalogs",
+      "palette": ["#fde7ef", "#e7f3ff", "#111111"], "materials": ["pastel cells", "name plates"],
+      "case": "Loses both axes: cute cast-of-mascots framing undercuts trust with a file you are about to submit.",
+      "kept": "One ribbon colour per category, whole-cell reflow.",
+      "hero": "https://impeccable.style/worlds/cards/pop-culture-shelf-character-goods-catalog-hero.webp"
+    }
+  ],
+  "reroll": { "registers": ["safer", "bolder"] },
+  "canon": true,
+  "canonCard": {
+    "kind": "canon",
+    "label": "The category standard",
+    "thesis": "What iLovePDF, Smallpdf and PDF24 ship, executed impeccably: white page, big tool grid, one bold Select files button.",
+    "palette": ["#ffffff", "#1f2937", "#e5322d"],
+    "materials": ["clean grid", "flat tool icons", "large primary button"],
+    "viewport": "Headline, a grid of every tool as icon tiles, and a big red Select files button on each tool page.",
+    "risk": "Indistinguishable from the competitors it has to beat.",
+    "html": ".impeccable/mocks/decision/canon.html"
+  }
+}

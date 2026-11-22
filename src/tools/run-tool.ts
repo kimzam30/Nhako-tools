@@ -15,6 +15,7 @@ import { WORKER_TOOLS } from '../workers/worker-tools';
  *                                  already threads its inference
  */
 const WORKER_SAFE = new Set(Object.keys(WORKER_TOOLS));
+const FFMPEG_TOOLS = new Set(['media/compress-video', 'media/extract-audio']);
 
 export interface RunHandle {
   result: Promise<FileToolResult>;
@@ -89,10 +90,14 @@ export function runFileTool(
       cleanup = () => {
         w.removeEventListener('message', onMessage);
         w.removeEventListener('error', onError);
+        w.removeEventListener('messageerror', onError);
       };
 
       w.addEventListener('message', onMessage);
       w.addEventListener('error', onError);
+      // A result that cannot be deserialized fires messageerror, not message:
+      // without this the run would wait forever. Same recovery as a crash.
+      w.addEventListener('messageerror', onError);
       w.postMessage({ ticket, id, files, options });
     });
 
@@ -112,7 +117,7 @@ export function runFileTool(
   }
 }
 
-/** Inline work cannot be interrupted, but its result can be ignored. */
+/** Inline work is stopped where the engine allows it, and ignored otherwise. */
 function inlineHandle(
   id: string,
   files: File[],
@@ -124,7 +129,14 @@ function inlineHandle(
     runInline(id, files, options, (p, l) => { if (!cancelled) onProgress(p, l); })
       .then((r) => { if (!cancelled) resolve(r); }, (e) => { if (!cancelled) reject(e); });
   });
-  return { result, cancel: () => { cancelled = true; } };
+  return {
+    result,
+    cancel: () => {
+      cancelled = true;
+      // The ffmpeg tools can genuinely be stopped: terminate its worker.
+      if (FFMPEG_TOOLS.has(id)) void import('../lib/ffmpeg').then((m) => m.abortFFmpeg());
+    },
+  };
 }
 
 async function runInline(

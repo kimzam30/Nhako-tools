@@ -2,6 +2,7 @@ import { ToolError, type FileRun } from '../types';
 import { bytesToBlob } from '../../lib/format';
 import { convertWithRetry, libreOffice, Timeout } from '../../lib/libreoffice';
 import { sayer } from '../say';
+import { assertCanRunOffice } from '../../lib/memory';
 
 /** What LibreOffice is asked to read, by extension. */
 const FORMATS: Record<string, string> = {
@@ -33,6 +34,8 @@ export const run: FileRun = async (files, opts, ctx) => {
     stage === 'download' ? f * 0.6 : 0.6 + f * 0.2,
     stage === 'download' ? say('Downloading LibreOffice (once, about 77 MB)', 'Memuat turun LibreOffice (sekali, kira-kira 77 MB)') : say('Starting LibreOffice', 'Memulakan LibreOffice'),
   );
+  // Before the 77 MB download, not after it fails on a phone.
+  assertCanRunOffice(say);
   try {
     await libreOffice(progress);
   } catch {

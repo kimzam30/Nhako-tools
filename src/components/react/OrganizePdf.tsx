@@ -193,7 +193,7 @@ export default function OrganizePdf({ locale = 'en', accept }: { locale?: Locale
     items.length === baseline.length &&
     items.every((it, i) => it.id === baseline[i]?.id && it.turn === 0);
 
-  const icon = 'grid size-6 place-items-center rounded border border-border bg-bg text-xs text-muted transition-colors hover:border-border-strong hover:text-text disabled:opacity-30';
+  const icon = 'grid size-6 pointer-coarse:size-11 place-items-center rounded border border-border bg-bg text-xs text-muted transition-colors hover:border-border-strong hover:text-text disabled:opacity-30';
   const fileInput = (
     <input ref={inputRef} id="organize-file" type="file" accept={accept} multiple className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(e) => void add(e.target.files)} />
   );
@@ -243,11 +243,11 @@ export default function OrganizePdf({ locale = 'en', accept }: { locale?: Locale
           <button
             type="button" onClick={restore} title={t.restoreHint}
             disabled={untouched}
-            className="rounded border border-border px-3 py-1.5 text-sm text-muted transition-colors hover:border-border-strong hover:text-text disabled:opacity-40"
+            className="rounded border border-border px-3 py-1.5 text-sm text-muted transition-colors hover:border-border-strong hover:text-text disabled:opacity-40 pointer-coarse:min-h-11"
           >
             {t.restore}
           </button>
-          <button type="button" onClick={reset} className="rounded border border-border px-3 py-1.5 text-sm text-muted hover:text-text">{t.reset}</button>
+          <button type="button" onClick={reset} className="rounded border border-border px-3 py-1.5 text-sm text-muted hover:text-text pointer-coarse:min-h-11">{t.reset}</button>
           <button type="button" disabled={busy || items.length === 0} onClick={() => void save()} className="rounded bg-accent px-3 py-1.5 text-sm font-medium text-accent-on hover:bg-accent-hover disabled:opacity-50">{busy ? <BusyLabel label={t.saving} /> : t.save}</button>
         </div>
       </div>
