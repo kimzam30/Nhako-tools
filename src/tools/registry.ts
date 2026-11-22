@@ -458,6 +458,43 @@ export const TOOLS: readonly ToolMeta[] = [
     related: ['media/transcribe', 'media/compress-video'],
   },
   {
+    slug: 'trim-video', category: 'media', name: 'Trim video', kind: 'file', heavy: true,
+    seoTitle: 'Trim video online, cut or mute, free, no upload | Nhako Tools',
+    blurb: 'Cut a clip out of a video, or remove its sound.',
+    description: 'Trim a video to the exact second you want, or remove its sound, in your browser. Fast, full quality, no upload, no watermark, no length limit.',
+    keywords: ['trim video', 'cut video', 'clip', 'shorten video', 'mute video', 'remove audio', 'remove sound', 'video cutter', 'potong video', 'buang bunyi'],
+    accept: 'video/*',
+    options: [
+      { kind: 'text', key: 'start', label: 'Start', default: '', placeholder: '0:00', help: 'Seconds, or minutes:seconds like 1:30. Empty starts at the beginning.' },
+      { kind: 'text', key: 'end', label: 'End', default: '', placeholder: 'the end', help: 'Empty keeps everything to the end.' },
+      { kind: 'toggle', key: 'mute', label: 'Remove sound', default: false },
+    ],
+    about: 'MP4 and MOV videos are cut on your device\'s own video encoder: the parts that can be copied are copied untouched, and only the few frames around each cut are re-encoded, so the clip starts and ends exactly where you say and keeps its quality. Remove sound drops the audio track. Other formats, and browsers without a video encoder, are cut by ffmpeg running in your browser. Either way the video never leaves your device.',
+    limits: ['MP4 and MOV come back as MP4. Other formats keep their type, but are cut at the nearest keyframe, so the clip can start a few seconds early; the result says when that happened.', 'The media engine (about 31 MB) downloads from this site the first time any video tool runs.', 'Very large videos need memory to match. If your device runs out, trim on a computer instead.'],
+    related: ['media/video-to-gif', 'media/compress-video', 'media/extract-audio'],
+  },
+  {
+    slug: 'video-to-gif', category: 'media', name: 'Video to GIF', kind: 'file', heavy: true,
+    seoTitle: 'Video to GIF converter online, free, no upload | Nhako Tools',
+    blurb: 'Turn a few seconds of video into a looping GIF.',
+    description: 'Make a GIF from a video in your browser: pick the start, length, size and frame rate. Smooth colours, no watermark, nothing uploaded.',
+    keywords: ['video to gif', 'mp4 to gif', 'gif maker', 'make gif', 'animated gif', 'meme', 'screen recording to gif', 'tukar video ke gif'],
+    accept: 'video/*',
+    options: [
+      { kind: 'text', key: 'start', label: 'Start', default: '', placeholder: '0:00', help: 'Seconds, or minutes:seconds like 1:30.' },
+      { kind: 'number', key: 'length', label: 'Length', min: 1, max: 30, step: 1, default: 5, suffix: 's' },
+      { kind: 'select', key: 'width', label: 'Width', default: '480', choices: [
+        { value: '320', label: '320 px, smallest' }, { value: '480', label: '480 px, for chats' }, { value: '640', label: '640 px' }, { value: '800', label: '800 px, sharpest' },
+      ] },
+      { kind: 'select', key: 'fps', label: 'Smoothness', default: '12', choices: [
+        { value: '8', label: '8 fps, smallest' }, { value: '12', label: '12 fps' }, { value: '15', label: '15 fps' }, { value: '24', label: '24 fps, smoothest' },
+      ] },
+    ],
+    about: 'ffmpeg, running in your browser, builds one 256-colour palette for your clip and applies it with light dithering, so faces and skies come out smooth instead of banded. The GIF loops forever, like the ones people share in chats.',
+    limits: ['GIFs are large for what they show: 5 seconds at 480 px and 12 fps is often 2 to 5 MB. Lower the width or smoothness to shrink it.', 'Up to 30 seconds. GIF has no sound.', 'The media engine (about 31 MB) downloads from this site the first time any video tool runs.'],
+    related: ['media/trim-video', 'media/compress-video', 'image/compress'],
+  },
+  {
     slug: 'transcribe', category: 'media', name: 'Audio to text', kind: 'file', heavy: true,
     seoTitle: 'Audio to text online, English and Malay, free, no upload | Nhako Tools',
     blurb: 'Transcribe English or Malay speech, on your device.',

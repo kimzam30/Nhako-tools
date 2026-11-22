@@ -38,6 +38,8 @@ export const LOADERS: Record<string, () => Promise<ToolModule>> = {
 
   'media/compress-video': () => import('./media/compress-video'),
   'media/extract-audio': () => import('./media/extract-audio'),
+  'media/trim-video': () => import('./media/trim-video'),
+  'media/video-to-gif': () => import('./media/video-to-gif'),
   'media/transcribe': () => import('./media/transcribe'),
 
   'image/compress': () => import('./image/compress'),

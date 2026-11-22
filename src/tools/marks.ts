@@ -203,6 +203,14 @@ export const MARKS: Record<string, string> = {
   'media/extract-audio':
     '<path d="M2.6 4.6h11.8v11.8H2.6z"/><path d="M6.6 7.8L10.8 10.5 6.6 13.2z"/>' +
     '<path d="M14.6 21v-4.6"/><path d="M17.4 21v-8.4"/><path d="M20.2 21v-6"/>',
+  /* Frame base, operation: two cut marks bracketing the kept span. */
+  'media/trim-video':
+    '<path d="M7.5 6.6h9v10.8h-9z"/><path d="M11 9.6L14.7 12 11 14.4z"/>' +
+    '<path d="M4.2 3v18"/><path d="M19.8 3v18"/>',
+  /* Frame base, operation: a loop arrow, the GIF that plays forever. */
+  'media/video-to-gif':
+    '<path d="M3.4 4.6h13v9.6h-13z"/><path d="M8.4 7.2L11.8 9.4 8.4 11.6z"/>' +
+    '<path d="M20.6 10v7.4H7.4"/><path d="M9.6 15.2L7.4 17.4l2.2 2.2"/>',
   'media/transcribe':
     '<path d="M1.6 9.4v5.2"/><path d="M4.4 6.4v11.2"/><path d="M7.2 8.6v6.8"/>' +
     '<path d="M9.8 12h3.4"/><path d="M11.4 10.2L13.2 12l-1.8 1.8"/>' +
