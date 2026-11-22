@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <b>50 free tools for PDFs, images, media, calculators and code, that run on your device.</b><br>
+  <b>51 free tools for PDFs, images, media, calculators and code, that run on your device.</b><br>
   Nothing uploads. Nothing waits. No account, no daily limit, no watermark.
 </p>
 
@@ -85,7 +85,7 @@ your file never appears in it.
 
 | | |
 |---|---|
-| **Search everything** | `⌘K` or `Ctrl K` (or the search icon on a phone) finds any of the 50 tools and their size presets, in English or Malay ("gaji" finds the salary calculator) |
+| **Search everything** | `⌘K` or `Ctrl K` (or the search icon on a phone) finds any of the 51 tools and their presets, in English or Malay ("gaji" finds the salary calculator) |
 | **Favourites** | Star a tool and it waits on [/favourites](https://tools.nhako.com/favourites). Stored in this browser only; there is no account to sync it to |
 | **Two languages** | Every page and tool in English and Bahasa Melayu, at `/` and `/ms` |
 | **Malaysia page** | [/malaysia](https://tools.nhako.com/malaysia) gathers the jobs Malaysian forms ask for: SPA MyRésumé photo sizes, the salary calculator, passport photos, CGPA |
@@ -114,6 +114,7 @@ your file never appears in it.
 | [Crop](https://tools.nhako.com/pdf/crop) | Trim margins by changing the crop box; nothing re-rendered |
 | [Protect](https://tools.nhako.com/pdf/protect) | AES-256 password with optional print/copy/edit restrictions (qpdf) |
 | [Unlock](https://tools.nhako.com/pdf/unlock) | Remove a password you know, and any restrictions (qpdf) |
+| [Redact](https://tools.nhako.com/pdf/redact) | Black out names, MyKad IC numbers, phone numbers and emails for good: matched pages are redrawn with the boxes burned in, so the hidden text is gone from the file |
 | [PDF to Word](https://tools.nhako.com/pdf/to-word) | Rebuilds paragraphs, headings, bold and italic into a real .docx |
 | [Office to PDF](https://tools.nhako.com/pdf/office-to-pdf) | [Word](https://tools.nhako.com/pdf/office-to-pdf/word), [Excel](https://tools.nhako.com/pdf/office-to-pdf/excel) and [PowerPoint](https://tools.nhako.com/pdf/office-to-pdf/powerpoint) to PDF with LibreOffice compiled to WebAssembly |
 | [Scan to PDF](https://tools.nhako.com/pdf/scan) | Phone photos to a PDF: page found, straightened, shadows lifted |
@@ -139,7 +140,7 @@ your file never appears in it.
 | Tool | What it does |
 |---|---|
 | [Compress](https://tools.nhako.com/image/compress) | Re-encode at a chosen quality, or under an exact size ([100 KB](https://tools.nhako.com/image/compress/100kb), [SPA MyRésumé](https://tools.nhako.com/image/compress/spa-myresume), ...) |
-| [Convert](https://tools.nhako.com/image/convert) | Move between JPG, PNG, WebP and AVIF |
+| [Convert](https://tools.nhako.com/image/convert) | Move between JPG, PNG, WebP and AVIF, with one-click pages such as [WebP to JPG](https://tools.nhako.com/image/convert/webp-to-jpg), [PNG to JPG](https://tools.nhako.com/image/convert/png-to-jpg) and [AVIF to JPG](https://tools.nhako.com/image/convert/avif-to-jpg) |
 | [Resize](https://tools.nhako.com/image/resize) | Scale to exact dimensions, aspect ratio preserved |
 | [Crop](https://tools.nhako.com/image/crop) | Drag a frame or type exact pixels; ratios from 1:1 to 16:9 |
 | [Rotate](https://tools.nhako.com/image/rotate) | Turn 90° or 180°, or flip, in batches |
@@ -155,7 +156,7 @@ your file never appears in it.
 | Tool | What it does |
 |---|---|
 | [Salary (Malaysia)](https://tools.nhako.com/calc/take-home-pay) | Take-home pay after EPF, SOCSO (with LINDUNG 24 Jam), EIS and PCB, from the official 2026 tables |
-| [CGPA calculator](https://tools.nhako.com/calc/cgpa) | Semester GPA, CGPA and the GPA needed for a target, on Universiti Malaya's published 4.00 scale, editable per university |
+| [CGPA calculator](https://tools.nhako.com/calc/cgpa) | Semester GPA, CGPA and the GPA needed for a target, on Universiti Malaya's published 4.00 scale, editable per university, with a [UKM preset](https://tools.nhako.com/calc/cgpa/ukm) on UKM's official grade table |
 
 ### Developer `/dev/*`
 
@@ -271,6 +272,10 @@ Things this project does **not** do, stated here rather than discovered later:
   margins a borderless print will not trim.
 - **Crop PDF hides content; it does not delete it.** The trimmed area is still in the
   file. Do not use it to remove sensitive information.
+- **Redact PDF only finds text the PDF contains.** A scanned page has none (run OCR PDF
+  first), and words in images, form fields, comments and attachments are not searched.
+  Redacted pages become images, so their remaining text is no longer selectable. Check
+  every page before sharing.
 - **Sign PDF makes a visual signature**, like signing a printout, not a certificate-based
   digital signature.
 - **Protect PDF's print and copy restrictions are requests** that mainstream readers
@@ -442,6 +447,9 @@ npm run dev
 > `scripts/seo-lastmod.json`, which gives each sitemap URL its `<lastmod>`. When a
 > build changes that file, commit it with your change. Vercel builds without git
 > history, so the committed file is where the dates come from.
+>
+> After a deploy is live, `node scripts/seo-indexnow.mjs` tells Bing and the other
+> IndexNow engines which pages changed today (`--since <date>`, `--all`, `--dry-run`).
 
 > **Cross-origin isolation.** `ffmpeg.wasm` needs `SharedArrayBuffer`, which needs the
 > COOP/COEP headers set in `astro.config.mjs` (dev), `scripts/preview.mjs` (preview)
