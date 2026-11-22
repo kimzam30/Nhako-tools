@@ -54,9 +54,10 @@ Google allows about 10 requests a day. Next batch to request, a few a day:
 - [x] tools.nhako.com added in Bing Webmaster Tools (unverified).
       Import from GSC found nothing new: Bing already holds nhako.com and
       doesn't split subdomains out of a Domain property.
-- [ ] **Deploy** (the `msvalidate.01` meta tag is now in `BaseLayout.astro`),
-      then in Bing Webmaster Tools pick tools.nhako.com → HTML Meta Tag → Verify.
-- [ ] After verifying: Sitemaps → submit `https://tools.nhako.com/sitemap-index.xml`.
+- [x] Deployed the `msvalidate.01` meta tag (commit 3ea8a1a) and verified
+      tools.nhako.com in Bing on 2026-11-22.
+- [x] Sitemap `https://tools.nhako.com/sitemap-index.xml` submitted to Bing
+      on 2026-11-22 (status: Processing).
 - [ ] Optional: turn on IndexNow (Bing's top recommendation) so new or changed
       pages are pushed to Bing and Yandex the same day.
 

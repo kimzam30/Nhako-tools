@@ -165,7 +165,7 @@ your file never appears in it.
 | [JWT](https://tools.nhako.com/dev/jwt) | Decode header and payload; timestamps rendered as dates |
 | [Base64](https://tools.nhako.com/dev/base64) | Encode and decode, full UTF-8, URL-safe alphabet |
 | [Word count](https://tools.nhako.com/dev/word-count) | Live word, character, sentence and reading-time counts |
-| [Hash](https://tools.nhako.com/dev/hash) | SHA-1/256/384/512 via Web Crypto |
+| [Hash](https://tools.nhako.com/dev/hash) | SHA-1/256/384/512 via Web Crypto; MD5 (for checking published checksums) from a small RFC 1321 implementation tested against Node's |
 | [UUID](https://tools.nhako.com/dev/uuid) | Bulk v4 UUIDs from the platform CSPRNG |
 | [QR code](https://tools.nhako.com/dev/qr) | Encodes your text directly, with no tracking redirect |
 | [Text diff](https://tools.nhako.com/dev/diff) | Compare by line, word or character |
@@ -254,7 +254,6 @@ Things this project does **not** do, stated here rather than discovered later:
   this LibreOffice build stalls inside its own document loader (measured: 2 in 24). A
   watchdog restarts it and tries again, so the file still converts, but that one takes
   about 50 seconds instead of 4.
-- **`Hash` does not offer MD5.** Web Crypto deliberately omits it.
 - **Video compression runs at roughly real-time or slower**, and single-pass encoding
   lands near the target size rather than exactly on it.
 - **Reaching a small PDF target usually rasterises the pages**, so text stops being
