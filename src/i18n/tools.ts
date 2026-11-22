@@ -115,7 +115,7 @@ export const MS: Record<string, ToolText> = {
       target: {
         label: 'Saiz sasaran',
         help: 'Untuk portal muat naik yang ada had saiz. Mencuba tanpa kehilangan kualiti dahulu, supaya teks kekal boleh dipilih apabila itu sudah cukup.',
-        choices: { '0': 'Tiada, pilih mod', '100': 'Bawah 100 KB', '200': 'Bawah 200 KB', '500': 'Bawah 500 KB', '1000': 'Bawah 1 MB', '2000': 'Bawah 2 MB', '5000': 'Bawah 5 MB' },
+        choices: { '0': 'Tiada, pilih mod', '100': 'Bawah 100 KB', '200': 'Bawah 200 KB', '300': 'Bawah 300 KB', '500': 'Bawah 500 KB', '1000': 'Bawah 1 MB', '2000': 'Bawah 2 MB', '5000': 'Bawah 5 MB' },
       },
       mode: {
         label: 'Mod',
@@ -127,6 +127,7 @@ export const MS: Record<string, ToolText> = {
     variants: {
       '100kb': { name: 'Mampat PDF ke 100 KB', blurb: 'Kecilkan PDF di bawah 100 KB.', description: `Mampatkan PDF di bawah 100 KB dalam pelayar anda, untuk portal yang mempunyai had muat naik ketat. ${noUpload}` },
       '200kb': { name: 'Mampat PDF ke 200 KB', blurb: 'Kecilkan PDF di bawah 200 KB.', description: `Mampatkan PDF di bawah 200 KB dalam pelayar anda, untuk borang dan portal yang ada had muat naik. ${noUpload}` },
+      '300kb': { name: 'Mampat PDF ke 300 KB', blurb: 'Kecilkan PDF di bawah 300 KB.', description: `Mampatkan PDF di bawah 300 KB dalam pelayar anda, untuk portal kerja dan biasiswa yang hadnya 300 KB. ${noUpload}` },
       '500kb': { name: 'Mampat PDF ke 500 KB', blurb: 'Kecilkan PDF di bawah 500 KB.', description: `Mampatkan PDF di bawah 500 KB dalam pelayar anda, had yang digunakan banyak portal permohonan. ${noUpload}` },
       '1mb': { name: 'Mampat PDF ke 1 MB', blurb: 'Kecilkan PDF di bawah 1 MB.', description: `Mampatkan PDF di bawah 1 MB dalam pelayar anda, biasanya dengan teks masih boleh dipilih. ${noUpload}` },
       '2mb': { name: 'Mampat PDF ke 2 MB', blurb: 'Kecilkan PDF di bawah 2 MB.', description: `Mampatkan PDF di bawah 2 MB dalam pelayar anda untuk e-mel dan portal muat naik. ${noUpload}` },
@@ -142,6 +143,14 @@ export const MS: Record<string, ToolText> = {
     options: {
       format: { label: 'Format', choices: { jpg: 'JPG', png: 'PNG' } },
       scale: { label: 'Resolusi', choices: { '1': '72 dpi, skrin', '2': '144 dpi, lalai', '3': '216 dpi, cetakan' } },
+    },
+    variants: {
+      'spa-myresume': {
+        name: 'PDF ke JPG untuk SPA MyRésumé',
+        blurb: 'Sijil sebagai JPG, kerana SPA tidak terima PDF.',
+        description: 'Tukar sijil dan transkrip PDF kepada halaman JPG untuk SPA MyRésumé, yang hanya menerima JPG atau PNG bawah 1 MB. Dalam pelayar, tiada muat naik.',
+        about: 'Panduan MyRésumé SPA (PANDUAN_GAMBAR.pdf, disemak 18 September 2026) hanya menerima dokumen dalam format .jpg atau .png, setiap satu bawah 1 MB, jadi sijil PDF perlu ditukar kepada imej dahulu. Pratetap ini melukis setiap halaman sebagai JPG pada 144 dpi, cukup tajam untuk dibaca dan biasanya jauh bawah 1 MB untuk halaman A4. Jika satu halaman lebih besar, gunakan pratetap imej SPA MyRésumé untuk mengecilkannya bawah 1 MB.',
+      },
     },
   },
   'pdf/to-powerpoint': {
@@ -391,7 +400,7 @@ export const MS: Record<string, ToolText> = {
       target: {
         label: 'Saiz sasaran',
         help: 'Untuk borang dan portal yang ada had saiz. Menurunkan kualiti dahulu dan hanya mengecilkan dimensi jika perlu.',
-        choices: { '0': 'Tiada, pilih kualiti', '20': 'Bawah 20 KB', '50': 'Bawah 50 KB', '100': 'Bawah 100 KB', '200': 'Bawah 200 KB', '500': 'Bawah 500 KB', '1000': 'Bawah 1 MB', '2000': 'Bawah 2 MB' },
+        choices: { '0': 'Tiada, pilih kualiti', '20': 'Bawah 20 KB', '50': 'Bawah 50 KB', '100': 'Bawah 100 KB', '200': 'Bawah 200 KB', '300': 'Bawah 300 KB', '500': 'Bawah 500 KB', '1000': 'Bawah 1 MB', '2000': 'Bawah 2 MB' },
       },
       quality: { label: 'Kualiti', help: 'Untuk PNG, menetapkan palet: 256 warna pada 70% ke atas, kurang di bawahnya.' },
       format: {
@@ -405,6 +414,7 @@ export const MS: Record<string, ToolText> = {
       '50kb': { name: 'Mampat gambar ke 50 KB', blurb: 'Kecilkan gambar di bawah 50 KB.', description: 'Mampatkan JPG atau gambar di bawah 50 KB dalam pelayar anda, untuk borang dalam talian yang hadnya ketat. Tiada muat naik, tiada akaun.' },
       '100kb': { name: 'Mampat gambar ke 100 KB', blurb: 'Kecilkan gambar di bawah 100 KB.', description: 'Mampatkan JPG atau gambar di bawah 100 KB dalam pelayar anda, had yang digunakan banyak borang permohonan. Tiada muat naik, tiada akaun.' },
       '200kb': { name: 'Mampat gambar ke 200 KB', blurb: 'Kecilkan gambar di bawah 200 KB.', description: 'Mampatkan JPG atau gambar di bawah 200 KB dalam pelayar anda untuk borang dan portal. Tiada muat naik, tiada akaun, tiada tera air.' },
+      '300kb': { name: 'Mampat gambar ke 300 KB', blurb: 'Kecilkan gambar di bawah 300 KB.', description: 'Mampatkan JPG atau gambar di bawah 300 KB dalam pelayar anda, untuk portal dan permohonan yang hadnya 300 KB. Tiada muat naik, tiada akaun.' },
       '500kb': { name: 'Mampat gambar ke 500 KB', blurb: 'Kecilkan gambar di bawah 500 KB.', description: 'Mampatkan JPG atau gambar di bawah 500 KB dalam pelayar anda dan kekal tajam. Tiada muat naik, tiada akaun, tiada tera air.' },
       '1mb': { name: 'Mampat gambar ke 1 MB', blurb: 'Kecilkan gambar di bawah 1 MB.', description: 'Mampatkan JPG atau gambar di bawah 1 MB dalam pelayar anda tanpa kehilangan yang ketara. Tiada muat naik, tiada akaun, tiada tera air.' },
       'spa-myresume': {
@@ -489,11 +499,11 @@ export const MS: Record<string, ToolText> = {
   },
   'image/remove-background': {
     name: 'Buang latar belakang',
-    seoTitle: 'Buang latar belakang gambar dalam talian, percuma, tanpa muat naik | Nhako Tools',
+    seoTitle: 'Buang latar belakang gambar percuma, resolusi penuh, tanpa muat naik | Nhako Tools',
     blurb: 'Potong subjek, pada peranti anda.',
-    description: 'Buang latar belakang gambar dalam pelayar anda: dapatkan PNG lutsinar, atau subjek atas latar putih. Model AI berjalan pada peranti anda, jadi tiada apa-apa dimuat naik.',
-    keywords: ['buang latar belakang', 'padam latar belakang', 'latar lutsinar', 'gambar produk', 'remove bg'],
-    about: 'Model segmentasi mencari subjek utama, dan selebihnya dijadikan lutsinar atau diisi putih atau hitam. Terdapat dua model berlesen terbuka: ISNet (Apache-2.0), dilatih pada objek harian, untuk produk dan barang; dan ormbg (Apache-2.0), dilatih pada manusia, yang juga baik untuk haiwan. Kedua-duanya berjalan dalam pelayar anda melalui WebAssembly, jadi gambar tidak pernah meninggalkan peranti anda.',
+    description: 'Buang latar belakang gambar secara percuma, pada resolusi penuh, tanpa akaun atau kredit. AI berjalan pada peranti anda, jadi tiada apa-apa dimuat naik. Alternatif kepada remove.bg.',
+    keywords: ['buang latar belakang', 'buang background gambar', 'padam latar belakang', 'latar lutsinar', 'latar putih', 'gambar produk', 'remove bg', 'alternatif remove.bg', 'percuma'],
+    about: 'Model segmentasi mencari subjek utama, dan selebihnya dijadikan lutsinar atau diisi putih atau hitam. Terdapat dua model berlesen terbuka: ISNet (Apache-2.0), dilatih pada objek harian, untuk produk dan barang; dan ormbg (Apache-2.0), dilatih pada manusia, yang juga baik untuk haiwan. Kedua-duanya berjalan dalam pelayar anda melalui WebAssembly, jadi gambar tidak pernah meninggalkan peranti anda. Hasilnya sama saiz dengan gambar anda, bukan pratonton resolusi rendah, dan tiada kredit, had harian atau pendaftaran. Kredit model: ISNet daripada projek DIS oleh Xuebin Qin et al., ditukar kepada ONNX dengan output tambahannya dibuang; ormbg oleh Maximilian Schirrmacher. Kedua-duanya digunakan di bawah Lesen Apache 2.0.',
     limits: ['Penggunaan pertama setiap model memuat turunnya sekali, kira-kira 45 MB, dari Hugging Face: muat turun model, bukan muat naik gambar anda.', 'Tiada model yang sempurna. Model objek mungkin meninggalkan bintik pada rumput atau batu kerikil; model manusia mungkin membuang bahagian objek besar. Semak hasilnya, dan cuba model yang satu lagi jika perlu.', 'Ia mengekalkan subjek paling menonjol. Pemandangan sibuk, seperti rak penuh, mungkin terpotong sebahagiannya.', 'Setiap gambar mengambil kira-kira 10 saat pada komputer riba, lebih lama pada telefon.'],
     options: {
       subject: { label: 'Subjek', choices: { general: 'Objek dan produk', person: 'Manusia dan haiwan' }, help: 'Dua model berbeza, setiap satu dimuat turun sekali apabila pertama kali digunakan. Jika satu meninggalkan cebisan, cuba yang satu lagi.' },

@@ -149,6 +149,11 @@ export const TOOLS: readonly ToolMeta[] = [
     about: 'Each page is rendered at the chosen resolution and exported as an image, bundled into a ZIP.',
     limits: ['High resolutions on long documents are memory-hungry.'],
     related: ['pdf/to-text', 'image/convert', 'pdf/compress'],
+    variants: [
+      { slug: 'spa-myresume', short: 'SPA MyResume', name: 'PDF to JPG for SPA MyRésumé', blurb: 'Certificates as JPG, since SPA takes no PDF.', defaults: { format: 'jpg', scale: '2' },
+        description: 'Turn PDF certificates and transcripts into JPG pages for SPA MyRésumé, which accepts only JPG or PNG under 1 MB. In your browser, no upload.',
+        about: 'SPA\'s MyRésumé guide (PANDUAN_GAMBAR.pdf, checked 18 September 2026) accepts documents only as .jpg or .png, each under 1 MB, so a PDF certificate has to become an image first. This preset renders each page as a JPG at 144 dpi, which is sharp enough to read and is usually well under 1 MB for an A4 page. If a page comes out larger, run it through the SPA MyRésumé image preset to bring it under 1 MB.' },
+    ],
   },
   {
     slug: 'office-to-pdf', category: 'pdf', name: 'Office to PDF', kind: 'file', group: 'convert', heavy: true, multiple: true,
@@ -292,6 +297,7 @@ export const TOOLS: readonly ToolMeta[] = [
       { kind: 'select', key: 'target', label: 'Target size', default: '0', choices: [
         { value: '0', label: 'None, choose a mode' },
         { value: '100', label: 'Under 100 KB' }, { value: '200', label: 'Under 200 KB' },
+        { value: '300', label: 'Under 300 KB' },
         { value: '500', label: 'Under 500 KB' }, { value: '1000', label: 'Under 1 MB' },
         { value: '2000', label: 'Under 2 MB' }, { value: '5000', label: 'Under 5 MB' },
       ], help: 'For upload portals with a size limit. Tries lossless first, so text stays selectable whenever that is enough.' },
@@ -310,6 +316,8 @@ export const TOOLS: readonly ToolMeta[] = [
         description: 'Compress a PDF to under 100 KB in your browser, for portals with a strict upload limit. No upload, no account, no watermark.' },
       { slug: '200kb', short: '200 KB', name: 'Compress PDF to 200 KB', blurb: 'Get a PDF under 200 KB.', defaults: { target: '200' },
         description: 'Compress a PDF to under 200 KB in your browser, for forms and portals with an upload limit. No upload, no account, no watermark.' },
+      { slug: '300kb', short: '300 KB', name: 'Compress PDF to 300 KB', blurb: 'Get a PDF under 300 KB.', defaults: { target: '300' },
+        description: 'Compress a PDF to under 300 KB in your browser, for job and scholarship portals with a 300 KB limit. No upload, no account, no watermark.' },
       { slug: '500kb', short: '500 KB', name: 'Compress PDF to 500 KB', blurb: 'Get a PDF under 500 KB.', defaults: { target: '500' },
         description: 'Compress a PDF to under 500 KB in your browser, the limit many application portals use. No upload, no account, no watermark.' },
       { slug: '1mb', short: '1 MB', name: 'Compress PDF to 1 MB', blurb: 'Get a PDF under 1 MB.', defaults: { target: '1000' },
@@ -476,6 +484,7 @@ export const TOOLS: readonly ToolMeta[] = [
         { value: '0', label: 'None, choose a quality' },
         { value: '20', label: 'Under 20 KB' }, { value: '50', label: 'Under 50 KB' },
         { value: '100', label: 'Under 100 KB' }, { value: '200', label: 'Under 200 KB' },
+        { value: '300', label: 'Under 300 KB' },
         { value: '500', label: 'Under 500 KB' }, { value: '1000', label: 'Under 1 MB' },
         { value: '2000', label: 'Under 2 MB' },
       ], help: 'For forms and portals with a size limit. Lowers quality first and only shrinks the dimensions if it has to.' },
@@ -496,6 +505,8 @@ export const TOOLS: readonly ToolMeta[] = [
         description: 'Compress a JPG or photo to under 100 KB in your browser, the limit many application forms use. No upload, no account.' },
       { slug: '200kb', short: '200 KB', name: 'Compress image to 200 KB', blurb: 'Get a photo under 200 KB.', defaults: { target: '200', format: 'jpeg' },
         description: 'Compress a JPG or photo to under 200 KB in your browser for forms and portals. No upload, no account, no watermark.' },
+      { slug: '300kb', short: '300 KB', name: 'Compress image to 300 KB', blurb: 'Get a photo under 300 KB.', defaults: { target: '300', format: 'jpeg' },
+        description: 'Compress a JPG or photo to under 300 KB in your browser, for portals and applications with a 300 KB limit. No upload, no account.' },
       { slug: '500kb', short: '500 KB', name: 'Compress image to 500 KB', blurb: 'Get a photo under 500 KB.', defaults: { target: '500', format: 'jpeg' },
         description: 'Compress a JPG or photo to under 500 KB in your browser, keeping it sharp. No upload, no account, no watermark.' },
       { slug: '1mb', short: '1 MB', name: 'Compress image to 1 MB', blurb: 'Get a photo under 1 MB.', defaults: { target: '1000', format: 'jpeg' },
@@ -633,10 +644,10 @@ export const TOOLS: readonly ToolMeta[] = [
   },
   {
     slug: 'remove-background', category: 'image', name: 'Remove background', kind: 'file', group: 'edit', heavy: true, multiple: true,
-    seoTitle: 'Remove background from image online, free, no upload | Nhako Tools',
+    seoTitle: 'Remove background free, full resolution, no upload | Nhako Tools',
     blurb: 'Cut out the subject, on your device.',
-    description: 'Remove the background from a photo in your browser: get a transparent PNG, or the subject on white. The AI model runs on your device, so nothing is uploaded.',
-    keywords: ['remove background', 'background remover', 'remove bg', 'transparent background', 'cut out', 'erase background', 'product photo', 'png', 'buang latar belakang'],
+    description: 'Remove the background from a photo for free, at full resolution, with no account and no credits. The AI runs on your device, so nothing is uploaded. A remove.bg alternative.',
+    keywords: ['remove background', 'background remover', 'remove bg', 'remove.bg alternative', 'free background remover', 'full resolution', 'no sign up', 'hd', 'white background', 'transparent background', 'cut out', 'erase background', 'product photo', 'png', 'buang latar belakang'],
     accept: 'image/jpeg,image/png,image/webp',
     options: [
       { kind: 'select', key: 'subject', label: 'Subject', default: 'general', choices: [
@@ -646,7 +657,7 @@ export const TOOLS: readonly ToolMeta[] = [
         { value: 'transparent', label: 'Transparent (PNG)' }, { value: 'white', label: 'White (JPG)' }, { value: 'black', label: 'Black (JPG)' },
       ] },
     ],
-    about: 'A segmentation model finds the main subject, and everything else is made transparent or filled with white or black. There are two openly licensed models: ISNet (Apache-2.0), trained on everyday objects, for products and things; and ormbg (Apache-2.0), trained on people, which also does well on animals. Both run in your browser through WebAssembly, so the photo never leaves your device.',
+    about: 'A segmentation model finds the main subject, and everything else is made transparent or filled with white or black. There are two openly licensed models: ISNet (Apache-2.0), trained on everyday objects, for products and things; and ormbg (Apache-2.0), trained on people, which also does well on animals. Both run in your browser through WebAssembly, so the photo never leaves your device. The result is the same size as your photo, not a low-resolution preview, and there are no credits, daily limits or sign-up. Model credits: ISNet from the DIS project by Xuebin Qin et al., converted to ONNX with its auxiliary outputs removed; ormbg by Maximilian Schirrmacher. Both are used under the Apache License 2.0.',
     limits: ['The first run of each model downloads it once, about 45 MB, from Hugging Face: a download of the model, never an upload of your photo.', 'Neither model is perfect. The object model can leave specks on grass or gravel; the people model can drop parts of large objects. Check the result, and try the other model if needed.', 'It keeps the most prominent subject. Busy scenes, like a full shelf, can come out partly cut.', 'Each photo takes about 10 seconds on a laptop, longer on phones.'],
     related: ['image/passport-photo', 'image/crop', 'image/compress'],
   },
