@@ -3,7 +3,9 @@
 Drafted 2026-11-22 for the owner to post. Nothing here has been posted. Each
 draft says where it goes, what to paste, and what to check first. Facts are
 taken from the registry on this date: 50 tools (24 PDF, 11 image, 4 media,
-2 calculators, 9 developer), English and Malay, MIT licence.
+2 calculators, 9 developer), English and Malay, MIT licence. Redact PDF
+made it 51 later the same day, so the copy below says "50+" and won't
+go stale as tools are added.
 
 Ground rules for every post: say you built it, give one link, answer
 comments, and don't post the same text in two places on the same day.
@@ -20,7 +22,7 @@ The topics list `react`, but the site uses Preact.
 
 **Description** (fits GitHub's 350-character limit):
 
-> 50 free PDF, image, video and calculator tools that run in your browser.
+> 50+ free PDF, image, video and calculator tools that run in your browser.
 > Files never leave your device: WebAssembly (qpdf, ffmpeg, LibreOffice,
 > Whisper) does the work locally. No account, no upload, no watermark.
 > English and Bahasa Melayu.
@@ -49,7 +51,7 @@ PDF24 Tools, TinyPNG, remove.bg and Sejda.
   > Free PDF, image and video tools that run entirely in your browser.
   > Your files are never uploaded.
 - **Long description:**
-  > Nhako Tools is a set of 50 free tools for PDFs, images, video and
+  > Nhako Tools is a set of 50+ free tools for PDFs, images, video and
   > everyday calculations. Every tool runs on your own device using
   > WebAssembly, so your documents are never uploaded to a server, there's
   > no file-size limit set by a server, and the tools keep working offline
@@ -67,7 +69,7 @@ Launch Tuesday to Thursday at 00:01 PT (16:01 MYT). Media:
 `launch/nhako-tools-launch.mp4`, `launch/posters/*`, `docs/images/*`.
 
 - **Name:** Nhako Tools
-- **Tagline (60 chars max):** `50 PDF and image tools that never upload your files` (51)
+- **Tagline (60 chars max):** `50+ PDF and image tools that never upload your files` (52)
 - **Topics:** Productivity, Privacy, Open Source, Developer Tools
 - **Description (260 max):**
   > Merge, compress, sign and convert PDFs, shrink images, remove
@@ -97,7 +99,7 @@ Launch Tuesday to Thursday at 00:01 PT (16:01 MYT). Media:
 Post Tuesday to Thursday, about 08:00 US Eastern (20:00 MYT). Link to the
 site, not GitHub. Stay around for the first two hours to answer.
 
-- **Title:** `Show HN: Nhako Tools – 50 PDF/image/video tools that run fully in the browser`
+- **Title:** `Show HN: Nhako Tools – 50+ PDF/image/video tools that run fully in the browser`
 - **Text:**
   > I built a set of file tools where the file never leaves your machine:
   > merge/split/compress/OCR PDFs, PDF to Word, Office to PDF, image
@@ -127,7 +129,7 @@ site, not GitHub. Stay around for the first two hours to answer.
 Section: Software → Software Discussion (or Kopitiam → Show your work
 if that subforum exists when you post). Read the section rules first.
 
-**Title (BM):** `[Percuma] 50 alat PDF & gambar yang berjalan dalam browser, fail tak dimuat naik`
+**Title (BM):** `[Percuma] 50+ alat PDF & gambar yang berjalan dalam browser, fail tak dimuat naik`
 
 > Salam semua. Saya buat laman alat percuma untuk PDF, gambar dan video:
 > https://tools.nhako.com/ms
