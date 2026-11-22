@@ -436,6 +436,44 @@ export const MS: Record<string, ToolText> = {
       format: { label: 'Tukar kepada', choices: { webp: 'WebP', jpeg: 'JPG', png: 'PNG', avif: 'AVIF' } },
       quality: { label: 'Kualiti', help: 'Diabaikan untuk PNG, yang tidak kehilangan kualiti.' },
     },
+    variants: {
+      'webp-to-jpg': {
+        name: 'Tukar WebP ke JPG',
+        blurb: 'Tukar imej WebP kepada JPG.',
+        description: 'Tukar imej WebP kepada JPG dalam pelayar anda, untuk borang, portal dan aplikasi yang menolak WebP. Penukaran berkelompok, tiada muat naik.',
+        about: 'Gambar yang disimpan dari laman web selalunya dalam format WebP, yang ditolak oleh banyak borang muat naik dan aplikasi lama. Pratetap ini mengekodnya semula sebagai JPG pada kualiti 85%, jadi foto kelihatan sama pada saiz yang hampir sama. Kawasan lutsinar menjadi putih kerana JPG tiada ketelusan.',
+      },
+      'png-to-jpg': {
+        name: 'Tukar PNG ke JPG',
+        blurb: 'Jadikan tangkapan skrin dan foto PNG lebih kecil sebagai JPG.',
+        description: 'Tukar PNG kepada JPG dalam pelayar anda: foto dan tangkapan skrin menjadi jauh lebih kecil, dan kawasan lutsinar menjadi putih. Berkelompok, tiada muat naik.',
+        about: 'Foto atau tangkapan skrin dalam PNG selalunya beberapa kali lebih besar daripada gambar yang sama dalam JPG. Pratetap ini mengekodnya semula sebagai JPG pada kualiti 85%. Kekalkan PNG untuk logo, rajah dan apa-apa yang ada teks tajam atau ketelusan, kerana JPG mengaburkannya atau mengisinya dengan putih.',
+      },
+      'jpg-to-png': {
+        name: 'Tukar JPG ke PNG',
+        blurb: 'Simpan JPG sebagai PNG tanpa kehilangan.',
+        description: 'Tukar JPG kepada PNG dalam pelayar anda, untuk aplikasi dan penyunting yang memerlukan PNG. Output tanpa kehilangan, berkelompok, tiada muat naik.',
+        about: 'PNG menyimpan setiap piksel dengan tepat, jadi tiada apa yang hilang selepas ini, sesuai untuk gambar yang akan terus disunting. Ia tidak boleh memulihkan butiran yang sudah hilang dalam JPG, dan PNG biasanya lebih besar daripada JPG asalnya.',
+      },
+      'jpg-to-webp': {
+        name: 'Tukar JPG ke WebP',
+        blurb: 'Kecilkan foto JPG untuk web.',
+        description: 'Tukar JPG kepada WebP dalam pelayar anda: biasanya 25-35% lebih kecil pada kualiti yang sama, untuk laman web dan blog. Berkelompok, tiada muat naik.',
+        about: 'WebP disokong oleh semua pelayar semasa dan biasanya suku hingga satu pertiga lebih kecil daripada JPG pada kualiti yang sama, jadi halaman dimuat lebih pantas. Pastikan tempat anda memuat naik menerima WebP; banyak portal kerajaan dan kerja masih hanya menerima JPG atau PNG.',
+      },
+      'png-to-webp': {
+        name: 'Tukar PNG ke WebP',
+        blurb: 'Kecilkan PNG dan kekalkan ketelusan.',
+        description: 'Tukar PNG kepada WebP dalam pelayar anda dan kekalkan ketelusan, biasanya pada sebahagian kecil saiznya. Untuk laman web dan aplikasi. Tiada muat naik.',
+        about: 'WebP mengekalkan ketelusan seperti PNG, tetapi memampatkan foto dan gradien jauh lebih baik, jadi PNG yang besar selalunya menjadi sebahagian kecil saiznya. Logo dan grafik rata kurang mengecil, dan pada kualiti tinggi ia kekal tajam.',
+      },
+      'avif-to-jpg': {
+        name: 'Tukar AVIF ke JPG',
+        blurb: 'Buka imej AVIF di mana-mana sebagai JPG.',
+        description: 'Tukar imej AVIF kepada JPG dalam pelayar anda, untuk aplikasi, borang dan peranti lama yang tidak dapat membuka AVIF. Berkelompok, tiada muat naik.',
+        about: 'AVIF ialah format baharu yang semakin digunakan oleh telefon dan laman web, tetapi banyak aplikasi, pencetak dan borang muat naik belum dapat membukanya. Pratetap ini menyahkod AVIF dalam pelayar anda dan menyimpannya sebagai JPG pada kualiti 85%. Pelayar anda mesti boleh membuka AVIF; Chrome, Edge, Firefox dan Safari terkini boleh.',
+      },
+    },
   },
   'image/resize': {
     name: 'Ubah saiz imej',
