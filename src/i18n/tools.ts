@@ -459,13 +459,13 @@ export const MS: Record<string, ToolText> = {
         name: 'Tukar JPG ke WebP',
         blurb: 'Kecilkan foto JPG untuk web.',
         description: 'Tukar JPG kepada WebP dalam pelayar anda: biasanya 25-35% lebih kecil pada kualiti yang sama, untuk laman web dan blog. Berkelompok, tiada muat naik.',
-        about: 'WebP disokong oleh semua pelayar semasa dan biasanya suku hingga satu pertiga lebih kecil daripada JPG pada kualiti yang sama, jadi halaman dimuat lebih pantas. Pastikan tempat anda memuat naik menerima WebP; banyak portal kerajaan dan kerja masih hanya menerima JPG atau PNG.',
+        about: 'WebP disokong oleh semua pelayar semasa. Pratetap ini menyimpan pada kualiti 75%, di mana foto kamera biasanya menjadi suku hingga satu pertiga lebih kecil daripada JPG tanpa perbezaan yang ketara, jadi halaman dimuat lebih pantas. Naikkan kualiti dan penjimatan berkurang; pada 85%, JPG kamera yang besar boleh menjadi lebih besar. Pastikan tempat anda memuat naik menerima WebP; banyak portal kerajaan dan kerja masih hanya menerima JPG atau PNG.',
       },
       'png-to-webp': {
         name: 'Tukar PNG ke WebP',
         blurb: 'Kecilkan PNG dan kekalkan ketelusan.',
-        description: 'Tukar PNG kepada WebP dalam pelayar anda dan kekalkan ketelusan, biasanya pada sebahagian kecil saiznya. Untuk laman web dan aplikasi. Tiada muat naik.',
-        about: 'WebP mengekalkan ketelusan seperti PNG, tetapi memampatkan foto dan gradien jauh lebih baik, jadi PNG yang besar selalunya menjadi sebahagian kecil saiznya. Logo dan grafik rata kurang mengecil, dan pada kualiti tinggi ia kekal tajam.',
+        description: 'Tukar PNG kepada WebP dalam pelayar anda dan kekalkan ketelusan, selalunya jauh lebih kecil daripada PNG. Untuk laman web dan aplikasi. Tiada muat naik.',
+        about: 'WebP mengekalkan ketelusan seperti PNG, tetapi memampatkan foto dan gradien jauh lebih baik, jadi foto atau tangkapan skrin PNG yang besar selalunya menjadi jauh lebih kecil. Logo dan grafik rata kurang mengecil, dan pada kualiti tinggi ia kekal tajam.',
       },
       'avif-to-jpg': {
         name: 'Tukar AVIF ke JPG',
