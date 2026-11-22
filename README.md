@@ -103,7 +103,7 @@ your file never appears in it.
 | [Merge](https://tools.nhako.com/pdf/merge) | Combine several PDFs into one, losslessly |
 | [Split](https://tools.nhako.com/pdf/split) | Extract pages or a page range into a ZIP |
 | [Compress](https://tools.nhako.com/pdf/compress) | Lossless repacking, aggressive re-encoding, or under an exact size ([500 KB](https://tools.nhako.com/pdf/compress/500kb), 1 MB, ...) |
-| [PDF to JPG](https://tools.nhako.com/pdf/to-image) | Render pages to JPG or PNG at up to 216 dpi |
+| [PDF to JPG](https://tools.nhako.com/pdf/to-image) | Render pages to JPG or PNG at up to 216 dpi; the [SPA MyRésumé preset](https://tools.nhako.com/pdf/to-image/spa-myresume) turns certificates into JPGs the portal accepts |
 | [PDF to text](https://tools.nhako.com/pdf/to-text) | Extract the embedded text layer |
 | [Rotate](https://tools.nhako.com/pdf/rotate) | Fix orientation without re-rendering |
 | [Watermark](https://tools.nhako.com/pdf/watermark) | Stamp text across every page |
@@ -147,7 +147,7 @@ your file never appears in it.
 | [HEIC to JPG](https://tools.nhako.com/image/heic-to-jpg) | iPhone photos to JPG or PNG (libheif where the browser cannot decode HEIC) |
 | [Remove metadata](https://tools.nhako.com/image/remove-metadata) | Strips EXIF/XMP/IPTC including GPS, without touching a pixel |
 | [Image to text](https://tools.nhako.com/image/ocr) | OCR in English and Malay; text or a searchable PDF |
-| [Remove background](https://tools.nhako.com/image/remove-background) | Transparent PNG or a white backdrop, with an objects model and a people model |
+| [Remove background](https://tools.nhako.com/image/remove-background) | Transparent PNG or a white backdrop at your photo's full resolution, with an objects model and a people model; no credits or sign-up |
 | [Passport photo](https://tools.nhako.com/image/passport-photo) | 35×50 mm, white background on device, 600 dpi file plus a 4R print sheet |
 
 ### Calculators `/calc/*`
@@ -190,7 +190,9 @@ installed app it never asks.
 **Offline.** After one visit the home page works offline, and any tool works
 offline once you have opened it once (the engines it downloaded stay cached).
 Big runtimes (ffmpeg, the ONNX runtime, LibreOffice, Tesseract) are cached the
-first time a tool needs them, never up front.
+first time a tool needs them, never up front. A page you have not opened yet
+shows the site's own offline page, in your language, instead of the browser's
+error.
 
 **An APK for Google Play and sideloading** is planned, as a Trusted Web
 Activity built with Bubblewrap: a small Android shell that opens this site full
@@ -297,7 +299,10 @@ Things this project does **not** do, stated here rather than discovered later:
 No backend of our own for the tools, no cookies, no account. The one exception is the
 [feedback page](https://tools.nhako.com/feedback): only what you type there, only when you
 press Send, goes into a Supabase table (`supabase/migrations/`) that accepts inserts and
-nothing else from the site. Page views are counted with
+nothing else from the site. Code for anonymous task events (which tool ran, whether it
+worked, how long it took; never files, names or text) is in `src/lib/events.ts`, but it
+is switched off (`EVENTS_ENABLED = false`), so nothing is sent; if that changes, this
+section will say exactly what is. Page views are counted with
 [Vercel Web Analytics](https://vercel.com/docs/analytics/privacy-policy), which is
 cookieless and served from this same domain; it records the page, referrer,
 approximate location and browser/device type, never files or tool input. `localStorage`
@@ -380,7 +385,7 @@ to inline if a worker cannot start.
 | Styling | Tailwind CSS v4, CSS-variable tokens |
 | PDF | `pdf-lib`, `pdf.js` |
 | Media | `ffmpeg.wasm` (self-hosted) |
-| Transcription | `transformers.js` (Whisper `tiny.en`) |
+| Transcription | `transformers.js` (Whisper `tiny.en`, `base` and `small`) |
 | Offline | Service worker, app shell precached, big binaries cached on use |
 | Install | Web app manifest (maskable icons, shortcuts, screenshots); installs from Chrome, Edge and Android in one tap, with Share-sheet steps on iPhone and iPad and File, Add to Dock on Safari for Mac |
 | Tests | Vitest + Playwright + axe-core |
@@ -397,9 +402,10 @@ src/
   i18n/         every string, in English and Malay
   styles/       tokens.css (colours, tested for contrast), nera.css (the NeraOS layer), motion.css
   workers/      the Web Worker that runs CPU-heavy PDF work off the main thread
-scripts/        build-sw.mjs, icons.mjs + mascot-art.mjs, logo-art.mjs, og-images.mjs, vendor.mjs, sweep.mjs
-e2e/            Playwright specs, Chromium, WebKit and mobile profiles
-supabase/       the feedback table's migration
+scripts/        build-sw.mjs, icons.mjs + mascot-art.mjs, logo-art.mjs, og-images.mjs, vendor.mjs, sweep.mjs,
+                seo-lastmod.mjs (sitemap dates), device-e2e.sh + fetch-real-fixtures.mjs (real-file tests)
+e2e/            Playwright specs, Chromium, WebKit and mobile profiles; human.spec.ts runs every file tool on real files
+supabase/       migrations for the feedback table and the (switched-off) task-event table
 launch/film/    the widescreen launch film and posters: capture, timeline, scene, posters, check, renderer
 launch/video/   the vertical phone video, and the soundtrack generator both films use
 docs/           the Android plan, the films' documentation, brand art
@@ -432,6 +438,11 @@ npm run dev
 | `npm run launch:film` | Rebuild the widescreen film, the posters and the banner from a running preview (see [docs/launch-film.md](docs/launch-film.md)) |
 | `npm run launch:video` | Rebuild the vertical phone video from a running preview (see [docs/launch-video.md](docs/launch-video.md)) |
 
+> **Sitemap dates.** Every build hashes each page's visible text and updates
+> `scripts/seo-lastmod.json`, which gives each sitemap URL its `<lastmod>`. When a
+> build changes that file, commit it with your change. Vercel builds without git
+> history, so the committed file is where the dates come from.
+
 > **Cross-origin isolation.** `ffmpeg.wasm` needs `SharedArrayBuffer`, which needs the
 > COOP/COEP headers set in `astro.config.mjs` (dev), `scripts/preview.mjs` (preview)
 > and `vercel.json` (production). Serving the build with a plain static server without
@@ -451,6 +462,13 @@ npm run dev
   It caught a real ARIA bug (an `<a>` nested inside `<li role="option">` in the
   command palette). Axe is not a screen reader; see TASKS.md for what the
   accessibility-API pass covered and what still needs a human.
+- `e2e/human.spec.ts` uses every file tool the way a person does: search for it, pick
+  a real file (camera JPEG, iPhone HEIC, Office documents, a phone scan, 1080p video,
+  recorded speech), save the result and check the saved bytes. Run
+  `node scripts/fetch-real-fixtures.mjs` first. `scripts/device-e2e.sh` runs the same
+  specs on real Android phones and tablets over adb.
+- `src/seo-lastmod.test.ts` checks that a sitemap date moves when a page's text
+  changes and stays put when only its markup or asset hashes do.
 - `npm run test:e2e:all` runs the e2e suite in WebKit as well as Chromium. WebKit
   found two bugs Chromium could not (Safari's position-less JSON errors, and input
   lost before hydration). It needs `npx playwright install webkit`.
@@ -458,7 +476,8 @@ npm run dev
 Lighthouse against the deployed site (tools.nhako.com, Chrome, 2026-09-18) scores
 100 across performance, accessibility, best practices and SEO on the homepage and
 both tool-page types, with LCP 1.1-1.4 s, blocking time 0-80 ms and layout shift at
-most 0.001.
+most 0.001. A day-0 mobile comparison with iLovePDF and Smallpdf (2026-11-22) is in
+[docs/seo-baseline-2026-11-22.md](docs/seo-baseline-2026-11-22.md).
 
 ## Design
 
@@ -502,7 +521,6 @@ information architecture, and screenshots.
 
 - **Android APK and Google Play** via a Trusted Web Activity: [docs/pwa-and-android.md](docs/pwa-and-android.md), Phases 1 to 4.
 - **Share to Nhako Tools** from any Android app (a manifest `share_target`), and **Open with** for PDFs and images on desktop (`file_handlers`): Phase 0 of the same plan.
-- **An offline page** for tools not opened yet, instead of the browser's error page.
 - Still open from the rebuild: a real screen-reader pass (axe is a weaker claim) and production parity checks. See `.design/nhako-tools-rebuild/TASKS.md`.
 
 Tool requests decide what comes next; send them from the [feedback page](https://tools.nhako.com/feedback).
@@ -521,5 +539,6 @@ Built on [pdf-lib](https://pdf-lib.js.org), [pdf.js](https://mozilla.github.io/p
 and Whisper, [Tesseract.js](https://tesseract.projectnaptha.com),
 [LibreOffice](https://www.libreoffice.org) compiled to WebAssembly (MPL-2.0),
 [qpdf](https://qpdf.sourceforge.io), [libheif](https://github.com/strukturag/libheif) (LGPL-3.0),
-and the ISNet, ormbg and MODNet models (Apache-2.0). Pixel art and the NeraOS
+and the ISNet (DIS project, Xuebin Qin et al.), ormbg (Maximilian Schirrmacher) and
+MODNet models (Apache-2.0). Pixel art and the NeraOS
 theme from [NeraOS](https://github.com/kimzam30/NeraOS).

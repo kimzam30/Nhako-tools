@@ -30,7 +30,7 @@ The topics list `react`, but the site uses Preact.
 **Topics:** remove `react`, `vite`; add `astro`, `preact`, `image-tools`,
 `pdf-converter`, `ocr`, `malaysia`, `pwa`. Keep the rest.
 
-Owner OK needed before Claude changes this (it's public).
+Applied 2026-11-22 with the owner's OK (description and topics as above).
 
 ---
 
