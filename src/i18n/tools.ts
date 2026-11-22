@@ -367,6 +367,22 @@ export const MS: Record<string, ToolText> = {
       range: { label: 'Halaman', placeholder: 'semua, atau 1-5, 8', help: 'Biarkan kosong untuk memasukkan setiap halaman.' },
     },
   },
+  'pdf/redact': {
+    name: 'Hitamkan PDF',
+    seoTitle: 'Hitamkan PDF percuma: sembunyikan nombor IC dan nama, tanpa muat naik | Nhako Tools',
+    blurb: 'Hitamkan nama, nombor IC dan nombor telefon untuk selamanya.',
+    description: 'Hitamkan nama, nombor IC MyKad, nombor telefon dan e-mel dalam PDF, dibuang terus dan bukan sekadar ditutup. Dalam pelayar anda, tiada muat naik.',
+    keywords: ['hitamkan pdf', 'sembunyi nombor ic', 'tutup maklumat peribadi', 'redact', 'slip gaji', 'pdpa', 'padam teks pdf'],
+    about: 'Kotak hitam yang dilukis atas teks dalam penyunting PDF masih meninggalkan teks di bawahnya, yang boleh dipilih, disalin atau dicari, dan beginilah kebanyakan "penghitaman" bocor. Di sini teks setiap halaman dicari untuk perkataan anda dan corak yang anda tandakan, dan setiap halaman yang ada padanan dilukis semula sebagai imej dengan kotak hitam dibakar ke dalam piksel, jadi teks yang disembunyikan tidak lagi wujud dalam fail. Halaman tanpa padanan disalin tanpa diubah, dan tajuk, pengarang serta sifat lain fail asal tidak dibawa. Semuanya berjalan dalam pelayar anda, jadi dokumen itu tidak pernah dimuat naik.',
+    limits: ['Hanya teks yang benar-benar ada dalam PDF boleh dijumpai. Halaman imbasan tiada teks: jalankan OCR PDF dahulu.', 'Halaman yang ada bahagian dihitamkan menjadi imej, jadi baki teksnya tidak boleh lagi dipilih atau dicari. Halaman lain kekal.', 'Teks yang condong mungkin mendapat kotak yang tidak menutupnya sepenuhnya. Semak setiap halaman sebelum berkongsi fail.', 'Perkataan dalam imej, medan borang, komen dan lampiran tidak dicari.'],
+    options: {
+      terms: { label: 'Perkataan untuk dihitamkan', placeholder: 'cth. Ali bin Abu, 4500.00', help: 'Pisahkan dengan koma dan jarak, jadi 4,321.00 kekal satu. Tidak peka huruf besar. Sekurang-kurangnya 2 aksara setiap satu.' },
+      ic: { label: 'Nombor IC MyKad' },
+      phone: { label: 'Nombor telefon Malaysia' },
+      email: { label: 'Alamat e-mel' },
+      dpi: { label: 'Kualiti halaman yang dihitamkan', help: 'Halaman yang ada bahagian dihitamkan menjadi imej pada kualiti ini.', choices: { '150': 'Standard (150 dpi)', '300': 'Tinggi (300 dpi)' } },
+    },
+  },
   'pdf/grayscale': {
     name: 'PDF skala kelabu',
     blurb: 'Jadikan setiap halaman hitam putih untuk dicetak.',

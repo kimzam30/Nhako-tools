@@ -384,6 +384,26 @@ export const TOOLS: readonly ToolMeta[] = [
     related: ['pdf/unlock', 'pdf/sign', 'pdf/watermark'],
   },
   {
+    slug: 'redact', category: 'pdf', name: 'Redact PDF', kind: 'file', group: 'secure',
+    seoTitle: 'Redact PDF free: black out IC numbers and names, no upload | Nhako Tools',
+    blurb: 'Black out names, IC numbers and phone numbers for good.',
+    description: 'Black out names, MyKad IC numbers, phone numbers and emails in a PDF, removed for good rather than just covered. In your browser, nothing uploaded.',
+    keywords: ['redact', 'redaction', 'black out', 'blackout', 'censor', 'hide', 'remove text', 'ic number', 'mykad', 'nric', 'personal data', 'pdpa', 'payslip', 'hitamkan'],
+    accept: 'application/pdf,.pdf',
+    options: [
+      { kind: 'text', key: 'terms', label: 'Words to black out', default: '', placeholder: 'e.g. Ali bin Abu, 4500.00', help: 'Separate with a comma and a space, so 4,321.00 stays whole. Not case-sensitive. At least 2 characters each.' },
+      { kind: 'toggle', key: 'ic', label: 'MyKad IC numbers', default: true },
+      { kind: 'toggle', key: 'phone', label: 'Malaysian phone numbers', default: false },
+      { kind: 'toggle', key: 'email', label: 'Email addresses', default: false },
+      { kind: 'select', key: 'dpi', label: 'Quality of redacted pages', default: '150', choices: [
+        { value: '150', label: 'Standard (150 dpi)' }, { value: '300', label: 'High (300 dpi)' },
+      ], help: 'Pages with something blacked out become images at this quality.' },
+    ],
+    about: 'A black box drawn over text in a PDF editor leaves the text underneath, where anyone can select, copy or search it, which is how most leaked "redactions" happen. Here the text of every page is searched for your words and the patterns you tick, and each page with a match is redrawn as an image with the black boxes burned into the pixels, so the hidden text no longer exists in the file. Pages with no match are copied across unchanged, and the original\'s title, author and other properties are not carried over. Everything runs in your browser, so the document you are redacting is never uploaded.',
+    limits: ['Only text the PDF actually contains can be found. A scanned page has none: run OCR PDF on it first.', 'Pages with something blacked out become images, so their remaining text can no longer be selected or searched. Other pages keep theirs.', 'Text drawn at an angle may get a box that does not fully cover it. Check every page before you share the file.', 'Words inside images, form fields, comments and attachments are not searched.'],
+    related: ['pdf/protect', 'pdf/ocr', 'image/remove-metadata'],
+  },
+  {
     slug: 'unlock', category: 'pdf', name: 'Unlock PDF', kind: 'file', group: 'secure', heavy: true,
     blurb: 'Remove a password you know.',
     description: 'Remove the password and restrictions from a PDF in your browser, using the password you already have. Nothing is uploaded.',

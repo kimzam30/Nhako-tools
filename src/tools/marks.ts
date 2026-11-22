@@ -132,6 +132,10 @@ export const MARKS: Record<string, string> = {
     '<path d="M6 2.6h8.4L18 6.2v15.2H6z"/><path d="M14.4 2.6v3.6H18"/>' +
     '<circle cx="12" cy="13.6" r="3.9"/><path d="M12 9.7v7.8"/>' +
     '<path d="M12 11.4h3.4"/><path d="M12 13.6h3.9"/><path d="M12 15.8h3.4"/>',
+  /* Page base, operation: two lines of text struck through as solid bars. */
+  'pdf/redact':
+    '<path d="M6 2.6h8.4L18 6.2v15.2H6z"/><path d="M14.4 2.6v3.6H18"/>' +
+    '<path d="M8.6 10.6h6.8v2.2H8.6z"/><path d="M8.6 15h4.6v2.2H8.6z"/>',
   /* Page base, operation: a cross, the mark of first aid. */
   'pdf/repair':
     '<path d="M6 2.6h8.4L18 6.2v15.2H6z"/><path d="M14.4 2.6v3.6H18"/>' +
