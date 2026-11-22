@@ -30,6 +30,8 @@ while read -r serial state rest; do
   # on the device then times out.
   adb -s "$serial" reverse --remove "tcp:$PORT" 2>/dev/null || true
   adb -s "$serial" reverse "tcp:$PORT" "tcp:$PORT"
+  # A sleeping screen pauses Chrome's tabs: wake it first.
+  adb -s "$serial" shell input keyevent KEYCODE_WAKEUP
   # Chrome must be running for its DevTools socket to exist.
   adb -s "$serial" shell am start --user 0 -a android.intent.action.VIEW -d "http://localhost:$PORT/" -p com.android.chrome >/dev/null
   sleep 3

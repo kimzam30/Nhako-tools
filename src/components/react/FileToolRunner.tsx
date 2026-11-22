@@ -12,6 +12,7 @@ import { optionsBeforeHydration } from './hydration';
 import { localePath, type Locale } from '../../i18n/paths';
 import { islandText } from '../../i18n/island';
 import { friendlyError } from '../../lib/errors';
+import { trackEvent } from '../../lib/events';
 
 /** A finished run, kept apart from the phase so it can outlive the next one. */
 interface Done { result: FileToolResult; elapsed: number; size: number; url: string }
@@ -162,6 +163,7 @@ export default function FileToolRunner({ tool, locale = 'en', initialOptions }: 
     // starting a second one on the same engine would corrupt both.
     if (busy && tool.heavy) return;
     const selected = tool.multiple ? picked : picked.slice(0, 1);
+    trackEvent(id, 'file_added', { files: selected.length, bytes: selected.reduce((n, f) => n + f.size, 0) });
     filesRef.current = selected;
     setFiles(selected);
     // A different input means a different output: neither the old preview nor
@@ -169,7 +171,7 @@ export default function FileToolRunner({ tool, locale = 'en', initialOptions }: 
     setHeld(null);
     setRename(null);
     void execute(selected, optionsRef.current);
-  }, [busy, execute, tool.heavy, tool.multiple]);
+  }, [busy, execute, id, tool.heavy, tool.multiple]);
 
   function changeOption(key: string, value: string | number | boolean) {
     const next = { ...optionsRef.current, [key]: value };
@@ -357,6 +359,7 @@ export default function FileToolRunner({ tool, locale = 'en', initialOptions }: 
             name={rename}
             onRename={setRename}
             onClear={reset}
+            onSave={() => trackEvent(id, 'download')}
             t={t}
             idBase={inputId}
           />

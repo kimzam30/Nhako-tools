@@ -16,6 +16,8 @@ import { fileURLToPath } from 'node:url';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { basename } from 'node:path';
 
+let warmed = false;
+
 export const DEVICE = process.env.DEVICE_CDP ? (process.env.DEVICE_NAME ?? 'device') : null;
 
 export const test = base.extend<{ shot: (label: string) => Promise<void> }>({
@@ -29,6 +31,15 @@ export const test = base.extend<{ shot: (label: string) => Promise<void> }>({
     const goto = devicePage.goto.bind(devicePage);
     devicePage.goto = (url, opts) => goto(url.startsWith('/') ? `${baseURL}${url}` : url, opts);
     devicePage.setDefaultTimeout(info.timeout ? Math.min(info.timeout, 60_000) : 30_000);
+    // The first navigation of a run on the Tab S9 FE sometimes never reaches
+    // "load" (seen 3 times, always the first test, never again in that run).
+    // Warm up once per run, retrying once, so that stall cannot pass for a
+    // tool failure; anything after the warm-up is reported as it happens.
+    if (!warmed) {
+      for (let attempt = 0; attempt < 2 && !warmed; attempt++) {
+        warmed = await goto(`${baseURL}/offline`, { timeout: 30_000 }).then(() => true, () => false);
+      }
+    }
     try {
       await provide(devicePage);
     } finally {

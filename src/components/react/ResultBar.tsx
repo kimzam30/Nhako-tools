@@ -24,12 +24,14 @@ export interface Finished {
   elapsed?: number;
 }
 
-export function ResultBar({ done, name, onRename, onClear, t, idBase }: {
+export function ResultBar({ done, name, onRename, onClear, onSave, t, idBase }: {
   done: Finished;
   /** The stem the user typed, or null for the tool's own name. */
   name: string | null;
   onRename: (value: string) => void;
   onClear: () => void;
+  /** Told when Save is pressed (anonymous task events). */
+  onSave?: () => void;
   t: IslandStrings;
   /** Prefix for the field ids, unique per tool on the page. */
   idBase: string;
@@ -61,6 +63,7 @@ export function ResultBar({ done, name, onRename, onClear, t, idBase }: {
         <a
           href={done.url}
           download={saveName}
+          onClick={onSave}
           className="rounded bg-accent px-3 py-1.5 text-sm font-medium text-accent-on transition-colors duration-[120ms] hover:bg-accent-hover pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center pointer-coarse:px-5"
         >
           {t.save}

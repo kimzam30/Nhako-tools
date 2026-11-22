@@ -11,7 +11,7 @@
  * projects and, through scripts/device-e2e.sh, on real phones and tablets.
  */
 import { PDFDocument, degrees } from 'pdf-lib';
-import { test, expect, real, openFromHome, chooseFiles, save, keep, imageInfo, magic, DEVICE } from './support/human';
+import { test, expect, real, fixture, openFromHome, chooseFiles, save, keep, imageInfo, magic, DEVICE } from './support/human';
 import { existsSync } from 'node:fs';
 
 test.skip(!existsSync(real('paper.pdf')), 'run node scripts/fetch-real-fixtures.mjs first');
@@ -64,6 +64,35 @@ test.describe('PDF tools, by hand, on real PDFs', () => {
     await keep(info, out);
     expect(out.bytes.length).toBeLessThanOrEqual(1_000_000);
     expect(await pages(out.bytes)).toBe(40);
+  });
+
+  for (const [file, pagesIn] of [['scanned-40.pdf', 40], ['paper.pdf', PAPER_PAGES]] as const) {
+    test(`landing on "compress pdf 300kb" with ${file} gets a PDF under 300 KB`, async ({ page }, info) => {
+      await page.goto('/pdf/compress/300kb');
+      await chooseFiles(page, [real(file)]);
+      const out = await save(page, /^Save/, 200_000);
+      await keep(info, out);
+      expect(out.bytes.length).toBeLessThanOrEqual(300_000);
+      expect(await pages(out.bytes)).toBe(pagesIn);
+    });
+  }
+
+  test('SPA MyRésumé: a 2-page A4 certificate becomes two JPGs under 1 MB', async ({ page }, info) => {
+    await page.goto('/pdf/to-image/spa-myresume');
+    await chooseFiles(page, [fixture('two-pages.pdf')]);
+    const out = await save(page);
+    await keep(info, out);
+    const z = await zip(out.bytes);
+    const jpgs = Object.keys(z.files).filter((n) => n.endsWith('.jpg')).sort();
+    expect(jpgs).toHaveLength(2);
+    for (const n of jpgs) {
+      const b = await z.file(n)!.async('nodebuffer');
+      expect(b.length).toBeLessThan(1_000_000);
+      const img = await imageInfo(page, b, 'image/jpeg');
+      // 144 dpi A4: 595 x 842 pt at 2x.
+      expect(Math.abs(img.width - 1190)).toBeLessThanOrEqual(2);
+      expect(Math.abs(img.height - 1684)).toBeLessThanOrEqual(2);
+    }
   });
 
   test('rotate pages 1-3 of a paper by 180°', async ({ page }, info) => {
@@ -231,7 +260,7 @@ test.describe('PDF tools, by hand, on real PDFs', () => {
     await openFromHome(page, 'Unlock PDF');
     await page.getByLabel('Password').fill('wrong-password');
     await chooseFiles(page, [lockedPath]);
-    await expect(page.getByRole('alert').or(page.getByText(/password/i).last())).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByText('That password is not correct for this file.')).toBeVisible({ timeout: 60_000 });
     await shot('wrong-password');
     // On a phone the keyboard covers "Run again": the Go key has to run it.
     await page.getByLabel('Password').fill('Nhako#2026');
@@ -316,7 +345,7 @@ test.describe('Image tools, by hand, on camera photos', () => {
     expect([img.width, img.height]).toEqual([5184, 3456]);
   });
 
-  for (const [slug, limit] of [['20kb', 20_000], ['50kb', 50_000], ['100kb', 100_000], ['200kb', 200_000], ['500kb', 500_000], ['1mb', 1_000_000]] as const) {
+  for (const [slug, limit] of [['20kb', 20_000], ['50kb', 50_000], ['100kb', 100_000], ['200kb', 200_000], ['300kb', 300_000], ['500kb', 500_000], ['1mb', 1_000_000]] as const) {
     test(`landing on "compress image ${slug}" gets a photo under ${slug}`, async ({ page }, info) => {
       await page.goto(`/image/compress/${slug}`);
       await chooseFiles(page, [real('big.jpg')]);
