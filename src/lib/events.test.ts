@@ -34,3 +34,14 @@ describe('task events', () => {
     expect(() => trackEvent('pdf/merge', 'run_start')).not.toThrow();
   });
 });
+
+import { countsHere } from './events';
+
+describe('where events are counted', () => {
+  it('only on the live site, never from localhost, previews or automated browsers', () => {
+    expect(countsHere('tools.nhako.com', false)).toBe(true);
+    expect(countsHere('localhost', false)).toBe(false);
+    expect(countsHere('nhako-tools.vercel.app', false)).toBe(false);
+    expect(countsHere('tools.nhako.com', true)).toBe(false);
+  });
+});

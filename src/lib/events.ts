@@ -76,11 +76,20 @@ function optedOut(): boolean {
   return n.globalPrivacyControl === true || n.doNotTrack === '1';
 }
 
+/**
+ * Only the live site counts. Local builds, previews and every E2E run (desktop
+ * and the real phones, all on localhost) would otherwise fill the table with
+ * test traffic; automated browsers are left out for the same reason.
+ */
+export function countsHere(host: string, webdriver: boolean): boolean {
+  return host === 'tools.nhako.com' && !webdriver;
+}
+
 /** Fire and forget. Never throws, never awaits. */
 export function trackEvent(tool: string, event: ToolEvent, detail: EventDetail = {}): void {
   if (!EVENTS_ENABLED || typeof window === 'undefined' || typeof fetch === 'undefined') return;
   try {
-    if (optedOut()) return;
+    if (optedOut() || !countsHere(location.hostname, navigator.webdriver === true)) return;
     const row = buildRow(tool, event, detail, {
       lang: document.documentElement.lang || 'en',
       coarse: window.matchMedia?.('(pointer: coarse)').matches ?? false,

@@ -564,6 +564,61 @@ test.describe('Image tools, by hand, on camera photos', () => {
 });
 
 test.describe('Media tools, by hand, on a real clip and real speech', () => {
+  /** Play the saved clip in the page and report its duration in seconds. */
+  async function videoSeconds(page: Page, bytes: Buffer) {
+    return page.evaluate(async (b64) => {
+      const blob = new Blob([Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))], { type: 'video/mp4' });
+      const v = document.createElement('video');
+      v.preload = 'metadata'; v.muted = true; v.src = URL.createObjectURL(blob);
+      await new Promise((ok, fail) => { v.onloadedmetadata = ok; v.onerror = () => fail(new Error('cannot play')); });
+      return v.duration;
+    }, bytes.toString('base64'));
+  }
+
+  for (const c of [
+    { start: '2', end: '6', mute: true, summary: /^0:02–0:06, sound removed/, sound: false, length: 4 },
+    { start: '0:03', end: '0:07', mute: false, summary: /^0:03–0:07/, sound: true, length: 4 },
+  ]) {
+    test(`trim a real clip ${c.start} to ${c.end}${c.mute ? ', sound removed' : ''}`, async ({ page }, info) => {
+      test.skip(desktopChromiumOnly(info.project.name), 'video engines: Chromium and devices');
+      await openFromHome(page, 'Trim video');
+      await page.getByLabel('Start').fill(c.start);
+      await page.getByLabel('End').fill(c.end);
+      if (c.mute) await page.getByLabel('Remove sound').check();
+      await chooseFiles(page, [real('clip-with-sound.mp4')]);
+      await expect(page.getByText(c.summary)).toBeVisible({ timeout: 200_000 });
+      const out = await save(page, /^Save/, 30_000);
+      await keep(info, out);
+      expect(out.name).toMatch(/\.mp4$/);
+      expect(await videoSeconds(page, out.bytes)).toBeCloseTo(c.length, 0);
+      expect(out.bytes.includes(Buffer.from('soun'))).toBe(c.sound);
+    });
+  }
+
+  test('turn 3 seconds of a real clip into a looping GIF', async ({ page }, info) => {
+    test.skip(desktopChromiumOnly(info.project.name), 'ffmpeg: Chromium and devices');
+    await openFromHome(page, 'Video to GIF');
+    await page.getByLabel('Start').fill('1');
+    await page.getByLabel('Length').fill('3');
+    await chooseFiles(page, [real('clip-with-sound.mp4')]);
+    const out = await save(page, /^Save/, 200_000);
+    await keep(info, out);
+    expect(out.bytes.subarray(0, 6).toString('latin1')).toBe('GIF89a');
+    // One graphic-control block per frame: 3 s at 12 fps.
+    let frames = 0;
+    for (let i = 0; i + 2 < out.bytes.length; i++) if (out.bytes[i] === 0x21 && out.bytes[i + 1] === 0xf9 && out.bytes[i + 2] === 0x04) frames++;
+    expect(frames).toBe(36);
+  });
+
+  test('trim video says what is wrong with the times', async ({ page }, info) => {
+    test.skip(desktopChromiumOnly(info.project.name), 'video engines: Chromium and devices');
+    await page.goto('/media/trim-video');
+    await page.getByLabel('Start').fill('6');
+    await page.getByLabel('End').fill('2');
+    await chooseFiles(page, [real('clip-with-sound.mp4')]);
+    await expect(page.getByText('The end must come after the start.')).toBeVisible({ timeout: 60_000 });
+  });
+
   test('compress a 1080p clip to about 2 MB', async ({ page, shot }, info) => {
     test.skip(desktopChromiumOnly(info.project.name), 'video engines: Chromium and devices');
     await openFromHome(page, 'Compress video');

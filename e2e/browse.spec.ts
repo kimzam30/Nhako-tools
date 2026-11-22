@@ -60,7 +60,7 @@ test.describe('category pages', () => {
   test('a flat category has no filter chips', async ({ page }) => {
     await page.goto('/media');
     await expect(page.locator('[data-filter]')).toHaveCount(0);
-    await expect(page.locator('main [data-tool-card]')).toHaveCount(4);
+    await expect(page.locator('main [data-tool-card]')).toHaveCount(TOOLS.filter((t) => t.category === 'media').length);
   });
 
   test('the smallest category still has a real page', async ({ page }) => {
