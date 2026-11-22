@@ -32,6 +32,7 @@ export const LOADERS: Record<string, () => Promise<ToolModule>> = {
   'pdf/extract-pages': () => import('./pdf/extract-pages'),
   'pdf/n-up': () => import('./pdf/n-up'),
   'pdf/grayscale': () => import('./pdf/grayscale'),
+  'pdf/redact': () => import('./pdf/redact'),
   'pdf/repair': () => import('./pdf/repair'),
   'pdf/to-powerpoint': () => import('./pdf/to-powerpoint'),
 
