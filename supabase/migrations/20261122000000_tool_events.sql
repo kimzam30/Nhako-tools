@@ -1,6 +1,5 @@
 -- Nhako Tools anonymous task events (src/lib/events.ts).
--- NOT YET APPLIED. Apply to NhakoEcoDB (iznnnsiojfcbncrdqzyh) only with the owner's OK,
--- then set EVENTS_ENABLED = true in src/lib/events.ts.
+-- Applied to NhakoEcoDB (iznnnsiojfcbncrdqzyh) on 2026-11-22 as migration "tool_events", at the owner's request.
 -- The public can INSERT a row and nothing else: no select, update or delete.
 -- There is deliberately no column for an IP address, a user id, a file name or error text.
 create table public.tool_events (

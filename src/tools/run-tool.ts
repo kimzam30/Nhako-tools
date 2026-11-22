@@ -17,7 +17,7 @@ import { WORKER_TOOLS } from '../workers/worker-tools';
  *                                  already threads its inference
  */
 const WORKER_SAFE = new Set(Object.keys(WORKER_TOOLS));
-const FFMPEG_TOOLS = new Set(['media/compress-video', 'media/extract-audio']);
+const FFMPEG_TOOLS = new Set(['media/compress-video', 'media/extract-audio', 'media/trim-video', 'media/video-to-gif']);
 
 export interface RunHandle {
   result: Promise<FileToolResult>;

@@ -23,7 +23,7 @@ const h2 = 'mb-2 text-sm font-semibold text-text';
     {locale === 'ms' ? (
       <div class="mt-7 space-y-7 text-sm leading-relaxed text-muted">
         <p class="text-base text-text">
-          Tiada pelayan belakang. Tiada titik muat naik, tiada pangkalan data, tiada kuki, tiada
+          Tiada pelayan untuk fail anda. Tiada titik muat naik, tiada kuki, tiada
           akaun. Fail anda dibuka oleh pelayar anda dan diproses pada peranti anda.
         </p>
 
@@ -106,6 +106,13 @@ const h2 = 'mb-2 text-sm font-semibold text-text';
             apa-apa tentang fail anda, apa yang anda taip dalam alat, atau hasilnya. Skrip dan
             laporannya pergi ke domain yang sama, jadi ia kelihatan dalam tab Network bersama yang
             lain, di mana anda boleh menyemak kandungannya dengan tepat.
+            Selain itu, apabila anda menggunakan alat fail, satu baris kecil dihantar ke pangkalan
+            data Supabase supaya kami tahu sama ada alat itu berjaya: nama alat, sama ada ia bermula,
+            berjaya, gagal atau dibatalkan, bahasa halaman, telefon atau komputer, bilangan fail,
+            julat saiz kasar (seperti 1 hingga 10 MB, bukan saiz sebenar) dan masa yang diambil.
+            Baris itu tiada nama fail, kandungan fail, teks ralat, alamat IP atau pengecam, dan orang
+            awam tidak boleh membacanya. Pelayar yang menghantar Do Not Track atau Global Privacy
+            Control tidak menghantar apa-apa.
           </p>
         </section>
 
@@ -149,7 +156,7 @@ const h2 = 'mb-2 text-sm font-semibold text-text';
     ) : (
       <div class="mt-7 space-y-7 text-sm leading-relaxed text-muted">
         <p class="text-base text-text">
-          There is no backend. No upload endpoint, no database, no cookies, no account.
+          There is no server for your files. No upload endpoint, no cookies, no account.
           Your files are opened by your browser and processed on your device.
         </p>
 
@@ -231,6 +238,12 @@ const h2 = 'mb-2 text-sm font-semibold text-text';
             what you type into a tool, or its results. The script and its
             reports go to this same domain, so they show up in the Network tab next to
             everything else, where you can check exactly what they contain.
+            Separately, when you use a file tool, one small row goes to a Supabase database so we
+            can see whether tools work: the tool's name, whether it started, worked, failed or was
+            cancelled, the page language, phone or computer, how many files, a rough size range
+            (such as 1 to 10 MB, never the actual size) and how long it took. The row has no file
+            names, file contents, error text, IP address or identifier, and the public cannot read
+            it. Browsers that send Do Not Track or Global Privacy Control send nothing.
           </p>
         </section>
 
