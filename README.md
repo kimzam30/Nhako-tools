@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <b>51 free tools for PDFs, images, media, calculators and code, that run on your device.</b><br>
+  <b>50+ free tools for PDFs, images, media, calculators and code, that run on your device.</b><br>
   Nothing uploads. Nothing waits. No account, no daily limit, no watermark.
 </p>
 
@@ -85,7 +85,7 @@ your file never appears in it.
 
 | | |
 |---|---|
-| **Search everything** | `⌘K` or `Ctrl K` (or the search icon on a phone) finds any of the 51 tools and their presets, in English or Malay ("gaji" finds the salary calculator) |
+| **Search everything** | `⌘K` or `Ctrl K` (or the search icon on a phone) finds any tool or preset, in English or Malay ("gaji" finds the salary calculator) |
 | **Favourites** | Star a tool and it waits on [/favourites](https://tools.nhako.com/favourites). Stored in this browser only; there is no account to sync it to |
 | **Two languages** | Every page and tool in English and Bahasa Melayu, at `/` and `/ms` |
 | **Malaysia page** | [/malaysia](https://tools.nhako.com/malaysia) gathers the jobs Malaysian forms ask for: SPA MyRésumé photo sizes, the salary calculator, passport photos, CGPA |
