@@ -32,7 +32,10 @@ Indexing requested on 2026-11-22 for: `/`, `/ms`, `/pdf/merge`,
 `/calc/take-home-pay`, `/calc/cgpa`, `/pdf/to-word`, `/image/heic-to-jpg`.
 Also `/malaysia` on 2026-11-22; the 12th request that day hit Google's daily
 quota (about 10–12 a day). Sitemap resubmitted to Google and Bing on
-2026-11-22 after the `<lastmod>` deploy. Next batch to request, a few a day:
+2026-11-22 after the `<lastmod>` deploy. Next batch to request, a few a day, newest pages first: `/pdf/redact`,
+the six `/image/convert/*` pages (`webp-to-jpg`, `png-to-jpg`, `jpg-to-png`,
+`jpg-to-webp`, `png-to-webp`, `avif-to-jpg`), `/pdf/compress/300kb`,
+`/image/compress/300kb`, `/calc/cgpa/ukm`, `/pdf/to-image/spa-myresume`, then
 `/ms/malaysia`, `/pdf/compress/500kb`, `/image/compress/200kb`,
 `/image/compress/spa-myresume`, `/pdf/ocr`, `/media/transcribe`, `/pdf/split`,
 `/image/remove-background`, and the `/ms` versions of the top tools.
@@ -60,8 +63,10 @@ quota (about 10–12 a day). Sitemap resubmitted to Google and Bing on
       tools.nhako.com in Bing on 2026-11-22.
 - [x] Sitemap `https://tools.nhako.com/sitemap-index.xml` submitted to Bing
       on 2026-11-22 (status: Processing).
-- [ ] Optional: turn on IndexNow (Bing's top recommendation) so new or changed
-      pages are pushed to Bing and Yandex the same day.
+- [x] IndexNow set up: key file `public/ba367e976c0d48d891510a0a1cf93015.txt`
+      and `scripts/seo-indexnow.mjs`. After each deploy:
+      `node scripts/seo-indexnow.mjs` (pages whose lastmod is today).
+      First run after the key file is live: `--all`.
 
 ## 3. Directories and listings (one-off, each a real backlink)
 
