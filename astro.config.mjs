@@ -3,6 +3,7 @@ import { defineConfig } from 'astro/config';
 import preact from '@astrojs/preact';
 import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
+import { stampLastmod } from './scripts/seo-lastmod.mjs';
 import { FFMPEG_BASE, ORT_BASE, QPDF_BASE, LIBHEIF_BASE, TESSERACT_BASE, TESSDATA_BASE, LIBREOFFICE_BASE } from './scripts/versions.mjs';
 
 const COI_HEADERS = {
@@ -35,23 +36,25 @@ export default defineConfig({
       // The offline page is only ever served by the service worker.
       filter: (page) => !page.endsWith('/media/teleprompter/remote') && !page.endsWith('/favourites') && !page.endsWith('/offline'),
     }),
-    // With trailingSlash 'never' the sitemap plugin rewrites the home page's
-    // <loc> to the bare origin after any `serialize`, while its canonical and
-    // hreflang say https://tools.nhako.com/. Same URL to a crawler, but make
-    // the sitemap say exactly what the canonical says. Runs after sitemap().
+    // Runs after sitemap(), which has written its files by then.
     {
-      name: 'sitemap-home-slash',
+      name: 'sitemap-seo',
       hooks: {
-        'astro:build:done': async ({ dir }) => {
+        'astro:build:done': async ({ dir, logger }) => {
           const { readdir, readFile, writeFile } = await import('node:fs/promises');
-          const root = new URL('.', dir);
-          for (const f of await readdir(root)) {
+          // With trailingSlash 'never' the sitemap plugin rewrites the home
+          // page's <loc> to the bare origin after any `serialize`, while its
+          // canonical and hreflang say https://tools.nhako.com/. Same URL to a
+          // crawler, but make the sitemap say exactly what the canonical says.
+          for (const f of await readdir(dir)) {
             if (!/^sitemap-\d+\.xml$/.test(f)) continue;
-            const file = new URL(f, root);
+            const file = new URL(f, dir);
             const xml = await readFile(file, 'utf8');
             const fixed = xml.replace('<loc>https://tools.nhako.com</loc>', '<loc>https://tools.nhako.com/</loc>');
             if (fixed !== xml) await writeFile(file, fixed);
           }
+          // <lastmod> from each page's visible content, see the script.
+          await stampLastmod(dir, { log: logger });
         },
       },
     },
