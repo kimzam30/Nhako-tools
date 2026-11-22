@@ -70,9 +70,9 @@ function tracked(id: string, files: File[], handle: RunHandle): RunHandle {
     (e: unknown) => {
       if (done) return;
       done = true;
-      // Errors from the worker arrive as plain Errors, so only an inline
-      // ToolError can be told apart; anything else is left unclassified.
-      trackEvent(id, 'run_error', { files: files.length, bytes, ms: performance.now() - t0, ...(e instanceof ToolError ? { error: 'tool' as const } : {}) });
+      // A ToolError (inline, or rebuilt from the worker) is a message the
+      // user can act on; anything else is a crash.
+      trackEvent(id, 'run_error', { files: files.length, bytes, ms: performance.now() - t0, error: e instanceof ToolError ? 'tool' : 'crash' });
     },
   );
   return {
@@ -113,7 +113,9 @@ function startFileTool(
         settled = true;
         cleanup();
         if (msg.kind === 'done') resolve(msg.result as FileToolResult);
-        else reject(new Error(msg.message as string));
+        // Rebuild a ToolError so it is shown verbatim and counted as one,
+        // exactly as when the tool runs inline.
+        else reject(msg.toolError ? new ToolError(msg.message as string) : new Error(msg.message as string));
       };
 
       const onError = () => {

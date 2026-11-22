@@ -8,6 +8,7 @@
  */
 import { WORKER_TOOLS } from './worker-tools';
 import type { FileToolResult, OptionValues } from '../tools/types';
+import { ToolError } from '../tools/types';
 
 export interface WorkerRequest {
   ticket: number;
@@ -19,7 +20,8 @@ export interface WorkerRequest {
 export type WorkerResponse =
   | { ticket: number; kind: 'progress'; progress: number; label?: string }
   | { ticket: number; kind: 'done'; result: FileToolResult }
-  | { ticket: number; kind: 'error'; message: string };
+  /** `toolError`: the tool threw a ToolError, a message written for people. */
+  | { ticket: number; kind: 'error'; message: string; toolError?: boolean };
 
 self.addEventListener('message', async (event: MessageEvent<WorkerRequest>) => {
   const { ticket, id, files, options } = event.data;
@@ -45,6 +47,7 @@ self.addEventListener('message', async (event: MessageEvent<WorkerRequest>) => {
       ticket,
       kind: 'error',
       message: err instanceof Error ? err.message : 'Something went wrong running this tool.',
+      toolError: err instanceof ToolError,
     });
   }
 });
