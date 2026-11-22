@@ -18,7 +18,7 @@ import BackLink from '../components/astro/BackLink.astro';
 import { TOOLS_BY_ID } from '../tools/registry';
 import { toolId, type ToolMeta, type ToolVariant } from '../tools/types';
 import { SOURCES as PAYROLL_SOURCES } from '../tools/calc/payroll-my';
-import { SOURCES as GRADE_SOURCES } from '../tools/calc/cgpa';
+import { SOURCES as GRADE_SOURCES, SCALES, type ScaleId } from '../tools/calc/cgpa';
 import { LANG, categoryLabel, localizeTool, localePath, ui, type Locale } from '../i18n';
 
 interface Props {
@@ -202,7 +202,7 @@ const wide = wideApp || filePane;
       <TextToolPane client:load tool={{ ...runnerTool, kind: tool.kind, generator: tool.generator }} locale={locale} />
     )}
     {id === 'calc/take-home-pay' && <SalaryCalculator client:load locale={locale} />}
-    {id === 'calc/cgpa' && <CgpaCalculator client:load locale={locale} />}
+    {id === 'calc/cgpa' && <CgpaCalculator client:load locale={locale} scale={variant?.defaults.scale as ScaleId | undefined} />}
     {id === 'image/passport-photo' && <PhotoMaker client:load locale={locale} accept={tool.accept ?? 'image/*'} />}
     {id === 'pdf/organize' && <OrganizePdf client:load locale={locale} accept={tool.accept ?? '.pdf'} />}
     {id === 'pdf/merge' && <MergePdf client:load locale={locale} accept={tool.accept ?? '.pdf'} />}
@@ -253,7 +253,7 @@ const wide = wideApp || filePane;
         <section data-reveal>
           <h2 class="mb-2 text-sm font-semibold">{t.sources}</h2>
           <ul class="space-y-1.5">
-            {Object.values(id === 'calc/cgpa' ? GRADE_SOURCES : PAYROLL_SOURCES).map((s) => (
+            {(id === 'calc/cgpa' ? (variant ? [SCALES[variant.defaults.scale as ScaleId].source] : Object.values(GRADE_SOURCES)) : Object.values(PAYROLL_SOURCES)).map((s) => (
               <li class="text-sm leading-relaxed text-muted max-sm:text-base">
                 <a class="underline decoration-border underline-offset-2 transition-colors hover:text-accent pointer-coarse:inline-block pointer-coarse:py-3.5" href={s.url} rel="noopener noreferrer">{s.title}</a>
                 <span data-numeric class="text-2xs">, {t.checkedOn(s.checked)}</span>

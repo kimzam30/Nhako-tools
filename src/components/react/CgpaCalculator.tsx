@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { UM_SCALE, cgpa, gpa, needed, round2, totals, SOURCES } from '../../tools/calc/cgpa';
+import { SCALES, cgpa, gpa, needed, round2, totals, type ScaleId } from '../../tools/calc/cgpa';
 import type { Locale } from '../../i18n/paths';
 import { valueBeforeHydration } from './hydration';
 
@@ -30,8 +30,8 @@ const TEXT = {
     unreachable: (g: string) => `That needs ${g}, above a perfect 4.00. Aim over more semesters.`,
     planHint: 'Uses your new CGPA and credits from above.',
     scale: 'Grade points',
-    scaleHelp: 'Universiti Malaya\'s published table. Universities differ, so change any point to match your own handbook.',
-    reset: 'Reset to Universiti Malaya',
+    scaleHelp: (u: string) => `${u}'s published table. Universities differ, so change any point to match your own handbook.`,
+    reset: (u: string) => `Reset to ${u}`,
     source: 'Source',
     summary: (g: string, c: string) => `Semester GPA ${g}, CGPA ${c}`,
   },
@@ -61,8 +61,8 @@ const TEXT = {
     unreachable: (g: string) => `Itu memerlukan ${g}, melebihi 4.00 penuh. Sasarkan dalam beberapa semester.`,
     planHint: 'Menggunakan PNGK baharu dan kredit anda di atas.',
     scale: 'Mata gred',
-    scaleHelp: 'Jadual terbitan Universiti Malaya. Setiap universiti berbeza, jadi ubah mana-mana mata mengikut buku panduan anda.',
-    reset: 'Set semula kepada Universiti Malaya',
+    scaleHelp: (u: string) => `Jadual terbitan ${u}. Setiap universiti berbeza, jadi ubah mana-mana mata mengikut buku panduan anda.`,
+    reset: (u: string) => `Set semula kepada ${u}`,
     source: 'Sumber',
     summary: (g: string, c: string) => `PNG semester ${g}, PNGK ${c}`,
   },
@@ -80,9 +80,11 @@ const fmt = (v: number | null) => (v === null ? '--' : round2(v).toFixed(2));
 
 const STARTING_ROWS = 4;
 
-export default function CgpaCalculator({ locale = 'en' }: { locale?: Locale }) {
+export default function CgpaCalculator({ locale = 'en', scale: scaleId = 'um' }: { locale?: Locale; scale?: ScaleId }) {
   const t = TEXT[locale];
-  const [points, setPoints] = useState<Record<string, number>>(() => Object.fromEntries(UM_SCALE.map((g) => [g.grade, g.point])));
+  // A preset page (e.g. /calc/cgpa/ukm) passes its university's verified table.
+  const scale = SCALES[scaleId] ?? SCALES.um;
+  const [points, setPoints] = useState<Record<string, number>>(() => Object.fromEntries(scale.rows.map((g) => [g.grade, g.point])));
   const [rows, setRows] = useState<Row[]>(() => Array.from({ length: STARTING_ROWS }, (_, i) => ({
     key: i,
     name: valueBeforeHydration(`course-${i}-name`, ''),
@@ -142,7 +144,7 @@ export default function CgpaCalculator({ locale = 'en' }: { locale?: Locale }) {
                   <input id={`course-${r.key}-credits`} aria-label={`${t.credits}, ${name}`} inputMode="numeric" autoComplete="off" value={r.credits} onInput={(e) => update(r.key, { credits: e.currentTarget.value })} className={`${field} tabular-nums`} />
                   <select id={`course-${r.key}-grade`} aria-label={`${t.grade}, ${name}`} value={r.grade} onChange={(e) => update(r.key, { grade: e.currentTarget.value })} className={field}>
                     <option value="">{t.noGrade}</option>
-                    {UM_SCALE.map((g) => <option key={g.grade} value={g.grade}>{g.grade}</option>)}
+                    {scale.rows.map((g) => <option key={g.grade} value={g.grade}>{g.grade}</option>)}
                   </select>
                   <button
                     type="button" aria-label={t.remove(name)} disabled={rows.length === 1}
@@ -166,9 +168,9 @@ export default function CgpaCalculator({ locale = 'en' }: { locale?: Locale }) {
 
         <details className="rounded-lg border border-border bg-surface p-4">
           <summary className="cursor-pointer text-2xs font-semibold uppercase tracking-wider text-muted pointer-coarse:-my-3.5 pointer-coarse:py-3.5">{t.scale}</summary>
-          <p className="mt-2 text-xs text-muted">{t.scaleHelp}</p>
+          <p className="mt-2 text-xs text-muted">{t.scaleHelp(scale.university)}</p>
           <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
-            {UM_SCALE.map((g) => (
+            {scale.rows.map((g) => (
               <label key={g.grade} className="flex items-center gap-2 text-sm">
                 <span className="w-7 font-semibold">{g.grade}</span>
                 <input
@@ -179,11 +181,11 @@ export default function CgpaCalculator({ locale = 'en' }: { locale?: Locale }) {
               </label>
             ))}
           </div>
-          <button type="button" onClick={() => setPoints(Object.fromEntries(UM_SCALE.map((g) => [g.grade, g.point])))} className="mt-3 text-xs text-muted underline decoration-border underline-offset-2 hover:text-accent pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center">
-            {t.reset}
+          <button type="button" onClick={() => setPoints(Object.fromEntries(scale.rows.map((g) => [g.grade, g.point])))} className="mt-3 text-xs text-muted underline decoration-border underline-offset-2 hover:text-accent pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center">
+            {t.reset(scale.university)}
           </button>
           <p className="mt-2 text-xs text-muted">
-            {t.source}: <a className="underline decoration-border underline-offset-2 hover:text-accent pointer-coarse:inline-block pointer-coarse:py-3.5" href={SOURCES.um.url} rel="noopener noreferrer">{SOURCES.um.title}</a>
+            {t.source}: <a className="underline decoration-border underline-offset-2 hover:text-accent pointer-coarse:inline-block pointer-coarse:py-3.5" href={scale.source.url} rel="noopener noreferrer">{scale.source.title}</a>
           </p>
         </details>
       </div>
