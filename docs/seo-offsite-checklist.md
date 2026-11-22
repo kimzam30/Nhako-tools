@@ -30,8 +30,10 @@ other sites. Fixing it is off-site work.
 Indexing requested on 2026-11-22 for: `/`, `/ms`, `/pdf/merge`,
 `/pdf/compress`, `/image/compress`, `/image/passport-photo`,
 `/calc/take-home-pay`, `/calc/cgpa`, `/pdf/to-word`, `/image/heic-to-jpg`.
-Google allows about 10 requests a day. Next batch to request, a few a day:
-`/malaysia`, `/ms/malaysia`, `/pdf/compress/500kb`, `/image/compress/200kb`,
+Also `/malaysia` on 2026-11-22; the 12th request that day hit Google's daily
+quota (about 10–12 a day). Sitemap resubmitted to Google and Bing on
+2026-11-22 after the `<lastmod>` deploy. Next batch to request, a few a day:
+`/ms/malaysia`, `/pdf/compress/500kb`, `/image/compress/200kb`,
 `/image/compress/spa-myresume`, `/pdf/ocr`, `/media/transcribe`, `/pdf/split`,
 `/image/remove-background`, and the `/ms` versions of the top tools.
 
