@@ -96,4 +96,20 @@ const offset = /startxref\s+(\d+)/.exec(text.slice(at))[1];
 const wrong = String(Number(offset) - 1234).padStart(offset.length, '0');
 await writeFile(`${DIR}/bad-xref.pdf`, Buffer.from(text.slice(0, at) + text.slice(at).replace(offset, wrong), 'latin1'));
 
+// A payslip-style page with personal data, and a second page with none, for
+// Redact PDF. Real text (Helvetica), with a title in the metadata that repeats
+// the name, because leaked metadata is a classic redaction failure.
+{
+  const { StandardFonts } = await import('pdf-lib');
+  const slip = await PDFDocument.create();
+  slip.setTitle('Slip gaji Ali bin Abu');
+  const font = await slip.embedFont(StandardFonts.Helvetica);
+  const one = slip.addPage([595, 842]);
+  ['Nama: Ali bin Abu', 'No. IC: 880101-14-5678', 'Tel: 012-345 6789', 'Gaji bersih RM4,321.00'].forEach((line, i) => {
+    one.drawText(line, { x: 72, y: 760 - i * 28, size: 14, font });
+  });
+  slip.addPage([595, 842]).drawText('Page two has nothing private on it.', { x: 72, y: 760, size: 14, font });
+  await writeFile(`${DIR}/payslip.pdf`, await slip.save());
+}
+
 console.log(`real fixtures ready in ${DIR}`);

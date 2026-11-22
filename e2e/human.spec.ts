@@ -110,6 +110,35 @@ test.describe('PDF tools, by hand, on real PDFs', () => {
     });
   }
 
+  test('redact a payslip: the name, IC and salary are gone from the file, not just covered', async ({ page, shot }, info) => {
+    await openFromHome(page, 'Redact PDF');
+    await page.getByLabel('Words to black out').fill('Ali bin Abu, 4,321.00');
+    await chooseFiles(page, [real('payslip.pdf')]);
+    await expect(page.getByText(/^3 matches blacked out on 1 page/)).toBeVisible({ timeout: 60_000 });
+    const out = await save(page);
+    await shot('redacted');
+    await keep(info, out);
+    expect(await pages(out.bytes)).toBe(2);
+    // Page 1 is now an image: no text layer at all. Page 2 is untouched.
+    expect((await pdfText(out.bytes, 1)).trim()).toBe('');
+    expect((await pdfText(out.bytes, 2)).trim()).toBe('Page two has nothing private on it.');
+    // Nothing of the hidden data anywhere in the file, metadata included.
+    const raw = out.bytes.toString('latin1');
+    for (const secret of ['880101', 'Ali bin', '4,321', 'Slip gaji']) expect(raw).not.toContain(secret);
+    expect((await PDFDocument.load(out.bytes)).getTitle()).toBeUndefined();
+  });
+
+  test('redact explains itself: nothing matched, and a scan with no text', async ({ page }) => {
+    await page.goto('/pdf/redact');
+    await page.getByLabel('Words to black out').fill('Siti binti Ahmad');
+    await page.getByLabel('MyKad IC numbers').uncheck();
+    await chooseFiles(page, [real('payslip.pdf')]);
+    await expect(page.getByText(/^Nothing matched, so nothing was blacked out/)).toBeVisible({ timeout: 60_000 });
+    await page.goto('/pdf/redact');
+    await chooseFiles(page, [real('scanned-40.pdf')]);
+    await expect(page.getByText(/^This PDF has no text to search/)).toBeVisible({ timeout: 60_000 });
+  });
+
   test('rotate pages 1-3 of a paper by 180°', async ({ page }, info) => {
     await openFromHome(page, 'Rotate PDF');
     await page.getByLabel('Rotate by').selectOption('180');
