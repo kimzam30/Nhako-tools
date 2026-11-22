@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { UM_SCALE, SOURCES, cgpa, gpa, needed, round2, totals } from './cgpa';
+import { UM_SCALE, UKM_SCALE, UKM_SOURCE, SCALES, SOURCES, cgpa, gpa, needed, round2, totals } from './cgpa';
 
 /**
  * The scale is pinned row by row against Universiti Malaya's 2024/2025
@@ -85,5 +85,25 @@ describe('edge cases', () => {
 
   it('treats a first semester as the whole CGPA', () => {
     expect(cgpa(null, [{ credits: 3, point: 3.7 }])).toBeCloseTo(3.7, 10);
+  });
+});
+
+describe('UKM scale (Regulations 2024, Table 3)', () => {
+  it('matches the published table row for row', () => {
+    expect(UKM_SCALE.map((r) => `${r.grade} ${r.point.toFixed(2)} ${r.marks}`)).toEqual([
+      'A 4.00 80-100', 'A- 3.67 75-79', 'B+ 3.33 70-74', 'B 3.00 65-69', 'B- 2.67 60-64', 'C+ 2.33 55-59',
+      'C 2.00 50-54', 'C- 1.67 45-49', 'D+ 1.33 40-44', 'D 1.00 35-39', 'E 0.00 0-34',
+    ]);
+    expect(UKM_SOURCE.url).toMatch(/^https:\/\/www\.ukm\.my\//);
+    expect(SCALES.ukm.rows).toBe(UKM_SCALE);
+  });
+
+  it('reproduces the regulations\' worked example: GPA 2.69', () => {
+    const p = (g: string) => UKM_SCALE.find((r) => r.grade === g)!.point;
+    const sem = [
+      { credits: 3, point: p('A') }, { credits: 3, point: p('B+') }, { credits: 3, point: p('A-') },
+      { credits: 2, point: p('E') }, { credits: 2, point: p('D') },
+    ];
+    expect(round2(gpa(sem)!)).toBe(2.69);
   });
 });

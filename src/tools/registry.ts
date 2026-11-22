@@ -710,9 +710,21 @@ export const TOOLS: readonly ToolMeta[] = [
     blurb: 'Semester GPA, CGPA and the GPA you need next.',
     description: 'Work out your semester GPA and CGPA on the 4.00 scale Malaysian universities use, and the GPA you need next semester to hit a target. Free.',
     keywords: ['cgpa', 'gpa', 'pngk', 'png', 'grade point', 'university', 'universiti', 'semester', 'dean list', 'target cgpa', 'kira pngk'],
+    // Not rendered as a control (app tools draw their own UI): it names the
+    // verified grade tables a preset page may start from (SCALES in cgpa.ts).
+    options: [
+      { kind: 'select', key: 'scale', label: 'Grade table', default: 'um', choices: [
+        { value: 'um', label: 'Universiti Malaya' }, { value: 'ukm', label: 'Universiti Kebangsaan Malaysia' },
+      ] },
+    ],
     about: 'Enter this semester\'s courses with their credits and grades, and your CGPA and credits so far if you have them. The grade points start from Universiti Malaya\'s published table and can be changed to match your own university. Plan ahead gives the GPA you need next semester to reach a target CGPA.',
     limits: ['Grade points differ between universities. Check your faculty handbook and edit the points if yours differ.', 'Courses graded pass or fail without points, and repeated courses, follow your university\'s own rules; leave them out here.'],
     related: ['calc/take-home-pay', 'pdf/n-up', 'pdf/compress'],
+    variants: [
+      { slug: 'ukm', short: 'UKM', name: 'UKM CGPA calculator', blurb: 'GPA and CGPA on UKM\'s official grade table.', defaults: { scale: 'ukm' },
+        description: 'Work out your UKM semester GPA and CGPA with the grade points in UKM\'s Undergraduate Studies Regulations 2024: A 4.00, A- 3.67, B+ 3.33. Free.',
+        about: 'This page starts from Table 3 of the Universiti Kebangsaan Malaysia (Undergraduate Studies) Regulations 2024, which applies from the 2022/2023 intake: A 4.00 (80-100), A- 3.67, B+ 3.33, B 3.00, B- 2.67, C+ 2.33, C 2.00, C- 1.67, D+ 1.33, D 1.00 and E 0.00 (0-34). UKM has no A+, and its failing grade is E. Checked against the worked example in regulation 36, where 13 credits of A, B+, A-, E and D give a GPA of 2.69.' },
+    ],
   },
 
   // ─── Developer ────────────────────────────────────────────────────────────

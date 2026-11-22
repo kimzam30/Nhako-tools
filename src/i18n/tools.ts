@@ -596,6 +596,17 @@ export const MS: Record<string, ToolText> = {
     keywords: ['pngk', 'png', 'cgpa', 'gpa', 'kira pngk', 'mata gred', 'universiti', 'semester', 'senarai dekan'],
     about: 'Masukkan kursus semester ini dengan kredit dan gred, serta PNGK dan kredit anda setakat ini jika ada. Mata gred bermula daripada jadual terbitan Universiti Malaya dan boleh diubah mengikut universiti anda. Rancang ke hadapan memberi PNG yang diperlukan semester depan untuk mencapai PNGK sasaran.',
     limits: ['Mata gred berbeza antara universiti. Semak buku panduan fakulti anda dan ubah mata jika berbeza.', 'Kursus lulus atau gagal tanpa mata, dan kursus yang diulang, mengikut peraturan universiti anda sendiri; tinggalkannya di sini.'],
+    options: {
+      scale: { label: 'Jadual gred', choices: { um: 'Universiti Malaya', ukm: 'Universiti Kebangsaan Malaysia' } },
+    },
+    variants: {
+      ukm: {
+        name: 'Kalkulator PNGK UKM',
+        blurb: 'PNG dan PNGK mengikut jadual gred rasmi UKM.',
+        description: 'Kira PNG semester dan PNGK UKM anda dengan mata gred dalam Peraturan UKM (Pengajian Sarjana Muda) 2024: A 4.00, A- 3.67, B+ 3.33. Percuma.',
+        about: 'Halaman ini bermula daripada Jadual 3 Peraturan-Peraturan Universiti Kebangsaan Malaysia (Pengajian Sarjana Muda) 2024, yang terpakai mulai pengambilan 2022/2023: A 4.00 (80-100), A- 3.67, B+ 3.33, B 3.00, B- 2.67, C+ 2.33, C 2.00, C- 1.67, D+ 1.33, D 1.00 dan E 0.00 (0-34). UKM tiada A+, dan gred gagalnya ialah E. Disemak dengan contoh dalam peraturan 36, di mana 13 kredit A, B+, A-, E dan D memberi PNG 2.69.',
+      },
+    },
   },
 
   // ─── Media ────────────────────────────────────────────────────────────────
