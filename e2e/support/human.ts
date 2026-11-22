@@ -101,7 +101,7 @@ export async function openFromHome(page: Page, toolName: string, query = toolNam
 /** Tap the drop zone and choose files in the file chooser that opens. */
 export async function chooseFiles(page: Page, paths: string[], zone?: Locator) {
   const files = await Promise.all(paths.map(payload));
-  const target = zone ?? page.getByRole('button', { name: /drop|choose|browse|tap|pilih/i }).first();
+  const target = zone ?? page.getByRole('button', { name: /drop|choose|browse|tap|pilih|lepaskan|semak imbas/i }).first();
   const chooser = page.waitForEvent('filechooser', { timeout: 5_000 }).catch(() => null);
   await target.click();
   const fc = await chooser;

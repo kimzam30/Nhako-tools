@@ -95,6 +95,20 @@ test.describe('PDF tools, by hand, on real PDFs', () => {
     }
   });
 
+  // Rotate runs in the worker. A ToolError thrown there must reach the person
+  // word for word, in the page's language, not as a generic or mapped error.
+  for (const [path, message] of [
+    ['/pdf/rotate', 'Could not read "damaged.pdf" as a PDF.'],
+    ['/ms/pdf/rotate', '"damaged.pdf" tidak dapat dibaca sebagai PDF.'],
+  ] as const) {
+    test(`a damaged PDF in ${path} gets its own plain message from the worker`, async ({ page, shot }) => {
+      await page.goto(path);
+      await chooseFiles(page, [real('damaged.pdf')]);
+      await expect(page.getByText(message, { exact: true })).toBeVisible({ timeout: 60_000 });
+      await shot('worker-error');
+    });
+  }
+
   test('rotate pages 1-3 of a paper by 180°', async ({ page }, info) => {
     await openFromHome(page, 'Rotate PDF');
     await page.getByLabel('Rotate by').selectOption('180');
